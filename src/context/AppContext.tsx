@@ -9,6 +9,8 @@ import {
   JiraLink,
   ViewMode,
   OKRWithDetails,
+  OKRLevel,
+  Quarter,
   getConfidenceLabel,
   getTrend,
   getCurrentQuarter
@@ -22,6 +24,16 @@ import {
   checkIns as seedCheckIns,
   jiraLinks as seedJiraLinks
 } from '@/data/seedData';
+
+export interface CreateOKRData {
+  level: OKRLevel;
+  ownerId: string;
+  quarter: string;
+  objectiveText: string;
+  keyResults: { metricName: string; baseline?: string; target: string }[];
+  parentOkrId?: string;
+  initialConfidence: number;
+}
 
 interface AppState {
   productAreas: ProductArea[];
@@ -47,6 +59,7 @@ interface AppContextType extends AppState {
   getOKRsByLevel: (level: OKR['level'], ownerId?: string) => OKRWithDetails[];
   getOKRsByQuarter: (quarter: string) => OKRWithDetails[];
   getTeamOKRs: (teamId: string) => OKRWithDetails[];
+  createOKR: (data: CreateOKRData) => string;
   
   // Check-in operations
   addCheckIn: (checkIn: Omit<CheckIn, 'id' | 'confidenceLabel'>) => void;
@@ -279,6 +292,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [state.okrs, state.keyResults]);
 
+  const createOKR = useCallback((data: CreateOKRData): string => {
+    const [year, q] = data.quarter.split('-');
+    const quarterNum = q as Quarter;
+    
+    const newOkrId = `okr-${Date.now()}`;
+    
+    const newOKR: OKR = {
+      id: newOkrId,
+      level: data.level,
+      ownerId: data.ownerId,
+      quarter: data.quarter,
+      year: parseInt(year),
+      quarterNum,
+      objectiveText: data.objectiveText,
+      parentOkrId: data.parentOkrId || undefined
+    };
+
+    // Create key results
+    const newKRs: KeyResult[] = data.keyResults
+      .filter(kr => kr.metricName.trim())
+      .map((kr, index) => ({
+        id: `kr-${Date.now()}-${index}`,
+        okrId: newOkrId,
+        text: `${kr.metricName}${kr.baseline ? ` from ${kr.baseline}` : ''} to ${kr.target}`,
+        targetValue: parseFloat(kr.target.replace(/[^0-9.]/g, '')) || 100,
+        currentValue: kr.baseline ? parseFloat(kr.baseline.replace(/[^0-9.]/g, '')) || 0 : 0
+      }));
+
+    // Create initial check-in with confidence
+    const initialCheckIn: CheckIn = {
+      id: `ci-${Date.now()}`,
+      okrId: newOkrId,
+      date: new Date().toISOString().split('T')[0],
+      cadence: 'biweekly',
+      progress: 0,
+      confidence: data.initialConfidence,
+      confidenceLabel: getConfidenceLabel(data.initialConfidence),
+      optionalNote: 'Initial confidence established at OKR creation.'
+    };
+
+    setState(prev => ({
+      ...prev,
+      okrs: [...prev.okrs, newOKR],
+      keyResults: [...prev.keyResults, ...newKRs],
+      checkIns: [...prev.checkIns, initialCheckIn]
+    }));
+
+    return newOkrId;
+  }, []);
+
   const getOverallConfidence = useCallback((okrIds: string[]) => {
     const confidences = okrIds
       .map(id => {
@@ -320,6 +383,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getOKRsByLevel,
     getOKRsByQuarter,
     getTeamOKRs,
+    createOKR,
     addCheckIn,
     getTeam,
     updateTeamCadence,

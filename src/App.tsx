@@ -8,6 +8,7 @@ import { Layout } from "@/components/layout/Layout";
 import { HomePage } from "@/pages/HomePage";
 import { OKRsPage } from "@/pages/OKRsPage";
 import { OKRDetailPage } from "@/pages/OKRDetailPage";
+import { CreateOKRPage } from "@/pages/CreateOKRPage";
 import { CheckInPage } from "@/pages/CheckInPage";
 import { AlignmentPage } from "@/pages/AlignmentPage";
 import { QBRPage } from "@/pages/QBRPage";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Layout />}>
               <Route index element={<HomePage />} />
               <Route path="okrs" element={<OKRsPage />} />
+              <Route path="okrs/create" element={<CreateOKRPage />} />
               <Route path="okrs/:okrId" element={<OKRDetailPage />} />
               <Route path="checkin" element={<CheckInPage />} />
               <Route path="alignment" element={<AlignmentPage />} />
