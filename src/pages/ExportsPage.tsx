@@ -3,15 +3,17 @@ import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatQuarter, getConfidenceLabel } from '@/types';
-import { FileSpreadsheet, Presentation, Download, Copy, Check } from 'lucide-react';
+import { FileSpreadsheet, Presentation, Download, Copy, Check, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { generateQBRPresentation } from '@/lib/qbrExport';
 
 export function ExportsPage() {
   const { toast } = useToast();
-  const { currentQuarter, getOKRsByQuarter } = useApp();
+  const { currentQuarter, getOKRsByQuarter, checkIns, productAreas } = useApp();
   
   const [copiedTable, setCopiedTable] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [isGeneratingPptx, setIsGeneratingPptx] = useState(false);
 
   const quarterOKRs = useMemo(() => {
     return getOKRsByQuarter(currentQuarter);
@@ -121,6 +123,36 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
     });
   };
 
+  const handleGenerateQBRPresentation = async () => {
+    setIsGeneratingPptx(true);
+    
+    try {
+      const scope = productAreas[0]?.name || 'Product';
+      
+      generateQBRPresentation({
+        quarter: currentQuarter,
+        scope,
+        okrs: quarterOKRs,
+        checkIns: checkIns.filter(ci => 
+          quarterOKRs.some(o => o.id === ci.okrId)
+        ),
+      });
+      
+      toast({
+        title: "Generated",
+        description: "QBR presentation downloaded"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate presentation",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPptx(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -130,6 +162,44 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
           Export OKR data for presentations and reports · {formatQuarter(currentQuarter)}
         </p>
       </div>
+
+      {/* QBR Presentation - Featured */}
+      <Card className="border-border/60 bg-gradient-to-br from-card to-muted/20">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-medium">QBR Presentation</CardTitle>
+              <CardDescription className="text-xs">Executive-grade quarterly review slides</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-0">
+          <p className="text-sm text-muted-foreground">
+            Generate a complete PowerPoint presentation with executive summary, OKR outcomes, 
+            confidence trends, at-risk analysis, prioritization decisions, and next quarter bets.
+            Ready for senior leadership with no additional editing required.
+          </p>
+          
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span className="px-2 py-1 bg-muted rounded">7 slides</span>
+            <span className="px-2 py-1 bg-muted rounded">Board-ready format</span>
+            <span className="px-2 py-1 bg-muted rounded">Confidence visualization</span>
+            <span className="px-2 py-1 bg-muted rounded">Trend analysis</span>
+          </div>
+          
+          <Button 
+            onClick={handleGenerateQBRPresentation} 
+            disabled={isGeneratingPptx}
+            className="gap-2"
+          >
+            <Presentation className="w-4 h-4" />
+            {isGeneratingPptx ? 'Generating...' : 'Download QBR Presentation'}
+          </Button>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Excel Export */}
@@ -152,11 +222,11 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
             </p>
             
             <div className="flex gap-2">
-              <Button onClick={handleDownloadCSV} size="sm" className="gap-2">
+              <Button onClick={handleDownloadCSV} size="sm" variant="outline" className="gap-2">
                 <Download className="w-3.5 h-3.5" />
                 Download CSV
               </Button>
-              <Button variant="outline" size="sm" onClick={handleCopyTable} className="gap-2">
+              <Button variant="ghost" size="sm" onClick={handleCopyTable} className="gap-2">
                 {copiedTable ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 {copiedTable ? 'Copied' : 'Copy Table'}
               </Button>
@@ -164,7 +234,7 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
           </CardContent>
         </Card>
 
-        {/* PowerPoint Export */}
+        {/* Text Summary Export */}
         <Card className="border-border/60">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
@@ -172,18 +242,18 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
                 <Presentation className="w-4 h-4 text-foreground" />
               </div>
               <div>
-                <CardTitle className="text-base font-medium">PowerPoint</CardTitle>
-                <CardDescription className="text-xs">Executive summary for presentations</CardDescription>
+                <CardTitle className="text-base font-medium">Text Summary</CardTitle>
+                <CardDescription className="text-xs">Plain text executive summary</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 pt-0">
             <p className="text-sm text-muted-foreground">
-              Generate a formatted executive summary with key signals, at-risk OKRs, 
-              and confidence metrics. Copy and paste into your slides.
+              Generate a formatted text summary with key signals and at-risk OKRs. 
+              Copy and paste into emails or documents.
             </p>
             
-            <Button variant="outline" size="sm" onClick={handleCopySummary} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={handleCopySummary} className="gap-2">
               {copiedSummary ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               {copiedSummary ? 'Copied' : 'Copy Summary'}
             </Button>
@@ -194,7 +264,7 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
       {/* Preview */}
       <Card className="border-border/60">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium">Preview: Executive Summary</CardTitle>
+          <CardTitle className="text-base font-medium">Preview: Text Summary</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <pre className="bg-muted/50 p-4 rounded-lg text-xs font-mono whitespace-pre-wrap overflow-x-auto text-muted-foreground">
