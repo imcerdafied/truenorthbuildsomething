@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { checkDemoMode } from '@/hooks/useDemoMode';
+import * as seedData from '@/data/seedData';
 import {
   ProductArea,
   Domain,
@@ -41,6 +43,7 @@ interface AppState {
   currentQuarter: string;
   selectedTeamId: string;
   currentPM: string;
+  isDemoMode: boolean;
   isLoading: boolean;
 }
 
@@ -80,30 +83,59 @@ interface AppContextType extends AppState {
   // Ownership
   isCurrentUserPM: (teamId: string) => boolean;
   canEditOKR: (okrId: string) => boolean;
+  isDemoMode: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { organization, profile } = useAuth();
+  const isDemoMode = checkDemoMode();
   
-  const [state, setState] = useState<AppState>({
-    productAreas: [],
-    domains: [],
-    teams: [],
-    okrs: [],
-    keyResults: [],
-    checkIns: [],
-    jiraLinks: [],
-    viewMode: 'team',
-    currentQuarter: getCurrentQuarter(),
-    selectedTeamId: '',
-    currentPM: '',
-    isLoading: true
+  const [state, setState] = useState<AppState>(() => {
+    // Initialize with demo data if in demo mode
+    if (isDemoMode) {
+      return {
+        productAreas: seedData.productAreas,
+        domains: seedData.domains,
+        teams: seedData.teams,
+        okrs: seedData.okrs,
+        keyResults: seedData.keyResults,
+        checkIns: seedData.checkIns,
+        jiraLinks: seedData.jiraLinks,
+        viewMode: 'team',
+        currentQuarter: '2026-Q1',
+        selectedTeamId: seedData.teams[0]?.id || '',
+        currentPM: 'Sarah Chen',
+        isLoading: false,
+        isDemoMode: true
+      };
+    }
+    
+    return {
+      productAreas: [],
+      domains: [],
+      teams: [],
+      okrs: [],
+      keyResults: [],
+      checkIns: [],
+      jiraLinks: [],
+      viewMode: 'team',
+      currentQuarter: getCurrentQuarter(),
+      selectedTeamId: '',
+      currentPM: '',
+      isLoading: true,
+      isDemoMode: false
+    };
   });
 
   // Fetch organization structure from database
   const refreshData = useCallback(async () => {
+    // Skip fetching if in demo mode
+    if (isDemoMode) {
+      return;
+    }
+    
     if (!organization?.id) {
       setState(prev => ({ ...prev, isLoading: false }));
       return;
@@ -160,13 +192,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         teams,
         selectedTeamId: prev.selectedTeamId || firstTeamId,
         currentPM: profile?.full_name || '',
-        isLoading: false
+        isLoading: false,
+        isDemoMode: false
       }));
     } catch (error) {
       console.error('Error fetching organization data:', error);
       setState(prev => ({ ...prev, isLoading: false }));
     }
-  }, [organization?.id, profile?.full_name]);
+  }, [organization?.id, profile?.full_name, isDemoMode]);
 
   // Fetch data when organization changes
   useEffect(() => {
@@ -439,6 +472,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: AppContextType = {
     ...state,
+    isDemoMode,
     setViewMode,
     setCurrentQuarter,
     setSelectedTeamId,
