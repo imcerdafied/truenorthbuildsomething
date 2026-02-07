@@ -12,6 +12,11 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        confidenceHigh: "border-transparent bg-confidence-high-bg text-confidence-high",
+        confidenceMedium: "border-transparent bg-confidence-medium-bg text-confidence-medium",
+        confidenceLow: "border-transparent bg-confidence-low-bg text-confidence-low",
+        onTrack: "border-transparent bg-confidence-high-bg text-confidence-high",
+        atRisk: "border-transparent bg-confidence-low-bg text-confidence-low",
       },
     },
     defaultVariants: {
