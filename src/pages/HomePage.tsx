@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
@@ -5,6 +6,8 @@ import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
 import { ConfidenceSparkline } from '@/components/shared/ConfidenceSparkline';
+import { TeamWeeklyView } from '@/components/views/TeamWeeklyView';
+import { ProductAreaView } from '@/components/views/ProductAreaView';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -18,13 +21,15 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Plus
+  Plus,
+  Calendar
 } from 'lucide-react';
 import { formatQuarter, getNextCheckInDate } from '@/types';
 import { useMemo } from 'react';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const [showWeeklyView, setShowWeeklyView] = useState(false);
   const { 
     viewMode,
     currentQuarter,
@@ -109,13 +114,23 @@ export function HomePage() {
 
   const TrendIcon = overallTrend === 'up' ? TrendingUp : overallTrend === 'down' ? TrendingDown : Minus;
 
+  // If in exec mode, show Product Area View
+  if (viewMode === 'exec') {
+    return <ProductAreaView />;
+  }
+
+  // If showing weekly view, render it
+  if (showWeeklyView) {
+    return <TeamWeeklyView onBack={() => setShowWeeklyView(false)} />;
+  }
+
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="page-title text-xl sm:text-2xl">
-            {viewMode === 'exec' ? 'Executive Dashboard' : `${currentTeam?.name || 'Team'}`}
+            {currentTeam?.name || 'Team'}
           </h1>
           <p className="helper-text mt-1 text-sm">
             What are we trying to achieve, and are we on track?
@@ -125,12 +140,25 @@ export function HomePage() {
           </p>
         </div>
         
-        {canRunCheckIn && hasOKRs && (
-          <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2 w-full sm:w-auto">
-            <PlayCircle className="w-4 h-4" />
-            Run Check-in
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {hasOKRs && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowWeeklyView(true)} 
+              size="sm" 
+              className="gap-2"
+            >
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Weekly View</span>
+            </Button>
+          )}
+          {canRunCheckIn && hasOKRs && (
+            <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2">
+              <PlayCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Run Check-in</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Signal Cards - calm briefing */}
