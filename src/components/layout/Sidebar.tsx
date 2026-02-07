@@ -22,14 +22,24 @@ const navItems = [
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+export function Sidebar({ onNavigate }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+
+  const handleNavClick = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+  };
 
   return (
     <aside 
       className={cn(
-        "flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-200",
+        "flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-200 h-full",
         collapsed ? "w-16" : "w-52"
       )}
     >
@@ -62,6 +72,7 @@ export function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={handleNavClick}
               className={cn(
                 "nav-item",
                 isActive && "active"
@@ -74,8 +85,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Collapse toggle */}
-      <div className="p-2 border-t border-sidebar-border">
+      {/* Collapse toggle - hidden on mobile */}
+      <div className="p-2 border-t border-sidebar-border hidden lg:block">
         <Button
           variant="ghost"
           size="sm"
