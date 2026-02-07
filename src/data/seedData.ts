@@ -91,7 +91,7 @@ export const okrs: OKR[] = [
   }
 ];
 
-// Key Results
+// Key Results with "Needs Attention" flags for demo
 export const keyResults: KeyResult[] = [
   // Domain KRs
   { id: 'kr-domain-1', okrId: 'okr-domain-q1', text: 'Improve overall booking conversion', targetValue: 22, currentValue: 19.2 },
@@ -99,13 +99,13 @@ export const keyResults: KeyResult[] = [
   
   // Booking Experience KRs
   { id: 'kr-booking-1', okrId: 'okr-booking-exp', text: 'Increase completed bookings from 18% to 22%', targetValue: 22, currentValue: 19.8 },
-  { id: 'kr-booking-2', okrId: 'okr-booking-exp', text: 'Reduce checkout abandonment from 30% to 20%', targetValue: 20, currentValue: 24 },
+  { id: 'kr-booking-2', okrId: 'okr-booking-exp', text: 'Reduce checkout abandonment from 30% to 20%', targetValue: 20, currentValue: 24, needsAttention: true, attentionReason: 'Mobile checkout still underperforming; investigating payment step friction.' },
   
-  // Payments KRs
-  { id: 'kr-payments-1', okrId: 'okr-payments', text: 'Reduce payment error rate from 4.5% to 2.5%', targetValue: 2.5, currentValue: 3.2 },
-  { id: 'kr-payments-2', okrId: 'okr-payments', text: 'Increase successful retry completion from 40% to 65%', targetValue: 65, currentValue: 52 },
+  // Payments KRs - at risk, needs attention
+  { id: 'kr-payments-1', okrId: 'okr-payments', text: 'Reduce payment error rate from 4.5% to 2.5%', targetValue: 2.5, currentValue: 3.2, needsAttention: true, attentionReason: 'Gateway v2.3 rollout delayed; vendor escalation ongoing.' },
+  { id: 'kr-payments-2', okrId: 'okr-payments', text: 'Increase successful retry completion from 40% to 65%', targetValue: 65, currentValue: 52, needsAttention: true, attentionReason: 'Blocked on gateway stability before full retry logic deployment.' },
   
-  // Search KRs
+  // Search KRs - on track
   { id: 'kr-search-1', okrId: 'okr-search', text: 'Increase search-to-booking handoff rate from 12% to 16%', targetValue: 16, currentValue: 14.8 },
   { id: 'kr-search-2', okrId: 'okr-search', text: 'Reduce irrelevant search results by 20%', targetValue: 20, currentValue: 18 }
 ];
