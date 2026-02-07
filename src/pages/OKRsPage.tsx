@@ -26,8 +26,13 @@ export function OKRsPage() {
     teams, 
     domains, 
     productAreas,
-    getOKRsByQuarter
+    getOKRsByQuarter,
+    viewMode
   } = useApp();
+
+  // In exec view, users can create OKRs; in team view, only PMs can
+  // For this prototype, we allow creation in both modes
+  const canCreateOKR = true;
 
   const [levelFilter, setLevelFilter] = useState<OKRLevel | 'all'>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
@@ -70,10 +75,12 @@ export function OKRsPage() {
             View and manage OKRs across all levels · {formatQuarter(currentQuarter)}
           </p>
         </div>
-        <Button onClick={() => navigate('/okrs/create')} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Create OKR
-        </Button>
+        {canCreateOKR && (
+          <Button onClick={() => navigate('/okrs/create')} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Create OKR
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -158,6 +165,15 @@ export function OKRsPage() {
                   : "Try adjusting your filters to see more results."
                 }
               </p>
+              {allOKRs.length === 0 && canCreateOKR && (
+                <Button 
+                  onClick={() => navigate('/okrs/create')} 
+                  className="mt-6 gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create your first OKR
+                </Button>
+              )}
             </div>
           ) : (
             <div>
