@@ -120,8 +120,8 @@ export function OKRsPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
                   <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="on-track">On Track</SelectItem>
-                  <SelectItem value="at-risk">At Risk</SelectItem>
+                  <SelectItem value="on-track">On Track (≥40)</SelectItem>
+                  <SelectItem value="at-risk">At Risk (&lt;40)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -142,9 +142,14 @@ export function OKRsPage() {
           {filteredOKRs.length === 0 ? (
             <div className="empty-state">
               <Target className="empty-state-icon" />
-              <p className="empty-state-title">No OKRs match your filters</p>
-              <p className="empty-state-description">
-                Try adjusting your filters to see more results.
+              <p className="empty-state-title">
+                {allOKRs.length === 0 ? "No OKRs for this quarter" : "No OKRs match your filters"}
+              </p>
+              <p className="empty-state-description max-w-md mx-auto">
+                {allOKRs.length === 0 
+                  ? "TrueNorth helps teams align on outcomes and make confidence explicit. Create your first OKR to establish your signal for the quarter."
+                  : "Try adjusting your filters to see more results."
+                }
               </p>
             </div>
           ) : (

@@ -26,16 +26,33 @@ export const teams: Team[] = [
   { id: 't-3', name: 'Search', domainId: 'd-1', pmName: 'Emily Rodriguez', cadence: 'weekly' }
 ];
 
-const currentQuarter = '2024-Q4';
+const currentQuarter = '2025-Q1';
+const previousQuarter = '2024-Q4';
 
 // OKRs
 export const okrs: OKR[] = [
+  // ========== Q1 2025 OKRs (Current Quarter - Demo) ==========
+  
+  // Example Team OKR for Booking Experience - demonstrates confidence tracking
+  {
+    id: 'okr-q1-demo',
+    level: 'team',
+    ownerId: 't-1',
+    quarter: currentQuarter,
+    year: 2025,
+    quarterNum: 'Q1',
+    objectiveText: 'Improve booking conversion rate',
+    parentOkrId: undefined // Intentionally orphaned to show the warning
+  },
+  
+  // ========== Q4 2024 OKRs (Previous Quarter - Historical) ==========
+  
   // Product Area OKR
   {
     id: 'okr-pa-1',
     level: 'productArea',
     ownerId: 'pa-1',
-    quarter: currentQuarter,
+    quarter: previousQuarter,
     year: 2024,
     quarterNum: 'Q4',
     objectiveText: 'Become the market leader in booking conversion rate'
@@ -46,7 +63,7 @@ export const okrs: OKR[] = [
     id: 'okr-d-1',
     level: 'domain',
     ownerId: 'd-1',
-    quarter: currentQuarter,
+    quarter: previousQuarter,
     year: 2024,
     quarterNum: 'Q4',
     objectiveText: 'Optimize the end-to-end booking funnel for conversion',
@@ -58,7 +75,7 @@ export const okrs: OKR[] = [
     id: 'okr-t1-1',
     level: 'team',
     ownerId: 't-1',
-    quarter: currentQuarter,
+    quarter: previousQuarter,
     year: 2024,
     quarterNum: 'Q4',
     objectiveText: 'Reduce booking abandonment through UX improvements',
@@ -68,7 +85,7 @@ export const okrs: OKR[] = [
     id: 'okr-t1-2',
     level: 'team',
     ownerId: 't-1',
-    quarter: currentQuarter,
+    quarter: previousQuarter,
     year: 2024,
     quarterNum: 'Q4',
     objectiveText: 'Launch mobile-first booking redesign',
@@ -80,7 +97,7 @@ export const okrs: OKR[] = [
     id: 'okr-t2-1',
     level: 'team',
     ownerId: 't-2',
-    quarter: currentQuarter,
+    quarter: previousQuarter,
     year: 2024,
     quarterNum: 'Q4',
     objectiveText: 'Increase payment success rate to 98%',
@@ -90,7 +107,7 @@ export const okrs: OKR[] = [
     id: 'okr-t2-2',
     level: 'team',
     ownerId: 't-2',
-    quarter: currentQuarter,
+    quarter: previousQuarter,
     year: 2024,
     quarterNum: 'Q4',
     objectiveText: 'Launch 3 new payment methods for EU markets'
@@ -102,7 +119,7 @@ export const okrs: OKR[] = [
     id: 'okr-t3-1',
     level: 'team',
     ownerId: 't-3',
-    quarter: currentQuarter,
+    quarter: previousQuarter,
     year: 2024,
     quarterNum: 'Q4',
     objectiveText: 'Improve search relevance and speed',
@@ -112,7 +129,7 @@ export const okrs: OKR[] = [
     id: 'okr-t3-2',
     level: 'team',
     ownerId: 't-3',
-    quarter: currentQuarter,
+    quarter: previousQuarter,
     year: 2024,
     quarterNum: 'Q4',
     objectiveText: 'Implement AI-powered search suggestions',
@@ -131,6 +148,11 @@ export const keyResults: KeyResult[] = [
   { id: 'kr-d-1-2', okrId: 'okr-d-1', text: 'Reduce cart abandonment to under 40%', targetValue: 40, currentValue: 45 },
   
   // Booking Experience KRs
+  // Q1 2025 Demo OKR Key Results
+  { id: 'kr-demo-1', okrId: 'okr-q1-demo', text: 'Increase completed bookings from 18% to 22%', targetValue: 22, currentValue: 19.5 },
+  { id: 'kr-demo-2', okrId: 'okr-q1-demo', text: 'Reduce checkout abandonment from 30% to 20%', targetValue: 20, currentValue: 26 },
+  
+  // Booking Experience KRs (Q4 2024)
   { id: 'kr-t1-1-1', okrId: 'okr-t1-1', text: 'Reduce form fields from 12 to 6', targetValue: 6, currentValue: 8 },
   { id: 'kr-t1-1-2', okrId: 'okr-t1-1', text: 'Increase step completion rate to 85%', targetValue: 85, currentValue: 78 },
   { id: 'kr-t1-2-1', okrId: 'okr-t1-2', text: 'Launch mobile redesign to 100% of users', targetValue: 100, currentValue: 60 },
@@ -151,6 +173,42 @@ export const keyResults: KeyResult[] = [
 
 // Check-ins with history showing confidence changes
 export const checkIns: CheckIn[] = [
+  // ========== Q1 2025 Demo OKR Check-ins ==========
+  // Shows the confidence journey: started high, dropped mid-quarter with clear reason
+  {
+    id: 'ci-demo-1',
+    okrId: 'okr-q1-demo',
+    date: '2025-01-13',
+    cadence: 'biweekly',
+    progress: 15,
+    confidence: 75,
+    confidenceLabel: 'High',
+    optionalNote: 'Strong start. Mobile checkout experiments launched to 25% of traffic.'
+  },
+  {
+    id: 'ci-demo-2',
+    okrId: 'okr-q1-demo',
+    date: '2025-01-27',
+    cadence: 'biweekly',
+    progress: 30,
+    confidence: 70,
+    confidenceLabel: 'Medium',
+    reasonForChange: 'Slight dip due to slower than expected experiment ramp-up',
+    optionalNote: 'Expanding to 50% of traffic next week.'
+  },
+  {
+    id: 'ci-demo-3',
+    okrId: 'okr-q1-demo',
+    date: '2025-02-10',
+    cadence: 'biweekly',
+    progress: 42,
+    confidence: 60,
+    confidenceLabel: 'Medium',
+    reasonForChange: 'Mobile checkout experiments underperformed initial assumptions',
+    optionalNote: 'Conversion lift was 1.2% vs expected 2.5%. Investigating drop-off points in payment step.'
+  },
+  
+  // ========== Q4 2024 Check-ins ==========
   // OKR okr-t1-1: Shows confidence drop with reason
   {
     id: 'ci-1',

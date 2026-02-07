@@ -14,9 +14,13 @@ import {
   CheckCircle2, 
   Clock,
   ArrowRight,
-  PlayCircle
+  PlayCircle,
+  TrendingUp,
+  TrendingDown,
+  Minus
 } from 'lucide-react';
-import { formatQuarter, getNextCheckInDate } from '@/types';
+import { formatQuarter, getNextCheckInDate, getTrend } from '@/types';
+import { useMemo } from 'react';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -30,7 +34,8 @@ export function HomePage() {
     getOverallConfidence,
     getAtRiskCount,
     getOnTrackCount,
-    isCurrentUserPM
+    isCurrentUserPM,
+    checkIns
   } = useApp();
 
   // Get the current team
@@ -41,10 +46,46 @@ export function HomePage() {
   const teamOKRs = getTeamOKRs(selectedTeamId);
   const allTeamOKRIds = teamOKRs.map(o => o.id);
   
+  const hasOKRs = teamOKRs.length > 0;
+  
   // Calculate overall stats
   const overallConfidence = getOverallConfidence(allTeamOKRIds);
   const atRiskCount = getAtRiskCount(allTeamOKRIds);
   const onTrackCount = getOnTrackCount(allTeamOKRIds);
+
+  // Calculate overall trend based on aggregated check-in history
+  const overallTrend = useMemo(() => {
+    if (!hasOKRs) return null;
+    
+    // Get all check-ins for team OKRs sorted by date
+    const teamCheckIns = checkIns
+      .filter(ci => allTeamOKRIds.includes(ci.okrId))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    if (teamCheckIns.length < 2) return null;
+    
+    // Get the two most recent dates with check-ins
+    const dates = [...new Set(teamCheckIns.map(ci => ci.date))].sort((a, b) => 
+      new Date(b).getTime() - new Date(a).getTime()
+    );
+    
+    if (dates.length < 2) return null;
+    
+    const latestDate = dates[0];
+    const previousDate = dates[1];
+    
+    const latestAvg = teamCheckIns
+      .filter(ci => ci.date === latestDate)
+      .reduce((sum, ci, _, arr) => sum + ci.confidence / arr.length, 0);
+    
+    const previousAvg = teamCheckIns
+      .filter(ci => ci.date === previousDate)
+      .reduce((sum, ci, _, arr) => sum + ci.confidence / arr.length, 0);
+    
+    if (latestAvg > previousAvg) return 'up';
+    if (latestAvg < previousAvg) return 'down';
+    return 'flat';
+  }, [checkIns, allTeamOKRIds, hasOKRs]);
 
   // Get peer teams in the same domain
   const peerTeams = teams.filter(t => t.domainId === currentTeam?.domainId && t.id !== selectedTeamId);
@@ -60,6 +101,8 @@ export function HomePage() {
 
   const canRunCheckIn = isCurrentUserPM(selectedTeamId);
 
+  const TrendIcon = overallTrend === 'up' ? TrendingUp : overallTrend === 'down' ? TrendingDown : Minus;
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
@@ -69,11 +112,11 @@ export function HomePage() {
             {viewMode === 'exec' ? 'Executive Dashboard' : `${currentTeam?.name || 'Team'}`}
           </h1>
           <p className="helper-text mt-1">
-            {formatQuarter(currentQuarter)} · What are we trying to achieve and are we on track?
+            {formatQuarter(currentQuarter)} · Source of truth for quarterly business reviews
           </p>
         </div>
         
-        {canRunCheckIn && (
+        {canRunCheckIn && hasOKRs && (
           <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2">
             <PlayCircle className="w-4 h-4" />
             Run Check-in
@@ -86,35 +129,51 @@ export function HomePage() {
         <SignalCard
           title="Overall Confidence"
           value={
-            <div className="flex items-center gap-3">
-              <span>{overallConfidence}</span>
-              <ConfidenceBadge confidence={overallConfidence} showValue={false} />
-            </div>
+            hasOKRs ? (
+              <div className="flex items-center gap-3">
+                <span>{overallConfidence}</span>
+                <ConfidenceBadge confidence={overallConfidence} showValue={false} />
+                {overallTrend && (
+                  <TrendIcon 
+                    className={`w-4 h-4 ${
+                      overallTrend === 'up' ? 'text-confidence-high' : 
+                      overallTrend === 'down' ? 'text-confidence-low' : 
+                      'text-muted-foreground'
+                    }`} 
+                  />
+                )}
+                {!overallTrend && hasOKRs && (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </div>
+            ) : (
+              <span className="text-lg font-medium text-muted-foreground">Not yet established</span>
+            )
           }
-          subtitle="Aggregate across all OKRs"
+          subtitle={hasOKRs ? "Aggregate across all OKRs" : "No OKRs have been defined for this quarter"}
           icon={<Target className="w-5 h-5" />}
         />
         
         <SignalCard
           title="On Track"
-          value={onTrackCount}
-          subtitle={`of ${teamOKRs.length} OKRs with confidence ≥40`}
+          value={hasOKRs ? onTrackCount : <span className="text-lg font-medium text-muted-foreground">No signal yet</span>}
+          subtitle={hasOKRs ? `of ${teamOKRs.length} OKRs with confidence ≥40` : "Signals appear once OKRs are created"}
           icon={<CheckCircle2 className="w-5 h-5" />}
-          variant="success"
+          variant={hasOKRs && onTrackCount > 0 ? "success" : "default"}
         />
         
         <SignalCard
           title="At Risk"
-          value={atRiskCount}
-          subtitle="OKRs with confidence <40"
+          value={hasOKRs ? atRiskCount : <span className="text-lg font-medium text-muted-foreground">No signal yet</span>}
+          subtitle={hasOKRs ? "OKRs with confidence <40" : "Signals appear once OKRs are created"}
           icon={<AlertTriangle className="w-5 h-5" />}
-          variant={atRiskCount > 0 ? 'danger' : 'default'}
+          variant={hasOKRs && atRiskCount > 0 ? 'danger' : 'default'}
         />
         
         <SignalCard
           title="Next Check-in"
-          value={nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          subtitle={`${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence`}
+          value={hasOKRs ? nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : <span className="text-lg font-medium text-muted-foreground">—</span>}
+          subtitle={hasOKRs ? `${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence` : "Scheduled after first OKR is created"}
           icon={<Clock className="w-5 h-5" />}
         />
       </div>
@@ -123,17 +182,20 @@ export function HomePage() {
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between pb-4">
           <CardTitle className="text-base font-medium">Your Team OKRs</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-1 text-xs h-8">
-            View all <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
+          {hasOKRs && (
+            <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-1 text-xs h-8">
+              View all <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="pt-0">
           {teamOKRs.length === 0 ? (
             <div className="empty-state">
               <Target className="empty-state-icon" />
               <p className="empty-state-title">No OKRs for this quarter</p>
-              <p className="empty-state-description">
-                OKRs help teams align on what matters most. Create your first OKR to get started.
+              <p className="empty-state-description max-w-md mx-auto">
+                TrueNorth helps teams align on outcomes and make confidence explicit.
+                Create your first OKR to establish your signal for the quarter.
               </p>
             </div>
           ) : (
@@ -193,6 +255,7 @@ export function HomePage() {
                 const okrIds = teamOkrs.map(o => o.id);
                 const confidence = getOverallConfidence(okrIds);
                 const atRisk = getAtRiskCount(okrIds);
+                const hasTeamOKRs = teamOkrs.length > 0;
                 
                 return (
                   <div 
@@ -205,11 +268,17 @@ export function HomePage() {
                         <p className="text-xs text-muted-foreground mt-0.5">PM: {team.pmName}</p>
                       </div>
                       <div className="text-right">
-                        <ConfidenceBadge confidence={confidence} />
-                        {atRisk > 0 && (
-                          <p className="text-xs text-confidence-low mt-1">
-                            {atRisk} at risk
-                          </p>
+                        {hasTeamOKRs ? (
+                          <>
+                            <ConfidenceBadge confidence={confidence} />
+                            {atRisk > 0 && (
+                              <p className="text-xs text-confidence-low mt-1">
+                                {atRisk} at risk
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">No signal yet</span>
                         )}
                       </div>
                     </div>

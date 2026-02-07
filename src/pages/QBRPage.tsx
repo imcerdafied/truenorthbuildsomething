@@ -30,6 +30,8 @@ export function QBRPage() {
     return getOKRsByQuarter(selectedQuarter);
   }, [selectedQuarter, getOKRsByQuarter]);
 
+  const hasOKRs = quarterOKRs.length > 0;
+
   const stats = useMemo(() => {
     const okrIds = quarterOKRs.map(o => o.id);
     const quarterCheckIns = checkIns.filter(ci => okrIds.includes(ci.okrId));
@@ -81,7 +83,7 @@ export function QBRPage() {
     };
   }, [quarterOKRs, checkIns, okrs, selectedQuarter]);
 
-  const quarters = ['2024-Q4', '2024-Q3', '2024-Q2', '2024-Q1', '2025-Q1'];
+  const quarters = ['2025-Q1', '2024-Q4', '2024-Q3', '2024-Q2', '2024-Q1'];
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -90,7 +92,7 @@ export function QBRPage() {
         <div>
           <h1 className="page-title">Quarterly Business Review</h1>
           <p className="helper-text mt-1">
-            Executive summary for leadership review
+            Source of truth for quarterly business reviews · Executive summary for leadership
           </p>
         </div>
         
@@ -112,47 +114,59 @@ export function QBRPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SignalCard
           title="Total OKRs"
-          value={stats.totalOKRs}
-          subtitle={`${stats.onTrackCount} on track, ${stats.atRiskCount} at risk`}
+          value={hasOKRs ? stats.totalOKRs : <span className="text-lg font-medium text-muted-foreground">—</span>}
+          subtitle={hasOKRs ? `${stats.onTrackCount} on track, ${stats.atRiskCount} at risk` : "No OKRs defined for this quarter"}
           icon={<Target className="w-5 h-5" />}
         />
         
         <SignalCard
           title="Starting Confidence"
           value={
-            <div className="flex items-center gap-3">
-              <span>{stats.avgStartConfidence}</span>
-              <ConfidenceBadge confidence={stats.avgStartConfidence} showValue={false} />
-            </div>
+            hasOKRs ? (
+              <div className="flex items-center gap-3">
+                <span>{stats.avgStartConfidence}</span>
+                <ConfidenceBadge confidence={stats.avgStartConfidence} showValue={false} />
+              </div>
+            ) : (
+              <span className="text-lg font-medium text-muted-foreground">Not yet established</span>
+            )
           }
-          subtitle="Average at quarter start"
+          subtitle={hasOKRs ? "Average at quarter start" : "No check-in data available"}
         />
         
         <SignalCard
           title="Current Confidence"
           value={
-            <div className="flex items-center gap-3">
-              <span>{stats.avgEndConfidence}</span>
-              <ConfidenceBadge confidence={stats.avgEndConfidence} showValue={false} />
-            </div>
+            hasOKRs ? (
+              <div className="flex items-center gap-3">
+                <span>{stats.avgEndConfidence}</span>
+                <ConfidenceBadge confidence={stats.avgEndConfidence} showValue={false} />
+              </div>
+            ) : (
+              <span className="text-lg font-medium text-muted-foreground">Not yet established</span>
+            )
           }
-          subtitle="Latest average"
+          subtitle={hasOKRs ? "Latest average" : "No check-in data available"}
         />
         
         <SignalCard
           title="Confidence Trend"
           value={
-            <div className="flex items-center gap-3">
-              <span className="tabular-nums">{stats.confidenceDelta > 0 ? '+' : ''}{stats.confidenceDelta}</span>
-              {stats.confidenceDelta > 0 ? (
-                <TrendingUp className="w-5 h-5 text-confidence-high" />
-              ) : stats.confidenceDelta < 0 ? (
-                <TrendingDown className="w-5 h-5 text-confidence-low" />
-              ) : null}
-            </div>
+            hasOKRs ? (
+              <div className="flex items-center gap-3">
+                <span className="tabular-nums">{stats.confidenceDelta > 0 ? '+' : ''}{stats.confidenceDelta}</span>
+                {stats.confidenceDelta > 0 ? (
+                  <TrendingUp className="w-5 h-5 text-confidence-high" />
+                ) : stats.confidenceDelta < 0 ? (
+                  <TrendingDown className="w-5 h-5 text-confidence-low" />
+                ) : null}
+              </div>
+            ) : (
+              <span className="text-lg font-medium text-muted-foreground">—</span>
+            )
           }
-          subtitle="Change over quarter"
-          variant={stats.confidenceDelta > 0 ? 'success' : stats.confidenceDelta < 0 ? 'danger' : 'default'}
+          subtitle={hasOKRs ? "Change over quarter" : "Trend appears after check-ins"}
+          variant={hasOKRs && stats.confidenceDelta > 0 ? 'success' : hasOKRs && stats.confidenceDelta < 0 ? 'danger' : 'default'}
         />
       </div>
 
@@ -166,6 +180,10 @@ export function QBRPage() {
             <div className="empty-state">
               <Target className="empty-state-icon" />
               <p className="empty-state-title">No OKRs for this quarter</p>
+              <p className="empty-state-description max-w-md mx-auto">
+                TrueNorth helps teams align on outcomes and make confidence explicit.
+                OKR results will appear here once they are defined and checked in.
+              </p>
             </div>
           ) : (
             <div>
@@ -196,12 +214,14 @@ export function QBRPage() {
                     />
                   </div>
                   <div className="col-span-2">
-                    {okr.latestCheckIn && (
+                    {okr.latestCheckIn ? (
                       <ConfidenceBadge 
                         confidence={okr.latestCheckIn.confidence}
                         label={okr.latestCheckIn.confidenceLabel}
                         size="sm"
                       />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No check-in</span>
                     )}
                   </div>
                   <div className="col-span-1">
@@ -224,7 +244,9 @@ export function QBRPage() {
         </CardHeader>
         <CardContent className="pt-0">
           {stats.significantChanges.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-6 text-center">No documented changes</p>
+            <p className="text-muted-foreground text-sm py-6 text-center">
+              {hasOKRs ? "No documented changes" : "Changes will appear after check-ins with confidence adjustments"}
+            </p>
           ) : (
             <div className="space-y-3">
               {stats.significantChanges.slice(0, 8).map((ci) => {
