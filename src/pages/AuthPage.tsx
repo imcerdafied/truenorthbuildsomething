@@ -211,7 +211,7 @@ export function AuthPage() {
         </Card>
         
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Source of truth for quarterly business reviews
+          Make outcomes visible. Make confidence explicit.
         </p>
       </div>
     </div>
