@@ -17,9 +17,10 @@ import {
   PlayCircle,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  Plus
 } from 'lucide-react';
-import { formatQuarter, getNextCheckInDate, getTrend } from '@/types';
+import { formatQuarter, getNextCheckInDate } from '@/types';
 import { useMemo } from 'react';
 
 export function HomePage() {
@@ -90,6 +91,10 @@ export function HomePage() {
   // Get peer teams in the same domain
   const peerTeams = teams.filter(t => t.domainId === currentTeam?.domainId && t.id !== selectedTeamId);
 
+  // Check if any peer team has OKRs
+  const peerTeamsWithOKRs = peerTeams.filter(team => getTeamOKRs(team.id).length > 0);
+  const anyPeerHasOKRs = peerTeamsWithOKRs.length > 0;
+
   // Calculate next check-in date
   const latestCheckIn = teamOKRs
     .flatMap(o => o.checkIns)
@@ -97,9 +102,10 @@ export function HomePage() {
   
   const nextCheckInDate = latestCheckIn 
     ? getNextCheckInDate(new Date(latestCheckIn.date), currentTeam?.cadence || 'biweekly')
-    : new Date();
+    : null;
 
   const canRunCheckIn = isCurrentUserPM(selectedTeamId);
+  const canCreateOKR = true; // Simplified for prototype
 
   const TrendIcon = overallTrend === 'up' ? TrendingUp : overallTrend === 'down' ? TrendingDown : Minus;
 
@@ -112,6 +118,9 @@ export function HomePage() {
             {viewMode === 'exec' ? 'Executive Dashboard' : `${currentTeam?.name || 'Team'}`}
           </h1>
           <p className="helper-text mt-1">
+            What are we trying to achieve, and are we on track?
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
             {formatQuarter(currentQuarter)} · Source of truth for quarterly business reviews
           </p>
         </div>
@@ -150,14 +159,14 @@ export function HomePage() {
               <span className="text-lg font-medium text-muted-foreground">Not yet established</span>
             )
           }
-          subtitle={hasOKRs ? "Aggregate across all OKRs" : "No OKRs have been defined for this quarter"}
+          subtitle={hasOKRs ? "Aggregate across all OKRs" : "No OKRs have been defined for this quarter."}
           icon={<Target className="w-5 h-5" />}
         />
         
         <SignalCard
           title="On Track"
           value={hasOKRs ? onTrackCount : <span className="text-lg font-medium text-muted-foreground">No signal yet</span>}
-          subtitle={hasOKRs ? `of ${teamOKRs.length} OKRs with confidence ≥40` : "Signals appear once OKRs are created"}
+          subtitle={hasOKRs ? `of ${teamOKRs.length} OKRs with confidence ≥40` : "OKRs appear here once teams define outcomes."}
           icon={<CheckCircle2 className="w-5 h-5" />}
           variant={hasOKRs && onTrackCount > 0 ? "success" : "default"}
         />
@@ -165,15 +174,19 @@ export function HomePage() {
         <SignalCard
           title="At Risk"
           value={hasOKRs ? atRiskCount : <span className="text-lg font-medium text-muted-foreground">No signal yet</span>}
-          subtitle={hasOKRs ? "OKRs with confidence <40" : "Signals appear once OKRs are created"}
+          subtitle={hasOKRs ? "OKRs with confidence <40" : "Risk becomes visible as confidence is tracked."}
           icon={<AlertTriangle className="w-5 h-5" />}
           variant={hasOKRs && atRiskCount > 0 ? 'danger' : 'default'}
         />
         
         <SignalCard
           title="Next Check-in"
-          value={hasOKRs ? nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : <span className="text-lg font-medium text-muted-foreground">—</span>}
-          subtitle={hasOKRs ? `${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence` : "Scheduled after first OKR is created"}
+          value={
+            hasOKRs && nextCheckInDate 
+              ? nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
+              : <span className="text-lg font-medium text-muted-foreground">Not scheduled</span>
+          }
+          subtitle={hasOKRs ? `${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence` : "Check-ins begin after OKRs are created."}
           icon={<Clock className="w-5 h-5" />}
         />
       </div>
@@ -190,13 +203,27 @@ export function HomePage() {
         </CardHeader>
         <CardContent className="pt-0">
           {teamOKRs.length === 0 ? (
-            <div className="empty-state">
+            <div className="empty-state py-16">
               <Target className="empty-state-icon" />
-              <p className="empty-state-title">No OKRs for this quarter</p>
-              <p className="empty-state-description max-w-md mx-auto">
+              <p className="empty-state-title text-lg">Get started with your first OKR</p>
+              <p className="empty-state-description max-w-md mx-auto mt-2">
                 TrueNorth helps teams align on outcomes and make confidence explicit.
-                Create your first OKR to establish your signal for the quarter.
+                Define your first OKR to establish your signal for the quarter.
               </p>
+              {canCreateOKR && (
+                <>
+                  <Button 
+                    onClick={() => navigate('/okrs/create')} 
+                    className="mt-6 gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create OKR
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Start with an outcome your team owns this quarter.
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-0">
@@ -237,8 +264,8 @@ export function HomePage() {
         </CardContent>
       </Card>
 
-      {/* Peer Teams - informational, not competitive */}
-      {peerTeams.length > 0 && (
+      {/* Peer Teams - only show if current team has OKRs OR any peer has OKRs */}
+      {peerTeams.length > 0 && (hasOKRs || anyPeerHasOKRs) && (
         <Card className="border-border/60">
           <CardHeader className="pb-4">
             <CardTitle className="text-base font-medium">
