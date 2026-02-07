@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
@@ -13,9 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatQuarter, getConfidenceLabel } from '@/types';
+import { formatQuarter } from '@/types';
 import { Target, TrendingUp, TrendingDown, RefreshCcw } from 'lucide-react';
-import { useState } from 'react';
 
 export function QBRPage() {
   const { 
@@ -31,14 +30,10 @@ export function QBRPage() {
     return getOKRsByQuarter(selectedQuarter);
   }, [selectedQuarter, getOKRsByQuarter]);
 
-  // Calculate stats
   const stats = useMemo(() => {
     const okrIds = quarterOKRs.map(o => o.id);
-    
-    // Get all check-ins for these OKRs
     const quarterCheckIns = checkIns.filter(ci => okrIds.includes(ci.okrId));
     
-    // First check-ins (committed state)
     const firstCheckIns: Record<string, typeof checkIns[0]> = {};
     quarterCheckIns.forEach(ci => {
       if (!firstCheckIns[ci.okrId] || new Date(ci.date) < new Date(firstCheckIns[ci.okrId].date)) {
@@ -46,7 +41,6 @@ export function QBRPage() {
       }
     });
     
-    // Latest check-ins
     const latestCheckIns: Record<string, typeof checkIns[0]> = {};
     quarterCheckIns.forEach(ci => {
       if (!latestCheckIns[ci.okrId] || new Date(ci.date) > new Date(latestCheckIns[ci.okrId].date)) {
@@ -54,7 +48,6 @@ export function QBRPage() {
       }
     });
 
-    // Average confidence at start vs end
     const firstConfidences = Object.values(firstCheckIns).map(ci => ci.confidence);
     const latestConfidences = Object.values(latestCheckIns).map(ci => ci.confidence);
     
@@ -66,12 +59,10 @@ export function QBRPage() {
       ? Math.round(latestConfidences.reduce((a, b) => a + b, 0) / latestConfidences.length)
       : 0;
 
-    // Confidence changes with reasons
     const significantChanges = quarterCheckIns
       .filter(ci => ci.reasonForChange)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    // Rolled over OKRs
     const rolledOver = okrs.filter(o => 
       o.isRolledOver && 
       o.rolledOverFrom && 
@@ -93,18 +84,18 @@ export function QBRPage() {
   const quarters = ['2024-Q4', '2024-Q3', '2024-Q2', '2024-Q1', '2025-Q1'];
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Quarterly Business Review</h1>
+          <h1 className="page-title">Quarterly Business Review</h1>
           <p className="helper-text mt-1">
-            QBR-ready summary for leadership review
+            Executive summary for leadership review
           </p>
         </div>
         
         <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-          <SelectTrigger className="w-32 bg-background">
+          <SelectTrigger className="w-28 bg-background h-8 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-popover">
@@ -129,7 +120,7 @@ export function QBRPage() {
         <SignalCard
           title="Starting Confidence"
           value={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span>{stats.avgStartConfidence}</span>
               <ConfidenceBadge confidence={stats.avgStartConfidence} showValue={false} />
             </div>
@@ -140,7 +131,7 @@ export function QBRPage() {
         <SignalCard
           title="Current Confidence"
           value={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span>{stats.avgEndConfidence}</span>
               <ConfidenceBadge confidence={stats.avgEndConfidence} showValue={false} />
             </div>
@@ -151,8 +142,8 @@ export function QBRPage() {
         <SignalCard
           title="Confidence Trend"
           value={
-            <div className="flex items-center gap-2">
-              <span>{stats.confidenceDelta > 0 ? '+' : ''}{stats.confidenceDelta}</span>
+            <div className="flex items-center gap-3">
+              <span className="tabular-nums">{stats.confidenceDelta > 0 ? '+' : ''}{stats.confidenceDelta}</span>
               {stats.confidenceDelta > 0 ? (
                 <TrendingUp className="w-5 h-5 text-confidence-high" />
               ) : stats.confidenceDelta < 0 ? (
@@ -166,16 +157,19 @@ export function QBRPage() {
       </div>
 
       {/* OKR Summary Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">OKR Results</CardTitle>
+      <Card className="border-border/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium">OKR Results</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {quarterOKRs.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No OKRs for this quarter</p>
+            <div className="empty-state">
+              <Target className="empty-state-icon" />
+              <p className="empty-state-title">No OKRs for this quarter</p>
+            </div>
           ) : (
-            <div className="space-y-1">
-              <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
+            <div>
+              <div className="grid grid-cols-12 gap-4 px-2 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
                 <div className="col-span-5">Objective</div>
                 <div className="col-span-2">Owner</div>
                 <div className="col-span-2">Progress</div>
@@ -186,15 +180,13 @@ export function QBRPage() {
               {quarterOKRs.map((okr) => (
                 <div
                   key={okr.id}
-                  className="grid grid-cols-12 gap-4 px-4 py-3 data-row items-center"
+                  className="grid grid-cols-12 gap-4 px-2 py-3 data-row items-center"
                 >
                   <div className="col-span-5">
-                    <span className="font-medium truncate">{okr.objectiveText}</span>
+                    <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
                   </div>
                   <div className="col-span-2">
-                    <Badge variant="secondary" className="font-normal">
-                      {okr.ownerName}
-                    </Badge>
+                    <span className="text-xs text-muted-foreground">{okr.ownerName}</span>
                   </div>
                   <div className="col-span-2">
                     <ProgressBar 
@@ -208,11 +200,12 @@ export function QBRPage() {
                       <ConfidenceBadge 
                         confidence={okr.latestCheckIn.confidence}
                         label={okr.latestCheckIn.confidenceLabel}
+                        size="sm"
                       />
                     )}
                   </div>
                   <div className="col-span-1">
-                    <TrendIndicator trend={okr.trend} />
+                    <TrendIndicator trend={okr.trend} size="sm" />
                   </div>
                 </div>
               ))}
@@ -222,29 +215,29 @@ export function QBRPage() {
       </Card>
 
       {/* What Changed */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">What Changed</CardTitle>
+      <Card className="border-border/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium">What Changed</CardTitle>
           <p className="helper-text">
-            Significant confidence changes and the reasons behind them
+            Significant confidence changes and the context behind them
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {stats.significantChanges.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No documented changes</p>
+            <p className="text-muted-foreground text-sm py-6 text-center">No documented changes</p>
           ) : (
-            <div className="space-y-4">
-              {stats.significantChanges.slice(0, 10).map((ci) => {
+            <div className="space-y-3">
+              {stats.significantChanges.slice(0, 8).map((ci) => {
                 const okr = quarterOKRs.find(o => o.id === ci.okrId);
                 return (
-                  <div key={ci.id} className="border rounded-lg p-4">
+                  <div key={ci.id} className="border border-border/60 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-medium">{okr?.objectiveText}</p>
-                        <p className="text-sm text-muted-foreground">{okr?.ownerName}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{okr?.objectiveText}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{okr?.ownerName}</p>
                       </div>
-                      <div className="text-right">
-                        <ConfidenceBadge confidence={ci.confidence} label={ci.confidenceLabel} />
+                      <div className="text-right flex-shrink-0 ml-4">
+                        <ConfidenceBadge confidence={ci.confidence} label={ci.confidenceLabel} size="sm" />
                         <p className="text-xs text-muted-foreground mt-1">
                           {new Date(ci.date).toLocaleDateString('en-US', { 
                             month: 'short', 
@@ -253,8 +246,8 @@ export function QBRPage() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-sm italic text-muted-foreground">
-                      "{ci.reasonForChange}"
+                    <p className="text-sm text-muted-foreground">
+                      {ci.reasonForChange}
                     </p>
                   </div>
                 );
@@ -265,37 +258,34 @@ export function QBRPage() {
       </Card>
 
       {/* Next Quarter Decisions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <RefreshCcw className="w-4 h-4" />
+      <Card className="border-border/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <RefreshCcw className="w-4 h-4 text-muted-foreground" />
             Next Quarter Decisions
           </CardTitle>
           <p className="helper-text">
             OKRs that have been rolled over to continue next quarter
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {stats.rolledOver.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
+            <p className="text-muted-foreground text-sm py-6 text-center">
               No OKRs rolled over from this quarter yet
             </p>
           ) : (
             <div className="space-y-2">
-              {stats.rolledOver.map((okr) => {
-                const originalOkr = quarterOKRs.find(o => o.id === okr.rolledOverFrom);
-                return (
-                  <div key={okr.id} className="flex items-center justify-between border rounded-lg p-4">
-                    <div>
-                      <p className="font-medium">{okr.objectiveText}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Rolled over to {formatQuarter(okr.quarter)}
-                      </p>
-                    </div>
-                    <Badge variant="secondary">Rolled Over</Badge>
+              {stats.rolledOver.map((okr) => (
+                <div key={okr.id} className="flex items-center justify-between border border-border/60 rounded-lg p-4">
+                  <div>
+                    <p className="font-medium text-sm">{okr.objectiveText}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Rolled over to {formatQuarter(okr.quarter)}
+                    </p>
                   </div>
-                );
-              })}
+                  <Badge variant="secondary" className="text-xs">Rolled Over</Badge>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

@@ -29,31 +29,31 @@ export function Sidebar() {
   return (
     <aside 
       className={cn(
-        "flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300",
-        collapsed ? "w-16" : "w-56"
+        "flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-200",
+        collapsed ? "w-16" : "w-52"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
+      <div className="flex items-center h-14 px-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center">
-              <Target className="w-5 h-5 text-sidebar-primary" />
+            <div className="w-7 h-7 rounded-md bg-sidebar-accent flex items-center justify-center">
+              <Target className="w-4 h-4 text-sidebar-primary" />
             </div>
-            <span className="font-semibold text-sidebar-primary text-lg tracking-tight">
+            <span className="font-semibold text-sidebar-primary text-base tracking-tight">
               TrueNorth
             </span>
           </div>
         )}
         {collapsed && (
-          <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center mx-auto">
-            <Target className="w-5 h-5 text-sidebar-primary" />
+          <div className="w-7 h-7 rounded-md bg-sidebar-accent flex items-center justify-center mx-auto">
+            <Target className="w-4 h-4 text-sidebar-primary" />
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-2 space-y-0.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || 
             (item.to !== '/' && location.pathname.startsWith(item.to));
@@ -67,7 +67,7 @@ export function Sidebar() {
                 isActive && "active"
               )}
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </NavLink>
           );
@@ -75,19 +75,19 @@ export function Sidebar() {
       </nav>
 
       {/* Collapse toggle */}
-      <div className="p-3 border-t border-sidebar-border">
+      <div className="p-2 border-t border-sidebar-border">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent"
+          className="w-full text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent h-8"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
           ) : (
             <>
               <ChevronLeft className="w-4 h-4 mr-2" />
-              <span>Collapse</span>
+              <span className="text-xs">Collapse</span>
             </>
           )}
         </Button>

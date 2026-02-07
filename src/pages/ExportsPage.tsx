@@ -1,15 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatQuarter, getConfidenceLabel } from '@/types';
 import { FileSpreadsheet, Presentation, Download, Copy, Check } from 'lucide-react';
-import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export function ExportsPage() {
   const { toast } = useToast();
-  const { currentQuarter, getOKRsByQuarter, checkIns, teams, domains, productAreas } = useApp();
+  const { currentQuarter, getOKRsByQuarter } = useApp();
   
   const [copiedTable, setCopiedTable] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
@@ -18,7 +17,6 @@ export function ExportsPage() {
     return getOKRsByQuarter(currentQuarter);
   }, [currentQuarter, getOKRsByQuarter]);
 
-  // Generate CSV content
   const generateCSV = () => {
     const headers = ['Objective', 'Level', 'Owner', 'Progress', 'Confidence', 'Label', 'Trend', 'Last Check-in'];
     const rows = quarterOKRs.map(okr => [
@@ -35,7 +33,6 @@ export function ExportsPage() {
     return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   };
 
-  // Generate table for copy/paste
   const generateTable = () => {
     const headers = ['Objective', 'Owner', 'Progress', 'Confidence', 'Trend'];
     const rows = quarterOKRs.map(okr => [
@@ -49,7 +46,6 @@ export function ExportsPage() {
     return [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
   };
 
-  // Generate executive summary
   const generateSummary = () => {
     const totalOKRs = quarterOKRs.length;
     const atRisk = quarterOKRs.filter(o => (o.latestCheckIn?.confidence || 0) < 40).length;
@@ -61,30 +57,27 @@ export function ExportsPage() {
 
     const atRiskOKRs = quarterOKRs
       .filter(o => (o.latestCheckIn?.confidence || 0) < 40)
-      .map(o => `• ${o.objectiveText} (${o.ownerName}) - ${o.latestCheckIn?.confidence || 0}% confidence`)
+      .map(o => `• ${o.objectiveText} (${o.ownerName}) – ${o.latestCheckIn?.confidence || 0}% confidence`)
       .join('\n');
 
     return `
-EXECUTIVE SUMMARY - ${formatQuarter(currentQuarter)}
+EXECUTIVE SUMMARY – ${formatQuarter(currentQuarter)}
 
 OVERVIEW
-────────────────────────────────
 Total OKRs: ${totalOKRs}
 On Track: ${onTrack} (${Math.round((onTrack / totalOKRs) * 100)}%)
 At Risk: ${atRisk} (${Math.round((atRisk / totalOKRs) * 100)}%)
 Average Confidence: ${avgConfidence}% (${getConfidenceLabel(avgConfidence)})
 
 ${atRisk > 0 ? `AT RISK OKRs
-────────────────────────────────
 ${atRiskOKRs}` : 'No OKRs at risk.'}
 
 TOP OKRs BY LEVEL
-────────────────────────────────
 Product Area:
-${quarterOKRs.filter(o => o.level === 'productArea').map(o => `• ${o.objectiveText} - ${o.latestCheckIn?.confidence || 0}% confidence`).join('\n') || 'None'}
+${quarterOKRs.filter(o => o.level === 'productArea').map(o => `• ${o.objectiveText} – ${o.latestCheckIn?.confidence || 0}% confidence`).join('\n') || 'None'}
 
 Domain:
-${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText} - ${o.latestCheckIn?.confidence || 0}% confidence`).join('\n') || 'None'}
+${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText} – ${o.latestCheckIn?.confidence || 0}% confidence`).join('\n') || 'None'}
 `.trim();
   };
 
@@ -113,7 +106,7 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
     
     toast({
       title: "Copied",
-      description: "Table copied to clipboard - paste into Excel or Sheets"
+      description: "Table copied – paste into Excel or Sheets"
     });
   };
 
@@ -132,7 +125,7 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Exports</h1>
+        <h1 className="page-title">Exports</h1>
         <p className="helper-text mt-1">
           Export OKR data for presentations and reports · {formatQuarter(currentQuarter)}
         </p>
@@ -140,71 +133,71 @@ ${quarterOKRs.filter(o => o.level === 'domain').map(o => `• ${o.objectiveText}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Excel Export */}
-        <Card>
-          <CardHeader>
+        <Card className="border-border/60">
+          <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-confidence-high-bg flex items-center justify-center">
-                <FileSpreadsheet className="w-5 h-5 text-confidence-high" />
+              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+                <FileSpreadsheet className="w-4 h-4 text-foreground" />
               </div>
               <div>
-                <CardTitle className="text-lg">Excel / Sheets</CardTitle>
-                <CardDescription>Export OKR table data</CardDescription>
+                <CardTitle className="text-base font-medium">Excel / Sheets</CardTitle>
+                <CardDescription className="text-xs">Export OKR table data</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             <p className="text-sm text-muted-foreground">
               Export all OKRs with progress, confidence, labels, and trends. 
               Compatible with Excel, Google Sheets, and other spreadsheet applications.
             </p>
             
             <div className="flex gap-2">
-              <Button onClick={handleDownloadCSV} className="gap-2">
-                <Download className="w-4 h-4" />
+              <Button onClick={handleDownloadCSV} size="sm" className="gap-2">
+                <Download className="w-3.5 h-3.5" />
                 Download CSV
               </Button>
-              <Button variant="outline" onClick={handleCopyTable} className="gap-2">
-                {copiedTable ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copiedTable ? 'Copied!' : 'Copy Table'}
+              <Button variant="outline" size="sm" onClick={handleCopyTable} className="gap-2">
+                {copiedTable ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedTable ? 'Copied' : 'Copy Table'}
               </Button>
             </div>
           </CardContent>
         </Card>
 
         {/* PowerPoint Export */}
-        <Card>
-          <CardHeader>
+        <Card className="border-border/60">
+          <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-confidence-medium-bg flex items-center justify-center">
-                <Presentation className="w-5 h-5 text-confidence-medium" />
+              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+                <Presentation className="w-4 h-4 text-foreground" />
               </div>
               <div>
-                <CardTitle className="text-lg">PowerPoint</CardTitle>
-                <CardDescription>Executive summary for presentations</CardDescription>
+                <CardTitle className="text-base font-medium">PowerPoint</CardTitle>
+                <CardDescription className="text-xs">Executive summary for presentations</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             <p className="text-sm text-muted-foreground">
               Generate a formatted executive summary with key signals, at-risk OKRs, 
               and confidence metrics. Copy and paste into your slides.
             </p>
             
-            <Button variant="outline" onClick={handleCopySummary} className="gap-2">
-              {copiedSummary ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copiedSummary ? 'Copied!' : 'Copy Summary'}
+            <Button variant="outline" size="sm" onClick={handleCopySummary} className="gap-2">
+              {copiedSummary ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedSummary ? 'Copied' : 'Copy Summary'}
             </Button>
           </CardContent>
         </Card>
       </div>
 
       {/* Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Preview: Executive Summary</CardTitle>
+      <Card className="border-border/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium">Preview: Executive Summary</CardTitle>
         </CardHeader>
-        <CardContent>
-          <pre className="bg-muted p-4 rounded-lg text-sm font-mono whitespace-pre-wrap overflow-x-auto">
+        <CardContent className="pt-0">
+          <pre className="bg-muted/50 p-4 rounded-lg text-xs font-mono whitespace-pre-wrap overflow-x-auto text-muted-foreground">
             {generateSummary()}
           </pre>
         </CardContent>

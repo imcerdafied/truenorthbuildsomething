@@ -31,11 +31,11 @@ export function Header() {
   } = useApp();
 
   return (
-    <header className="h-16 border-b bg-card flex items-center justify-between px-6">
-      <div className="flex items-center gap-4">
+    <header className="h-14 border-b bg-card flex items-center justify-between px-5">
+      <div className="flex items-center gap-3">
         {/* Quarter Selector */}
         <Select value={currentQuarter} onValueChange={setCurrentQuarter}>
-          <SelectTrigger className="w-32 bg-background">
+          <SelectTrigger className="w-28 bg-background h-8 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-popover">
@@ -50,7 +50,7 @@ export function Header() {
         {/* Team Selector (visible in team view) */}
         {viewMode === 'team' && (
           <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-            <SelectTrigger className="w-48 bg-background">
+            <SelectTrigger className="w-44 bg-background h-8 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-popover">
@@ -64,33 +64,33 @@ export function Header() {
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* View Mode Toggle */}
-        <div className="flex items-center bg-secondary rounded-lg p-1">
+        <div className="flex items-center bg-muted rounded-md p-0.5">
           <Button
             variant={viewMode === 'team' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('team')}
-            className="gap-2"
+            className="gap-1.5 h-7 px-3 text-xs"
           >
-            <Users className="w-4 h-4" />
-            Team view
+            <Users className="w-3.5 h-3.5" />
+            Team
           </Button>
           <Button
             variant={viewMode === 'exec' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('exec')}
-            className="gap-2"
+            className="gap-1.5 h-7 px-3 text-xs"
           >
-            <Building2 className="w-4 h-4" />
-            Exec view
+            <Building2 className="w-3.5 h-3.5" />
+            Exec
           </Button>
         </div>
 
         {/* Current User */}
-        <div className="text-sm text-muted-foreground">
+        <div className="text-xs text-muted-foreground border-l pl-3">
           <span className="font-medium text-foreground">{currentPM}</span>
-          <span className="mx-2">·</span>
+          <span className="mx-1.5 text-border">·</span>
           <span>PM</span>
         </div>
       </div>

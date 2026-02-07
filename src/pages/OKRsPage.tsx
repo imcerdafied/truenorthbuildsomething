@@ -5,8 +5,7 @@ import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -14,8 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { formatQuarter, OKRLevel, OKRWithDetails } from '@/types';
+import { formatQuarter, OKRLevel } from '@/types';
 import { Target, Building2, Users, Layers } from 'lucide-react';
 
 type StatusFilter = 'all' | 'at-risk' | 'on-track';
@@ -27,7 +25,6 @@ export function OKRsPage() {
     teams, 
     domains, 
     productAreas,
-    getOKRsByLevel,
     getOKRsByQuarter
   } = useApp();
 
@@ -43,36 +40,22 @@ export function OKRsPage() {
   // Apply filters
   const filteredOKRs = useMemo(() => {
     return allOKRs.filter(okr => {
-      // Level filter
       if (levelFilter !== 'all' && okr.level !== levelFilter) return false;
-      
-      // Owner filter
       if (ownerFilter !== 'all' && okr.ownerId !== ownerFilter) return false;
-      
-      // Status filter
       if (statusFilter !== 'all') {
         const confidence = okr.latestCheckIn?.confidence || 0;
         if (statusFilter === 'at-risk' && confidence >= 40) return false;
         if (statusFilter === 'on-track' && confidence < 40) return false;
       }
-      
       return true;
     });
   }, [allOKRs, levelFilter, ownerFilter, statusFilter]);
 
   const getLevelIcon = (level: OKRLevel) => {
     switch (level) {
-      case 'productArea': return <Layers className="w-4 h-4" />;
-      case 'domain': return <Building2 className="w-4 h-4" />;
-      case 'team': return <Users className="w-4 h-4" />;
-    }
-  };
-
-  const getLevelLabel = (level: OKRLevel) => {
-    switch (level) {
-      case 'productArea': return 'Product Area';
-      case 'domain': return 'Domain';
-      case 'team': return 'Team';
+      case 'productArea': return <Layers className="w-3.5 h-3.5" />;
+      case 'domain': return <Building2 className="w-3.5 h-3.5" />;
+      case 'team': return <Users className="w-3.5 h-3.5" />;
     }
   };
 
@@ -80,21 +63,21 @@ export function OKRsPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">OKRs</h1>
+        <h1 className="page-title">OKRs</h1>
         <p className="helper-text mt-1">
           View and manage OKRs across all levels · {formatQuarter(currentQuarter)}
         </p>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4">
+      <Card className="border-border/60">
+        <CardContent className="py-4">
+          <div className="flex flex-wrap items-end gap-4">
             {/* Level Filter */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">Level</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Level</label>
               <Select value={levelFilter} onValueChange={(v) => setLevelFilter(v as OKRLevel | 'all')}>
-                <SelectTrigger className="w-40 bg-background">
+                <SelectTrigger className="w-36 bg-background h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
@@ -107,10 +90,10 @@ export function OKRsPage() {
             </div>
 
             {/* Owner Filter */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">Owner</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Owner</label>
               <Select value={ownerFilter} onValueChange={setOwnerFilter}>
-                <SelectTrigger className="w-48 bg-background">
+                <SelectTrigger className="w-44 bg-background h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
@@ -129,10 +112,10 @@ export function OKRsPage() {
             </div>
 
             {/* Status Filter */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">Status</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <SelectTrigger className="w-36 bg-background">
+                <SelectTrigger className="w-32 bg-background h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
@@ -144,8 +127,8 @@ export function OKRsPage() {
             </div>
 
             {/* Results count */}
-            <div className="flex items-end ml-auto">
-              <span className="text-sm text-muted-foreground">
+            <div className="ml-auto">
+              <span className="text-xs text-muted-foreground">
                 {filteredOKRs.length} OKR{filteredOKRs.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -154,17 +137,20 @@ export function OKRsPage() {
       </Card>
 
       {/* OKR List */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="border-border/60">
+        <CardContent className="py-0">
           {filteredOKRs.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Target className="w-12 h-12 mx-auto mb-4 opacity-30" />
-              <p>No OKRs match your filters</p>
+            <div className="empty-state">
+              <Target className="empty-state-icon" />
+              <p className="empty-state-title">No OKRs match your filters</p>
+              <p className="empty-state-description">
+                Try adjusting your filters to see more results.
+              </p>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div>
               {/* Header */}
-              <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
+              <div className="grid grid-cols-12 gap-4 px-2 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
                 <div className="col-span-5">Objective</div>
                 <div className="col-span-2">Owner</div>
                 <div className="col-span-2">Progress</div>
@@ -176,21 +162,19 @@ export function OKRsPage() {
               {filteredOKRs.map((okr) => (
                 <div
                   key={okr.id}
-                  className="grid grid-cols-12 gap-4 px-4 py-4 data-row cursor-pointer items-center rounded-lg"
+                  className="grid grid-cols-12 gap-4 px-2 py-3.5 data-row cursor-pointer items-center"
                   onClick={() => navigate(`/okrs/${okr.id}`)}
                 >
                   <div className="col-span-5">
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">{getLevelIcon(okr.level)}</span>
-                      <span className="font-medium truncate">{okr.objectiveText}</span>
+                      <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
                       {okr.isOrphaned && <OrphanWarning />}
                     </div>
                   </div>
                   
                   <div className="col-span-2">
-                    <Badge variant="secondary" className="font-normal">
-                      {okr.ownerName}
-                    </Badge>
+                    <span className="text-xs text-muted-foreground">{okr.ownerName}</span>
                   </div>
                   
                   <div className="col-span-2">
@@ -208,12 +192,12 @@ export function OKRsPage() {
                         label={okr.latestCheckIn.confidenceLabel}
                       />
                     ) : (
-                      <span className="text-muted-foreground text-sm">No check-in</span>
+                      <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </div>
                   
                   <div className="col-span-1">
-                    <TrendIndicator trend={okr.trend} />
+                    <TrendIndicator trend={okr.trend} size="sm" />
                   </div>
                 </div>
               ))}
