@@ -26,491 +26,323 @@ export const teams: Team[] = [
   { id: 't-3', name: 'Search', domainId: 'd-1', pmName: 'Emily Rodriguez', cadence: 'weekly' }
 ];
 
-const currentQuarter = '2025-Q1';
-const previousQuarter = '2024-Q4';
+const currentQuarter = '2026-Q1';
+
+// ============================================================================
+// Q1 2026 SCENARIO: Marriott-style Product Operating Model Demo
+// ============================================================================
+// Narrative: A realistic quarter showing how confidence tracking surfaces
+// risk early and enables evidence-based QBR conversations.
+//
+// - Search: On track, high confidence throughout
+// - Booking Experience: Mixed, recovering after mid-quarter dip  
+// - Payments: At risk, struggling with vendor dependencies
+// ============================================================================
 
 // OKRs
 export const okrs: OKR[] = [
-  // ========== Q1 2025 OKRs (Current Quarter - Demo) ==========
-  
-  // Example Team OKR for Booking Experience - demonstrates confidence tracking
+  // ========== Domain OKR ==========
   {
-    id: 'okr-q1-demo',
+    id: 'okr-domain-q1',
+    level: 'domain',
+    ownerId: 'd-1',
+    quarter: currentQuarter,
+    year: 2026,
+    quarterNum: 'Q1',
+    objectiveText: 'Increase direct digital bookings'
+  },
+  
+  // ========== Team OKRs ==========
+  
+  // Booking Experience - Mixed, recovering
+  {
+    id: 'okr-booking-exp',
     level: 'team',
     ownerId: 't-1',
     quarter: currentQuarter,
-    year: 2025,
+    year: 2026,
     quarterNum: 'Q1',
     objectiveText: 'Improve booking conversion rate',
-    parentOkrId: undefined // Intentionally orphaned to show the warning
+    parentOkrId: 'okr-domain-q1'
   },
   
-  // ========== Q4 2024 OKRs (Previous Quarter - Historical) ==========
-  
-  // Product Area OKR
+  // Payments - At risk
   {
-    id: 'okr-pa-1',
-    level: 'productArea',
-    ownerId: 'pa-1',
-    quarter: previousQuarter,
-    year: 2024,
-    quarterNum: 'Q4',
-    objectiveText: 'Become the market leader in booking conversion rate'
-  },
-  
-  // Domain OKR
-  {
-    id: 'okr-d-1',
-    level: 'domain',
-    ownerId: 'd-1',
-    quarter: previousQuarter,
-    year: 2024,
-    quarterNum: 'Q4',
-    objectiveText: 'Optimize the end-to-end booking funnel for conversion',
-    parentOkrId: 'okr-pa-1'
-  },
-  
-  // Team OKRs - Booking Experience
-  {
-    id: 'okr-t1-1',
-    level: 'team',
-    ownerId: 't-1',
-    quarter: previousQuarter,
-    year: 2024,
-    quarterNum: 'Q4',
-    objectiveText: 'Reduce booking abandonment through UX improvements',
-    parentOkrId: 'okr-d-1'
-  },
-  {
-    id: 'okr-t1-2',
-    level: 'team',
-    ownerId: 't-1',
-    quarter: previousQuarter,
-    year: 2024,
-    quarterNum: 'Q4',
-    objectiveText: 'Launch mobile-first booking redesign',
-    parentOkrId: 'okr-d-1'
-  },
-  
-  // Team OKRs - Payments
-  {
-    id: 'okr-t2-1',
+    id: 'okr-payments',
     level: 'team',
     ownerId: 't-2',
-    quarter: previousQuarter,
-    year: 2024,
-    quarterNum: 'Q4',
-    objectiveText: 'Increase payment success rate to 98%',
-    parentOkrId: 'okr-d-1'
-  },
-  {
-    id: 'okr-t2-2',
-    level: 'team',
-    ownerId: 't-2',
-    quarter: previousQuarter,
-    year: 2024,
-    quarterNum: 'Q4',
-    objectiveText: 'Launch 3 new payment methods for EU markets'
-    // This is an orphaned OKR - no parentOkrId
+    quarter: currentQuarter,
+    year: 2026,
+    quarterNum: 'Q1',
+    objectiveText: 'Reduce payment-related booking failures',
+    parentOkrId: 'okr-domain-q1'
   },
   
-  // Team OKRs - Search
+  // Search - On track
   {
-    id: 'okr-t3-1',
+    id: 'okr-search',
     level: 'team',
     ownerId: 't-3',
-    quarter: previousQuarter,
-    year: 2024,
-    quarterNum: 'Q4',
-    objectiveText: 'Improve search relevance and speed',
-    parentOkrId: 'okr-d-1'
-  },
-  {
-    id: 'okr-t3-2',
-    level: 'team',
-    ownerId: 't-3',
-    quarter: previousQuarter,
-    year: 2024,
-    quarterNum: 'Q4',
-    objectiveText: 'Implement AI-powered search suggestions',
-    parentOkrId: 'okr-d-1'
+    quarter: currentQuarter,
+    year: 2026,
+    quarterNum: 'Q1',
+    objectiveText: 'Increase qualified traffic into the booking funnel',
+    parentOkrId: 'okr-domain-q1'
   }
 ];
 
 // Key Results
 export const keyResults: KeyResult[] = [
-  // Product Area KRs
-  { id: 'kr-pa-1-1', okrId: 'okr-pa-1', text: 'Increase overall conversion rate from 4.2% to 5.5%', targetValue: 5.5, currentValue: 4.8 },
-  { id: 'kr-pa-1-2', okrId: 'okr-pa-1', text: 'Reduce booking time from 8 min to 5 min', targetValue: 5, currentValue: 6.2 },
-  
   // Domain KRs
-  { id: 'kr-d-1-1', okrId: 'okr-d-1', text: 'Increase funnel completion rate to 65%', targetValue: 65, currentValue: 58 },
-  { id: 'kr-d-1-2', okrId: 'okr-d-1', text: 'Reduce cart abandonment to under 40%', targetValue: 40, currentValue: 45 },
+  { id: 'kr-domain-1', okrId: 'okr-domain-q1', text: 'Improve overall booking conversion', targetValue: 22, currentValue: 19.2 },
+  { id: 'kr-domain-2', okrId: 'okr-domain-q1', text: 'Reduce funnel abandonment', targetValue: 20, currentValue: 26 },
   
   // Booking Experience KRs
-  // Q1 2025 Demo OKR Key Results
-  { id: 'kr-demo-1', okrId: 'okr-q1-demo', text: 'Increase completed bookings from 18% to 22%', targetValue: 22, currentValue: 19.5 },
-  { id: 'kr-demo-2', okrId: 'okr-q1-demo', text: 'Reduce checkout abandonment from 30% to 20%', targetValue: 20, currentValue: 26 },
-  
-  // Booking Experience KRs (Q4 2024)
-  { id: 'kr-t1-1-1', okrId: 'okr-t1-1', text: 'Reduce form fields from 12 to 6', targetValue: 6, currentValue: 8 },
-  { id: 'kr-t1-1-2', okrId: 'okr-t1-1', text: 'Increase step completion rate to 85%', targetValue: 85, currentValue: 78 },
-  { id: 'kr-t1-2-1', okrId: 'okr-t1-2', text: 'Launch mobile redesign to 100% of users', targetValue: 100, currentValue: 60 },
-  { id: 'kr-t1-2-2', okrId: 'okr-t1-2', text: 'Achieve 4.5+ app store rating', targetValue: 4.5, currentValue: 4.2 },
+  { id: 'kr-booking-1', okrId: 'okr-booking-exp', text: 'Increase completed bookings from 18% to 22%', targetValue: 22, currentValue: 19.8 },
+  { id: 'kr-booking-2', okrId: 'okr-booking-exp', text: 'Reduce checkout abandonment from 30% to 20%', targetValue: 20, currentValue: 24 },
   
   // Payments KRs
-  { id: 'kr-t2-1-1', okrId: 'okr-t2-1', text: 'Reduce payment failures to under 2%', targetValue: 2, currentValue: 3.5 },
-  { id: 'kr-t2-1-2', okrId: 'okr-t2-1', text: 'Implement retry logic for 95% of failure types', targetValue: 95, currentValue: 70 },
-  { id: 'kr-t2-2-1', okrId: 'okr-t2-2', text: 'Launch Apple Pay, Google Pay, and Klarna', targetValue: 3, currentValue: 1 },
-  { id: 'kr-t2-2-2', okrId: 'okr-t2-2', text: 'Process €1M through new methods', targetValue: 1000000, currentValue: 150000 },
+  { id: 'kr-payments-1', okrId: 'okr-payments', text: 'Reduce payment error rate from 4.5% to 2.5%', targetValue: 2.5, currentValue: 3.2 },
+  { id: 'kr-payments-2', okrId: 'okr-payments', text: 'Increase successful retry completion from 40% to 65%', targetValue: 65, currentValue: 52 },
   
   // Search KRs
-  { id: 'kr-t3-1-1', okrId: 'okr-t3-1', text: 'Reduce search latency to under 200ms (p95)', targetValue: 200, currentValue: 280 },
-  { id: 'kr-t3-1-2', okrId: 'okr-t3-1', text: 'Increase search-to-booking rate to 12%', targetValue: 12, currentValue: 9.5 },
-  { id: 'kr-t3-2-1', okrId: 'okr-t3-2', text: 'Launch AI suggestions to 50% of users', targetValue: 50, currentValue: 25 },
-  { id: 'kr-t3-2-2', okrId: 'okr-t3-2', text: 'Achieve 40% suggestion click-through rate', targetValue: 40, currentValue: 32 }
+  { id: 'kr-search-1', okrId: 'okr-search', text: 'Increase search-to-booking handoff rate from 12% to 16%', targetValue: 16, currentValue: 14.8 },
+  { id: 'kr-search-2', okrId: 'okr-search', text: 'Reduce irrelevant search results by 20%', targetValue: 20, currentValue: 18 }
 ];
 
 // Check-ins with history showing confidence changes
 export const checkIns: CheckIn[] = [
-  // ========== Q1 2025 Demo OKR Check-ins ==========
-  // Shows the confidence journey: started high, dropped mid-quarter with clear reason
+  // ========================================================================
+  // BOOKING EXPERIENCE: Mixed journey, recovering after mid-quarter dip
+  // Story: Started strong, mobile experiments underperformed, iterated to recover
+  // ========================================================================
   {
-    id: 'ci-demo-1',
-    okrId: 'okr-q1-demo',
-    date: '2025-01-13',
+    id: 'ci-booking-1',
+    okrId: 'okr-booking-exp',
+    date: '2026-01-13',
     cadence: 'biweekly',
-    progress: 15,
+    progress: 10,
     confidence: 75,
     confidenceLabel: 'High',
-    optionalNote: 'Strong start. Mobile checkout experiments launched to 25% of traffic.'
+    reasonForChange: 'Initial experiments show promise in guest checkout simplification.',
+    optionalNote: 'A/B tests launched on simplified guest checkout. Early signals positive.'
   },
   {
-    id: 'ci-demo-2',
-    okrId: 'okr-q1-demo',
-    date: '2025-01-27',
+    id: 'ci-booking-2',
+    okrId: 'okr-booking-exp',
+    date: '2026-01-27',
     cadence: 'biweekly',
-    progress: 30,
-    confidence: 70,
-    confidenceLabel: 'Medium',
-    reasonForChange: 'Slight dip due to slower than expected experiment ramp-up',
-    optionalNote: 'Expanding to 50% of traffic next week.'
-  },
-  {
-    id: 'ci-demo-3',
-    okrId: 'okr-q1-demo',
-    date: '2025-02-10',
-    cadence: 'biweekly',
-    progress: 42,
-    confidence: 60,
-    confidenceLabel: 'Medium',
-    reasonForChange: 'Mobile checkout experiments underperformed initial assumptions',
-    optionalNote: 'Conversion lift was 1.2% vs expected 2.5%. Investigating drop-off points in payment step.'
-  },
-  
-  // ========== Q4 2024 Check-ins ==========
-  // OKR okr-t1-1: Shows confidence drop with reason
-  {
-    id: 'ci-1',
-    okrId: 'okr-t1-1',
-    date: '2024-10-07',
-    cadence: 'biweekly',
-    progress: 45,
-    confidence: 80,
-    confidenceLabel: 'High',
-    optionalNote: 'Good progress on form simplification'
-  },
-  {
-    id: 'ci-2',
-    okrId: 'okr-t1-1',
-    date: '2024-10-21',
-    cadence: 'biweekly',
-    progress: 55,
-    confidence: 75,
-    confidenceLabel: 'High',
-    reasonForChange: 'Design review identified additional complexity',
-    optionalNote: 'Need more engineering support'
-  },
-  {
-    id: 'ci-3',
-    okrId: 'okr-t1-1',
-    date: '2024-11-04',
-    cadence: 'biweekly',
-    progress: 58,
-    confidence: 55,
-    confidenceLabel: 'Medium',
-    reasonForChange: 'Lost one engineer to another priority; timeline at risk'
-  },
-  {
-    id: 'ci-4',
-    okrId: 'okr-t1-1',
-    date: '2024-11-18',
-    cadence: 'biweekly',
-    progress: 65,
-    confidence: 60,
-    confidenceLabel: 'Medium',
-    reasonForChange: 'Got partial engineering support back',
-    optionalNote: 'Should be able to recover if no more blockers'
-  },
-  
-  // OKR okr-t1-2
-  {
-    id: 'ci-5',
-    okrId: 'okr-t1-2',
-    date: '2024-10-07',
-    cadence: 'biweekly',
-    progress: 30,
-    confidence: 85,
-    confidenceLabel: 'High'
-  },
-  {
-    id: 'ci-6',
-    okrId: 'okr-t1-2',
-    date: '2024-10-21',
-    cadence: 'biweekly',
-    progress: 45,
-    confidence: 85,
-    confidenceLabel: 'High',
-    optionalNote: 'On track for 100% rollout'
-  },
-  {
-    id: 'ci-7',
-    okrId: 'okr-t1-2',
-    date: '2024-11-04',
-    cadence: 'biweekly',
-    progress: 55,
-    confidence: 80,
-    confidenceLabel: 'High',
-    reasonForChange: 'Minor delays in QA cycle'
-  },
-  {
-    id: 'ci-8',
-    okrId: 'okr-t1-2',
-    date: '2024-11-18',
-    cadence: 'biweekly',
-    progress: 60,
-    confidence: 80,
-    confidenceLabel: 'High'
-  },
-  
-  // OKR okr-t2-1
-  {
-    id: 'ci-9',
-    okrId: 'okr-t2-1',
-    date: '2024-10-07',
-    cadence: 'biweekly',
-    progress: 40,
-    confidence: 70,
-    confidenceLabel: 'Medium'
-  },
-  {
-    id: 'ci-10',
-    okrId: 'okr-t2-1',
-    date: '2024-10-21',
-    cadence: 'biweekly',
-    progress: 50,
-    confidence: 65,
-    confidenceLabel: 'Medium',
-    reasonForChange: 'Payment provider API issues discovered'
-  },
-  {
-    id: 'ci-11',
-    okrId: 'okr-t2-1',
-    date: '2024-11-04',
-    cadence: 'biweekly',
-    progress: 55,
-    confidence: 55,
-    confidenceLabel: 'Medium',
-    reasonForChange: 'Still waiting on provider fix; exploring workarounds'
-  },
-  {
-    id: 'ci-12',
-    okrId: 'okr-t2-1',
-    date: '2024-11-18',
-    cadence: 'biweekly',
-    progress: 60,
-    confidence: 60,
-    confidenceLabel: 'Medium',
-    reasonForChange: 'Workaround implemented; cautiously optimistic',
-    optionalNote: 'Provider promised fix by EOQ'
-  },
-  
-  // OKR okr-t2-2 (orphaned) - shows at-risk
-  {
-    id: 'ci-13',
-    okrId: 'okr-t2-2',
-    date: '2024-10-07',
-    cadence: 'biweekly',
-    progress: 20,
-    confidence: 50,
-    confidenceLabel: 'Medium'
-  },
-  {
-    id: 'ci-14',
-    okrId: 'okr-t2-2',
-    date: '2024-10-21',
-    cadence: 'biweekly',
-    progress: 25,
-    confidence: 40,
-    confidenceLabel: 'Medium',
-    reasonForChange: 'Regulatory review taking longer than expected'
-  },
-  {
-    id: 'ci-15',
-    okrId: 'okr-t2-2',
-    date: '2024-11-04',
-    cadence: 'biweekly',
-    progress: 30,
-    confidence: 30,
-    confidenceLabel: 'Low',
-    reasonForChange: 'Klarna integration blocked by legal review; may slip to Q1'
-  },
-  {
-    id: 'ci-16',
-    okrId: 'okr-t2-2',
-    date: '2024-11-18',
-    cadence: 'biweekly',
-    progress: 33,
-    confidence: 25,
-    confidenceLabel: 'Low',
-    reasonForChange: 'Legal confirmed Klarna blocked until Q1; pivoting scope'
-  },
-  
-  // OKR okr-t3-1 (weekly cadence)
-  {
-    id: 'ci-17',
-    okrId: 'okr-t3-1',
-    date: '2024-10-28',
-    cadence: 'weekly',
-    progress: 50,
-    confidence: 75,
-    confidenceLabel: 'High'
-  },
-  {
-    id: 'ci-18',
-    okrId: 'okr-t3-1',
-    date: '2024-11-04',
-    cadence: 'weekly',
-    progress: 58,
-    confidence: 75,
-    confidenceLabel: 'High'
-  },
-  {
-    id: 'ci-19',
-    okrId: 'okr-t3-1',
-    date: '2024-11-11',
-    cadence: 'weekly',
-    progress: 65,
-    confidence: 80,
-    confidenceLabel: 'High',
-    reasonForChange: 'New caching layer showing great results',
-    optionalNote: 'Already seeing 15% latency reduction'
-  },
-  {
-    id: 'ci-20',
-    okrId: 'okr-t3-1',
-    date: '2024-11-18',
-    cadence: 'weekly',
-    progress: 72,
-    confidence: 85,
-    confidenceLabel: 'High',
-    reasonForChange: 'Ahead of schedule',
-    optionalNote: 'May exceed target'
-  },
-  
-  // OKR okr-t3-2
-  {
-    id: 'ci-21',
-    okrId: 'okr-t3-2',
-    date: '2024-10-28',
-    cadence: 'weekly',
-    progress: 35,
-    confidence: 70,
-    confidenceLabel: 'Medium'
-  },
-  {
-    id: 'ci-22',
-    okrId: 'okr-t3-2',
-    date: '2024-11-04',
-    cadence: 'weekly',
-    progress: 42,
-    confidence: 70,
-    confidenceLabel: 'Medium'
-  },
-  {
-    id: 'ci-23',
-    okrId: 'okr-t3-2',
-    date: '2024-11-11',
-    cadence: 'weekly',
-    progress: 48,
-    confidence: 75,
-    confidenceLabel: 'High',
-    reasonForChange: 'ML model accuracy better than expected'
-  },
-  {
-    id: 'ci-24',
-    okrId: 'okr-t3-2',
-    date: '2024-11-18',
-    cadence: 'weekly',
-    progress: 55,
-    confidence: 78,
-    confidenceLabel: 'High',
-    reasonForChange: 'Rolled out to 30% successfully'
-  },
-  
-  // Domain OKR
-  {
-    id: 'ci-25',
-    okrId: 'okr-d-1',
-    date: '2024-11-04',
-    cadence: 'biweekly',
-    progress: 55,
-    confidence: 65,
-    confidenceLabel: 'Medium'
-  },
-  {
-    id: 'ci-26',
-    okrId: 'okr-d-1',
-    date: '2024-11-18',
-    cadence: 'biweekly',
-    progress: 62,
+    progress: 28,
     confidence: 68,
     confidenceLabel: 'Medium',
-    reasonForChange: 'Team OKRs showing mixed progress',
-    optionalNote: 'Payments team at risk affecting overall funnel'
+    reasonForChange: 'Mobile conversion lagging desktop; investigating payment step drop-off.',
+    optionalNote: 'Desktop conversion up 1.2pp. Mobile flat. Focus shifting to payment integration friction.'
+  },
+  {
+    id: 'ci-booking-3',
+    okrId: 'okr-booking-exp',
+    date: '2026-02-10',
+    cadence: 'biweekly',
+    progress: 42,
+    confidence: 60,
+    confidenceLabel: 'Medium',
+    reasonForChange: 'Mobile checkout experiments underperformed assumptions; payment retries adding friction.',
+    optionalNote: 'Conversion lift was 0.8% vs expected 2.2%. Payment retry modal causing 15% additional abandonment on mobile.'
+  },
+  {
+    id: 'ci-booking-4',
+    okrId: 'okr-booking-exp',
+    date: '2026-02-24',
+    cadence: 'biweekly',
+    progress: 55,
+    confidence: 65,
+    confidenceLabel: 'Medium',
+    reasonForChange: 'Iterated mobile flow stabilized; desktop gains offset mobile drag.',
+    optionalNote: 'Removed inline retry modal. Desktop now +1.8pp. Mobile stabilizing at +0.4pp. On pace for 20% vs 22% target.'
   },
   
-  // Product Area OKR
+  // ========================================================================
+  // PAYMENTS: At risk journey with vendor dependencies
+  // Story: Gateway instability and vendor delays created sustained risk
+  // ========================================================================
   {
-    id: 'ci-27',
-    okrId: 'okr-pa-1',
-    date: '2024-11-04',
+    id: 'ci-payments-1',
+    okrId: 'okr-payments',
+    date: '2026-01-13',
     cadence: 'biweekly',
-    progress: 50,
-    confidence: 60,
-    confidenceLabel: 'Medium'
+    progress: 15,
+    confidence: 55,
+    confidenceLabel: 'Medium',
+    reasonForChange: 'Baseline improvements identified; dependency on gateway updates.',
+    optionalNote: 'Initial retry logic spec complete. Waiting on gateway v2.3 release for full implementation.'
   },
   {
-    id: 'ci-28',
-    okrId: 'okr-pa-1',
-    date: '2024-11-18',
+    id: 'ci-payments-2',
+    okrId: 'okr-payments',
+    date: '2026-01-27',
     cadence: 'biweekly',
+    progress: 22,
+    confidence: 45,
+    confidenceLabel: 'Medium',
+    reasonForChange: 'Gateway update delayed to mid-February; interim workarounds limited.',
+    optionalNote: 'Vendor confirmed 2-week delay. Pursuing client-side retry as stopgap.'
+  },
+  {
+    id: 'ci-payments-3',
+    okrId: 'okr-payments',
+    date: '2026-02-10',
+    cadence: 'biweekly',
+    progress: 30,
+    confidence: 35,
+    confidenceLabel: 'Low',
+    reasonForChange: 'Unexpected gateway instability and vendor delays impacting retry logic.',
+    optionalNote: 'Gateway v2.3 rollout caused 2-day outage. Error rate spiked to 6.2%. Vendor escalation in progress.'
+  },
+  {
+    id: 'ci-payments-4',
+    okrId: 'okr-payments',
+    date: '2026-02-24',
+    cadence: 'biweekly',
+    progress: 45,
+    confidence: 40,
+    confidenceLabel: 'Medium',
+    reasonForChange: 'Mitigations in place; full impact expected next quarter.',
+    optionalNote: 'Gateway stable. Error rate back to 3.2%. Retry logic partially deployed. Full rollout Q2.'
+  },
+  
+  // ========================================================================
+  // SEARCH: Consistent high performer
+  // Story: Ranking model improvements delivering sustained gains
+  // ========================================================================
+  {
+    id: 'ci-search-1',
+    okrId: 'okr-search',
+    date: '2026-01-06',
+    cadence: 'weekly',
+    progress: 20,
+    confidence: 80,
+    confidenceLabel: 'High',
+    reasonForChange: 'Ranking model updates performing above expectations.',
+    optionalNote: 'New relevance model live. Click-through up 8% week-over-week.'
+  },
+  {
+    id: 'ci-search-2',
+    okrId: 'okr-search',
+    date: '2026-01-13',
+    cadence: 'weekly',
+    progress: 28,
+    confidence: 80,
+    confidenceLabel: 'High',
+    optionalNote: 'Gains holding. Irrelevant result rate down 12%.'
+  },
+  {
+    id: 'ci-search-3',
+    okrId: 'okr-search',
+    date: '2026-01-20',
+    cadence: 'weekly',
+    progress: 35,
+    confidence: 82,
+    confidenceLabel: 'High',
+    reasonForChange: 'Sustained gains in relevance and click-through.',
+    optionalNote: 'Search-to-booking handoff at 13.8%, up from 12% baseline.'
+  },
+  {
+    id: 'ci-search-4',
+    okrId: 'okr-search',
+    date: '2026-01-27',
+    cadence: 'weekly',
+    progress: 42,
+    confidence: 82,
+    confidenceLabel: 'High',
+    optionalNote: 'Personalization layer showing early promise in test segment.'
+  },
+  {
+    id: 'ci-search-5',
+    okrId: 'okr-search',
+    date: '2026-02-03',
+    cadence: 'weekly',
+    progress: 50,
+    confidence: 82,
+    confidenceLabel: 'High',
+    reasonForChange: 'Sustained gains in relevance and click-through.',
+    optionalNote: 'Handoff rate at 14.2%. On track for 16% target.'
+  },
+  {
+    id: 'ci-search-6',
+    okrId: 'okr-search',
+    date: '2026-02-10',
+    cadence: 'weekly',
     progress: 58,
+    confidence: 84,
+    confidenceLabel: 'High',
+    reasonForChange: 'Personalization rollout boosting conversion in returning guest segment.',
+    optionalNote: 'Returning guests now 18% higher handoff rate. Expanding rollout.'
+  },
+  {
+    id: 'ci-search-7',
+    okrId: 'okr-search',
+    date: '2026-02-17',
+    cadence: 'weekly',
+    progress: 65,
+    confidence: 85,
+    confidenceLabel: 'High',
+    optionalNote: 'Handoff rate at 14.6%. Irrelevant results down 17%.'
+  },
+  {
+    id: 'ci-search-8',
+    okrId: 'okr-search',
+    date: '2026-02-24',
+    cadence: 'weekly',
+    progress: 70,
+    confidence: 85,
+    confidenceLabel: 'High',
+    reasonForChange: 'Improvements holding across segments.',
+    optionalNote: 'Final push on mobile relevance. Confident in hitting both KRs.'
+  },
+  
+  // ========================================================================
+  // DOMAIN: Aggregated confidence reflecting team mix
+  // ========================================================================
+  {
+    id: 'ci-domain-1',
+    okrId: 'okr-domain-q1',
+    date: '2026-01-27',
+    cadence: 'biweekly',
+    progress: 25,
+    confidence: 68,
+    confidenceLabel: 'Medium',
+    optionalNote: 'Search strong, Booking Experience on track, Payments emerging risk.'
+  },
+  {
+    id: 'ci-domain-2',
+    okrId: 'okr-domain-q1',
+    date: '2026-02-10',
+    cadence: 'biweekly',
+    progress: 40,
+    confidence: 58,
+    confidenceLabel: 'Medium',
+    reasonForChange: 'Payments gateway issues impacting overall funnel confidence.',
+    optionalNote: 'Payment failures creating downstream impact on booking completion.'
+  },
+  {
+    id: 'ci-domain-3',
+    okrId: 'okr-domain-q1',
+    date: '2026-02-24',
+    cadence: 'biweekly',
+    progress: 55,
     confidence: 62,
     confidenceLabel: 'Medium',
-    reasonForChange: 'Conversion improvements tracking, but timeline tight'
+    reasonForChange: 'Payments stabilizing; overall trajectory recovering.',
+    optionalNote: 'Search gains offsetting some payments drag. Booking Experience recovered momentum.'
   }
 ];
 
-// Jira Links
+// Jira Links (optional - keeping minimal for demo clarity)
 export const jiraLinks: JiraLink[] = [
-  { id: 'jl-1', okrId: 'okr-t1-1', epicIdentifierOrUrl: 'BOOK-1234' },
-  { id: 'jl-2', okrId: 'okr-t1-1', epicIdentifierOrUrl: 'BOOK-1235' },
-  { id: 'jl-3', okrId: 'okr-t1-2', epicIdentifierOrUrl: 'https://jira.company.com/browse/BOOK-1300' },
-  { id: 'jl-4', okrId: 'okr-t2-1', epicIdentifierOrUrl: 'PAY-500' },
-  { id: 'jl-5', okrId: 'okr-t3-1', epicIdentifierOrUrl: 'SRCH-200' },
-  { id: 'jl-6', okrId: 'okr-t3-2', epicIdentifierOrUrl: 'SRCH-201' },
-  { id: 'jl-7', okrId: 'okr-t3-2', epicIdentifierOrUrl: 'ML-100' }
+  { id: 'jl-1', okrId: 'okr-booking-exp', epicIdentifierOrUrl: 'BOOK-2401' },
+  { id: 'jl-2', okrId: 'okr-booking-exp', epicIdentifierOrUrl: 'BOOK-2415' },
+  { id: 'jl-3', okrId: 'okr-payments', epicIdentifierOrUrl: 'PAY-890' },
+  { id: 'jl-4', okrId: 'okr-search', epicIdentifierOrUrl: 'SRCH-445' }
 ];
 
 // Helper to calculate aggregated confidence for a set of OKRs
