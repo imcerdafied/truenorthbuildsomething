@@ -64,31 +64,20 @@ export function Header() {
         {/* Team Selector (visible in team view) */}
         {viewMode === 'team' && teams.length > 0 && (
           <div className="flex flex-col">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Select value={selectedTeamId || teams[0]?.id} onValueChange={setSelectedTeamId}>
-                      <SelectTrigger className="w-44 bg-background h-8 text-sm">
-                        <SelectValue placeholder="Select team" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover">
-                        {teams.map(team => (
-                          <SelectItem key={team.id} value={team.id}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  <p className="text-xs">
-                    Scopes reflect your product operating model. OKRs are created within teams, domains, and product areas.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="flex items-center gap-1.5">
+              <Select value={selectedTeamId || teams[0]?.id} onValueChange={setSelectedTeamId}>
+                <SelectTrigger className="w-44 bg-background h-8 text-sm">
+                  <SelectValue placeholder="Select team" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {teams.map(team => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             {currentTeam && currentDomain && (
               <p className="text-[10px] text-muted-foreground mt-0.5 ml-1">
                 {currentTeam.name} within {currentDomain.name}
