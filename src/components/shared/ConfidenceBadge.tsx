@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { ConfidenceLabel } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +11,7 @@ interface ConfidenceBadgeProps {
   className?: string;
 }
 
-export const ConfidenceBadge = React.forwardRef<HTMLSpanElement, ConfidenceBadgeProps>(({ 
+export function ConfidenceBadge({ 
   confidence, 
   label, 
   showValue = true,
@@ -20,7 +19,7 @@ export const ConfidenceBadge = React.forwardRef<HTMLSpanElement, ConfidenceBadge
   size = 'default',
   variant = 'minimal',
   className
-}, ref) => {
+}: ConfidenceBadgeProps) {
   const getLabel = () => {
     if (label) return label;
     if (confidence >= 75) return 'High';
@@ -42,13 +41,12 @@ export const ConfidenceBadge = React.forwardRef<HTMLSpanElement, ConfidenceBadge
 
   if (variant === 'dot') {
     return (
-      <span ref={ref} className={cn('confidence-dot', getDotClass(), className)} />
+      <span className={cn('confidence-dot', getDotClass(), className)} />
     );
   }
 
   return (
     <span 
-      ref={ref}
       className={cn(
         'confidence-label',
         getLabelClass(),
@@ -61,6 +59,4 @@ export const ConfidenceBadge = React.forwardRef<HTMLSpanElement, ConfidenceBadge
       <span className="font-medium">{getLabel()}</span>
     </span>
   );
-});
-
-ConfidenceBadge.displayName = 'ConfidenceBadge';
+}
