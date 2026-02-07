@@ -33,23 +33,23 @@ export function SignalCard({
 
   return (
     <div className={cn(
-      "signal-card relative",
+      "signal-card relative p-3 sm:p-5",
       variant !== 'default' && "before:absolute before:left-0 before:top-4 before:bottom-4 before:w-0.5 before:rounded-full",
       getAccentClass(),
       className
     )}>
       <div className="flex items-start justify-between">
-        <div className={cn(variant !== 'default' && "pl-3")}>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+        <div className={cn(variant !== 'default' && "pl-2 sm:pl-3")}>
+          <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 sm:mb-2">
             {title}
           </p>
-          <div className="metric-value">{value}</div>
+          <div className="metric-value text-xl sm:text-2xl">{value}</div>
           {subtitle && (
-            <p className="text-sm text-muted-foreground mt-1.5">{subtitle}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-1.5 line-clamp-2">{subtitle}</p>
           )}
         </div>
         {icon && (
-          <div className="text-muted-foreground/50">{icon}</div>
+          <div className="text-muted-foreground/50 hidden sm:block">{icon}</div>
         )}
       </div>
     </div>

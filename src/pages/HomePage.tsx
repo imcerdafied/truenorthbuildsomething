@@ -110,14 +110,14 @@ export function HomePage() {
   const TrendIcon = overallTrend === 'up' ? TrendingUp : overallTrend === 'down' ? TrendingDown : Minus;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* Page Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="page-title">
+          <h1 className="page-title text-xl sm:text-2xl">
             {viewMode === 'exec' ? 'Executive Dashboard' : `${currentTeam?.name || 'Team'}`}
           </h1>
-          <p className="helper-text mt-1">
+          <p className="helper-text mt-1 text-sm">
             What are we trying to achieve, and are we on track?
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -126,7 +126,7 @@ export function HomePage() {
         </div>
         
         {canRunCheckIn && hasOKRs && (
-          <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2">
+          <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2 w-full sm:w-auto">
             <PlayCircle className="w-4 h-4" />
             Run Check-in
           </Button>
@@ -134,12 +134,12 @@ export function HomePage() {
       </div>
 
       {/* Signal Cards - calm briefing */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <SignalCard
           title="Overall Confidence"
           value={
             hasOKRs ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <span>{overallConfidence}</span>
                 <ConfidenceBadge confidence={overallConfidence} showValue={false} />
                 {overallTrend && (
@@ -156,7 +156,7 @@ export function HomePage() {
                 )}
               </div>
             ) : (
-              <span className="text-lg font-medium text-muted-foreground">Not yet established</span>
+              <span className="text-base sm:text-lg font-medium text-muted-foreground">Not yet established</span>
             )
           }
           subtitle={hasOKRs ? "Aggregate across all OKRs" : "No OKRs have been defined for this quarter."}
@@ -165,7 +165,7 @@ export function HomePage() {
         
         <SignalCard
           title="On Track"
-          value={hasOKRs ? onTrackCount : <span className="text-lg font-medium text-muted-foreground">No signal yet</span>}
+          value={hasOKRs ? onTrackCount : <span className="text-base sm:text-lg font-medium text-muted-foreground">No signal yet</span>}
           subtitle={hasOKRs ? `of ${teamOKRs.length} OKRs with confidence ≥40` : "OKRs appear here once teams define outcomes."}
           icon={<CheckCircle2 className="w-5 h-5" />}
           variant={hasOKRs && onTrackCount > 0 ? "success" : "default"}
@@ -173,7 +173,7 @@ export function HomePage() {
         
         <SignalCard
           title="At Risk"
-          value={hasOKRs ? atRiskCount : <span className="text-lg font-medium text-muted-foreground">No signal yet</span>}
+          value={hasOKRs ? atRiskCount : <span className="text-base sm:text-lg font-medium text-muted-foreground">No signal yet</span>}
           subtitle={hasOKRs ? "OKRs with confidence <40" : "Risk becomes visible as confidence is tracked."}
           icon={<AlertTriangle className="w-5 h-5" />}
           variant={hasOKRs && atRiskCount > 0 ? 'danger' : 'default'}
@@ -184,7 +184,7 @@ export function HomePage() {
           value={
             hasOKRs && nextCheckInDate 
               ? nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
-              : <span className="text-lg font-medium text-muted-foreground">Not scheduled</span>
+              : <span className="text-base sm:text-lg font-medium text-muted-foreground">Not scheduled</span>
           }
           subtitle={hasOKRs ? `${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence` : "Check-ins begin after OKRs are created."}
           icon={<Clock className="w-5 h-5" />}
@@ -230,7 +230,7 @@ export function HomePage() {
               {teamOKRs.map((okr) => (
                 <div 
                   key={okr.id}
-                  className="data-row flex items-center gap-4 py-3.5 px-2 cursor-pointer rounded-md -mx-2"
+                  className="data-row flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3.5 px-2 cursor-pointer rounded-md -mx-2"
                   onClick={() => navigate(`/okrs/${okr.id}`)}
                 >
                   <div className="flex-1 min-w-0">
@@ -240,22 +240,24 @@ export function HomePage() {
                     </div>
                   </div>
                   
-                  <div className="w-28">
-                    <ProgressBar value={okr.latestCheckIn?.progress || 0} showLabel size="sm" />
-                  </div>
-                  
-                  <div className="w-20">
-                    <ConfidenceSparkline checkIns={okr.checkIns} />
-                  </div>
-                  
-                  <div className="flex items-center gap-3 min-w-[140px] justify-end">
-                    {okr.latestCheckIn && (
-                      <ConfidenceBadge 
-                        confidence={okr.latestCheckIn.confidence} 
-                        label={okr.latestCheckIn.confidenceLabel}
-                      />
-                    )}
-                    <TrendIndicator trend={okr.trend} size="sm" />
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-24 sm:w-28">
+                      <ProgressBar value={okr.latestCheckIn?.progress || 0} showLabel size="sm" />
+                    </div>
+                    
+                    <div className="w-16 sm:w-20 hidden sm:block">
+                      <ConfidenceSparkline checkIns={okr.checkIns} />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-[100px] sm:min-w-[140px] justify-end">
+                      {okr.latestCheckIn && (
+                        <ConfidenceBadge 
+                          confidence={okr.latestCheckIn.confidence} 
+                          label={okr.latestCheckIn.confidenceLabel}
+                        />
+                      )}
+                      <TrendIndicator trend={okr.trend} size="sm" />
+                    </div>
                   </div>
                 </div>
               ))}

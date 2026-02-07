@@ -8,13 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Users, Building2 } from 'lucide-react';
+import { Users, Building2, Menu, X } from 'lucide-react';
 import { formatQuarter } from '@/types';
 
 const quarters = [
@@ -25,7 +19,12 @@ const quarters = [
   '2025-Q1',
 ];
 
-export function Header() {
+interface HeaderProps {
+  mobileMenuOpen?: boolean;
+  onToggleMobileMenu?: () => void;
+}
+
+export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
   const { 
     viewMode, 
     setViewMode, 
@@ -45,11 +44,21 @@ export function Header() {
   const currentDomain = domains.find(d => d.id === currentTeam?.domainId);
 
   return (
-    <header className="h-14 border-b bg-card flex items-center justify-between px-5">
-      <div className="flex items-center gap-3">
+    <header className="h-14 border-b bg-card flex items-center justify-between px-3 sm:px-5">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile menu toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="lg:hidden h-8 w-8 p-0"
+          onClick={onToggleMobileMenu}
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </Button>
+
         {/* Quarter Selector */}
         <Select value={currentQuarter} onValueChange={setCurrentQuarter}>
-          <SelectTrigger className="w-28 bg-background h-8 text-sm">
+          <SelectTrigger className="w-24 sm:w-28 bg-background h-8 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-popover">
@@ -87,31 +96,31 @@ export function Header() {
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* View Mode Toggle */}
         <div className="flex items-center bg-muted rounded-md p-0.5">
           <Button
             variant={viewMode === 'team' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('team')}
-            className="gap-1.5 h-7 px-3 text-xs"
+            className="gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs"
           >
             <Users className="w-3.5 h-3.5" />
-            Team
+            <span className="hidden sm:inline">Team</span>
           </Button>
           <Button
             variant={viewMode === 'exec' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('exec')}
-            className="gap-1.5 h-7 px-3 text-xs"
+            className="gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs"
           >
             <Building2 className="w-3.5 h-3.5" />
-            Exec
+            <span className="hidden sm:inline">Exec</span>
           </Button>
         </div>
 
-        {/* Current User */}
-        <div className="text-xs text-muted-foreground border-l pl-3">
+        {/* Current User - hidden on small screens */}
+        <div className="hidden sm:block text-xs text-muted-foreground border-l pl-3">
           <span className="font-medium text-foreground">{profile?.full_name || currentPM}</span>
           <span className="mx-1.5 text-border">·</span>
           <span>PM</span>
