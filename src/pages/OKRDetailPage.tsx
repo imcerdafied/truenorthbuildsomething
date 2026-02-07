@@ -4,11 +4,11 @@ import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
+import { ConfidenceSparkline } from '@/components/shared/ConfidenceSparkline';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -51,7 +51,6 @@ export function OKRDetailPage() {
     removeJiraLink,
     rolloverOKR,
     addOKRLink,
-    okrs,
     getOKRsByQuarter,
     currentQuarter
   } = useApp();
@@ -64,9 +63,9 @@ export function OKRDetailPage() {
 
   if (!okr) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Target className="w-12 h-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">OKR not found</p>
+      <div className="empty-state">
+        <Target className="empty-state-icon" />
+        <p className="empty-state-title">OKR not found</p>
         <Button variant="ghost" onClick={() => navigate('/okrs')} className="mt-4">
           Back to OKRs
         </Button>
@@ -78,9 +77,9 @@ export function OKRDetailPage() {
 
   const getLevelIcon = (level: OKRLevel) => {
     switch (level) {
-      case 'productArea': return <Layers className="w-5 h-5" />;
-      case 'domain': return <Building2 className="w-5 h-5" />;
-      case 'team': return <Users className="w-5 h-5" />;
+      case 'productArea': return <Layers className="w-4 h-4" />;
+      case 'domain': return <Building2 className="w-4 h-4" />;
+      case 'team': return <Users className="w-4 h-4" />;
     }
   };
 
@@ -111,46 +110,44 @@ export function OKRDetailPage() {
     }
   };
 
-  // Get potential parent OKRs (higher level)
   const potentialParents = getOKRsByQuarter(currentQuarter).filter(o => {
     if (okr.level === 'team') return o.level === 'domain' || o.level === 'productArea';
     if (okr.level === 'domain') return o.level === 'productArea';
     return false;
   });
 
-  // Get parent OKR if linked
   const parentOkr = okr.parentOkrId ? getOKRWithDetails(okr.parentOkrId) : null;
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Back button */}
-      <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-2">
+      <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
         <ArrowLeft className="w-4 h-4" />
         Back to OKRs
       </Button>
 
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between gap-6">
+        <div className="space-y-3 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-muted-foreground">{getLevelIcon(okr.level)}</span>
-            <Badge variant="secondary">{getLevelLabel(okr.level)}</Badge>
-            <Badge variant="outline">{formatQuarter(okr.quarter)}</Badge>
+            <Badge variant="secondary" className="text-xs">{getLevelLabel(okr.level)}</Badge>
+            <Badge variant="outline" className="text-xs">{formatQuarter(okr.quarter)}</Badge>
             {okr.isRolledOver && (
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 text-xs">
                 <RefreshCcw className="w-3 h-3" />
                 Rolled over
               </Badge>
             )}
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">{okr.objectiveText}</h1>
-          <p className="text-muted-foreground">Owner: {okr.ownerName}</p>
+          <h1 className="text-xl font-semibold tracking-tight leading-tight">{okr.objectiveText}</h1>
+          <p className="text-sm text-muted-foreground">Owner: {okr.ownerName}</p>
           {okr.isOrphaned && (
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 pt-1">
               <OrphanWarning />
               <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1">
+                  <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
                     <Link2 className="w-3 h-3" />
                     Link to parent
                   </Button>
@@ -183,36 +180,31 @@ export function OKRDetailPage() {
           )}
         </div>
 
-        <div className="flex gap-2">
-          {canEdit && (
-            <>
-              <Button variant="outline" onClick={() => navigate(`/checkin?okrId=${okr.id}`)} className="gap-2">
-                <Plus className="w-4 h-4" />
-                Add Check-in
-              </Button>
-              <Button variant="outline" onClick={handleRollover} className="gap-2">
-                <RefreshCcw className="w-4 h-4" />
-                Roll over to next quarter
-              </Button>
-            </>
-          )}
-        </div>
+        {canEdit && (
+          <div className="flex gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={() => navigate(`/checkin?okrId=${okr.id}`)} className="gap-2">
+              <Plus className="w-3.5 h-3.5" />
+              Add Check-in
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleRollover} className="gap-2">
+              <RefreshCcw className="w-3.5 h-3.5" />
+              Roll over
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Status Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-6">
+          <Card className="border-border/60">
+            <CardContent className="py-5">
+              <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Progress</p>
+                  <p className="section-header mb-3">Progress</p>
                   <div className="flex items-center gap-4">
-                    <span className="text-3xl font-semibold">
+                    <span className="text-2xl font-semibold tabular-nums">
                       {okr.latestCheckIn?.progress || 0}%
                     </span>
                     <ProgressBar 
@@ -222,9 +214,9 @@ export function OKRDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Confidence</p>
+                  <p className="section-header mb-3">Confidence</p>
                   <div className="flex items-center gap-4">
-                    <span className="text-3xl font-semibold">
+                    <span className="text-2xl font-semibold tabular-nums">
                       {okr.latestCheckIn?.confidence || 0}
                     </span>
                     {okr.latestCheckIn && (
@@ -238,31 +230,41 @@ export function OKRDetailPage() {
                   </div>
                 </div>
               </div>
+              
+              {/* Inline sparkline */}
+              {okr.checkIns.length > 1 && (
+                <div className="mt-6 pt-5 border-t">
+                  <p className="section-header mb-3">Confidence Trend</p>
+                  <div className="h-16">
+                    <ConfidenceSparkline checkIns={okr.checkIns} className="h-full w-full" />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Key Results */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Key Results</CardTitle>
+          <Card className="border-border/60">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-medium">Key Results</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {okr.keyResults.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No key results defined</p>
+                <p className="text-muted-foreground text-sm py-4">No key results defined</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {okr.keyResults.map((kr, index) => {
                     const progress = kr.targetValue > 0 
                       ? Math.round((kr.currentValue / kr.targetValue) * 100) 
                       : 0;
                     return (
-                      <div key={kr.id} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <p className="font-medium">KR{index + 1}: {kr.text}</p>
-                        </div>
+                      <div key={kr.id} className="border border-border/60 rounded-lg p-4">
+                        <p className="text-sm font-medium mb-3">
+                          <span className="text-muted-foreground">KR{index + 1}:</span> {kr.text}
+                        </p>
                         <div className="flex items-center gap-4">
                           <ProgressBar value={progress} className="flex-1" />
-                          <span className="text-sm text-muted-foreground min-w-[100px] text-right">
+                          <span className="text-xs text-muted-foreground tabular-nums min-w-[80px] text-right">
                             {kr.currentValue} / {kr.targetValue}
                           </span>
                         </div>
@@ -275,33 +277,33 @@ export function OKRDetailPage() {
           </Card>
 
           {/* Confidence History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Confidence History</CardTitle>
-              <p className="helper-text">Last 6 check-ins</p>
+          <Card className="border-border/60">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-medium">Check-in History</CardTitle>
+              <p className="helper-text">Recent confidence updates and context</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {okr.checkIns.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No check-ins yet</p>
+                <p className="text-muted-foreground text-sm py-4">No check-ins yet</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-0">
                   {okr.checkIns.slice(0, 6).map((ci) => (
-                    <div key={ci.id} className="flex items-center gap-4 py-2 border-b last:border-0">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[100px]">
-                        <Calendar className="w-4 h-4" />
+                    <div key={ci.id} className="flex items-start gap-4 py-3 border-b border-border/40 last:border-0">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-[80px]">
+                        <Calendar className="w-3.5 h-3.5" />
                         {new Date(ci.date).toLocaleDateString('en-US', { 
                           month: 'short', 
                           day: 'numeric' 
                         })}
                       </div>
-                      <ConfidenceBadge confidence={ci.confidence} label={ci.confidenceLabel} />
-                      <span className="text-sm text-muted-foreground">
-                        {ci.progress}% progress
+                      <ConfidenceBadge confidence={ci.confidence} label={ci.confidenceLabel} size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        {ci.progress}%
                       </span>
                       {ci.reasonForChange && (
-                        <span className="text-sm italic text-muted-foreground flex-1 truncate">
-                          "{ci.reasonForChange}"
-                        </span>
+                        <p className="text-xs text-muted-foreground flex-1 truncate">
+                          {ci.reasonForChange}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -314,24 +316,24 @@ export function OKRDetailPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Parent/Child Links */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <GitBranch className="w-4 h-4" />
+          <Card className="border-border/60">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-medium flex items-center gap-2">
+                <GitBranch className="w-4 h-4 text-muted-foreground" />
                 Alignment
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="pt-0 space-y-4">
               {parentOkr && (
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Parent OKR</p>
+                  <p className="section-header mb-2">Parent OKR</p>
                   <div 
-                    className="border rounded-lg p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="border border-border/60 rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors"
                     onClick={() => navigate(`/okrs/${parentOkr.id}`)}
                   >
                     <p className="text-sm font-medium truncate">{parentOkr.objectiveText}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="secondary" className="text-xs">{parentOkr.ownerName}</Badge>
+                      <span className="text-xs text-muted-foreground">{parentOkr.ownerName}</span>
                       {parentOkr.latestCheckIn && (
                         <ConfidenceBadge 
                           confidence={parentOkr.latestCheckIn.confidence} 
@@ -346,17 +348,17 @@ export function OKRDetailPage() {
               
               {okr.childOKRs.length > 0 && (
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Child OKRs</p>
+                  <p className="section-header mb-2">Child OKRs</p>
                   <div className="space-y-2">
                     {okr.childOKRs.map(child => (
                       <div 
                         key={child.id}
-                        className="border rounded-lg p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                        className="border border-border/60 rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors"
                         onClick={() => navigate(`/okrs/${child.id}`)}
                       >
                         <p className="text-sm font-medium truncate">{child.objectiveText}</p>
                         <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className="text-xs">{child.ownerName}</Badge>
+                          <span className="text-xs text-muted-foreground">{child.ownerName}</span>
                           {child.latestCheckIn && (
                             <ConfidenceBadge 
                               confidence={child.latestCheckIn.confidence} 
@@ -372,7 +374,7 @@ export function OKRDetailPage() {
               )}
 
               {!parentOkr && okr.childOKRs.length === 0 && (
-                <p className="text-muted-foreground text-sm text-center py-2">
+                <p className="text-muted-foreground text-sm">
                   No linked OKRs
                 </p>
               )}
@@ -380,50 +382,51 @@ export function OKRDetailPage() {
           </Card>
 
           {/* Jira Links */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <ExternalLink className="w-4 h-4" />
+          <Card className="border-border/60">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-medium flex items-center gap-2">
+                <ExternalLink className="w-4 h-4 text-muted-foreground" />
                 Linked Work
               </CardTitle>
               <p className="helper-text">Jira epics linked to this OKR</p>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="pt-0 space-y-2">
               {okr.jiraLinks.map((link) => (
                 <div 
                   key={link.id} 
-                  className="flex items-center justify-between border rounded-lg px-3 py-2"
+                  className="flex items-center justify-between border border-border/60 rounded-lg px-3 py-2"
                 >
-                  <span className="text-sm font-mono">{link.epicIdentifierOrUrl}</span>
+                  <span className="text-xs font-mono text-muted-foreground">{link.epicIdentifierOrUrl}</span>
                   {canEdit && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
+                      className="h-6 w-6 p-0"
                       onClick={() => removeJiraLink(link.id)}
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3.5 h-3.5" />
                     </Button>
                   )}
                 </div>
               ))}
               
               {canEdit && (
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-2 pt-2">
                   <Input
                     placeholder="Epic ID or URL"
                     value={jiraInput}
                     onChange={(e) => setJiraInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddJiraLink()}
-                    className="bg-background"
+                    className="bg-background h-8 text-sm"
                   />
-                  <Button variant="outline" size="icon" onClick={handleAddJiraLink}>
-                    <Plus className="w-4 h-4" />
+                  <Button variant="outline" size="sm" className="h-8 px-3" onClick={handleAddJiraLink}>
+                    <Plus className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               )}
 
               {okr.jiraLinks.length === 0 && !canEdit && (
-                <p className="text-muted-foreground text-sm text-center py-2">
+                <p className="text-muted-foreground text-sm">
                   No linked work
                 </p>
               )}

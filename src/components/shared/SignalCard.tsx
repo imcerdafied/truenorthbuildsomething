@@ -18,31 +18,38 @@ export function SignalCard({
   variant = 'default',
   className 
 }: SignalCardProps) {
-  const getVariantStyles = () => {
+  const getAccentClass = () => {
     switch (variant) {
       case 'success':
-        return 'border-l-4 border-l-confidence-high';
+        return 'before:bg-confidence-high';
       case 'warning':
-        return 'border-l-4 border-l-confidence-medium';
+        return 'before:bg-confidence-medium';
       case 'danger':
-        return 'border-l-4 border-l-confidence-low';
+        return 'before:bg-confidence-low';
       default:
         return '';
     }
   };
 
   return (
-    <div className={cn("signal-card", getVariantStyles(), className)}>
+    <div className={cn(
+      "signal-card relative",
+      variant !== 'default' && "before:absolute before:left-0 before:top-4 before:bottom-4 before:w-0.5 before:rounded-full",
+      getAccentClass(),
+      className
+    )}>
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground font-medium">{title}</p>
-          <div className="metric-value mt-1">{value}</div>
+        <div className={cn(variant !== 'default' && "pl-3")}>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            {title}
+          </p>
+          <div className="metric-value">{value}</div>
           {subtitle && (
-            <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+            <p className="text-sm text-muted-foreground mt-1.5">{subtitle}</p>
           )}
         </div>
         {icon && (
-          <div className="text-muted-foreground">{icon}</div>
+          <div className="text-muted-foreground/50">{icon}</div>
         )}
       </div>
     </div>

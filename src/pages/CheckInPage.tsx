@@ -5,11 +5,10 @@ import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { getConfidenceLabel, OKRWithDetails } from '@/types';
+import { getConfidenceLabel } from '@/types';
 import { ArrowLeft, ArrowRight, Check, AlertCircle } from 'lucide-react';
 
 interface CheckInFormData {
@@ -37,7 +36,6 @@ export function CheckInPage() {
   const team = getTeam(selectedTeamId);
   const teamOKRs = getTeamOKRs(selectedTeamId);
   
-  // Filter to OKRs that user can check in on
   const editableOKRs = preselectedOkrId 
     ? teamOKRs.filter(o => o.id === preselectedOkrId)
     : teamOKRs;
@@ -91,7 +89,6 @@ export function CheckInPage() {
   };
 
   const handleSubmit = () => {
-    // Submit all check-ins
     Object.values(formData).forEach(data => {
       addCheckIn({
         okrId: data.okrId,
@@ -108,9 +105,9 @@ export function CheckInPage() {
 
   if (!isCurrentUserPM(selectedTeamId)) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">Only the PM can submit check-ins</p>
+      <div className="empty-state">
+        <AlertCircle className="empty-state-icon" />
+        <p className="empty-state-title">Only the PM can submit check-ins</p>
         <Button variant="ghost" onClick={() => navigate('/')} className="mt-4">
           Back to Home
         </Button>
@@ -120,9 +117,12 @@ export function CheckInPage() {
 
   if (editableOKRs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">No OKRs to check in on</p>
+      <div className="empty-state">
+        <AlertCircle className="empty-state-icon" />
+        <p className="empty-state-title">No OKRs to check in on</p>
+        <p className="empty-state-description">
+          Create OKRs for your team to start tracking confidence.
+        </p>
         <Button variant="ghost" onClick={() => navigate('/')} className="mt-4">
           Back to Home
         </Button>
@@ -131,15 +131,15 @@ export function CheckInPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2 -ml-2 text-muted-foreground">
           <ArrowLeft className="w-4 h-4" />
           Cancel
         </Button>
-        <div className="text-sm text-muted-foreground">
-          {currentStep + 1} of {editableOKRs.length} OKRs
+        <div className="text-xs text-muted-foreground">
+          {currentStep + 1} of {editableOKRs.length}
         </div>
       </div>
 
@@ -148,8 +148,8 @@ export function CheckInPage() {
         {editableOKRs.map((_, index) => (
           <div 
             key={index}
-            className={`h-1 flex-1 rounded-full transition-colors ${
-              index <= currentStep ? 'bg-primary' : 'bg-muted'
+            className={`h-0.5 flex-1 rounded-full transition-colors ${
+              index <= currentStep ? 'bg-foreground' : 'bg-muted'
             }`}
           />
         ))}
@@ -157,9 +157,9 @@ export function CheckInPage() {
 
       {/* Check-in Form */}
       {currentOKR && currentData && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">{currentOKR.objectiveText}</CardTitle>
+        <Card className="border-border/60">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg leading-tight">{currentOKR.objectiveText}</CardTitle>
             <CardDescription>
               {team?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} check-in for {team?.name}
             </CardDescription>
@@ -168,15 +168,15 @@ export function CheckInPage() {
             {/* Progress */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Progress</Label>
-                <span className="text-2xl font-semibold">{currentData.progress}%</span>
+                <Label className="text-sm font-medium">Progress</Label>
+                <span className="text-xl font-semibold tabular-nums">{currentData.progress}%</span>
               </div>
               <Slider
                 value={[currentData.progress]}
                 onValueChange={([value]) => updateField('progress', value)}
                 max={100}
                 step={1}
-                className="py-4"
+                className="py-2"
               />
               <ProgressBar value={currentData.progress} />
             </div>
@@ -184,9 +184,9 @@ export function CheckInPage() {
             {/* Confidence */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Confidence</Label>
+                <Label className="text-sm font-medium">Confidence</Label>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-semibold">{currentData.confidence}</span>
+                  <span className="text-xl font-semibold tabular-nums">{currentData.confidence}</span>
                   <ConfidenceBadge 
                     confidence={currentData.confidence} 
                     showValue={false}
@@ -201,33 +201,33 @@ export function CheckInPage() {
                 onValueChange={([value]) => updateField('confidence', value)}
                 max={100}
                 step={1}
-                className="py-4"
+                className="py-2"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Low (&lt;40)</span>
-                <span>Medium (40-74)</span>
+                <span>Medium (40–74)</span>
                 <span>High (≥75)</span>
               </div>
             </div>
 
-            {/* Reason for change (required if confidence changed) */}
+            {/* Reason for change - contextual, reflective */}
             {isConfidenceChanged && (
-              <div className="space-y-2 p-4 border rounded-lg bg-muted/30">
+              <div className="space-y-3 p-4 border border-confidence-medium/30 rounded-lg bg-confidence-medium-bg/30">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-confidence-medium" />
-                  <Label className="font-medium">
-                    Reason for change <span className="text-destructive">*</span>
+                  <span className="confidence-dot confidence-dot-medium" />
+                  <Label className="text-sm font-medium">
+                    Why did confidence change?
                   </Label>
                 </div>
                 <p className="helper-text">
-                  Confidence changed from {currentData.previousConfidence} to {currentData.confidence}. 
-                  Please explain why.
+                  Confidence moved from {currentData.previousConfidence} to {currentData.confidence}. 
+                  A brief note helps the team understand what changed.
                 </p>
                 <Textarea
-                  placeholder="Brief explanation for the confidence change..."
+                  placeholder="What changed since last check-in..."
                   value={currentData.reasonForChange}
                   onChange={(e) => updateField('reasonForChange', e.target.value)}
-                  className="bg-background"
+                  className="bg-background resize-none"
                   rows={2}
                 />
               </div>
@@ -235,12 +235,12 @@ export function CheckInPage() {
 
             {/* Optional note */}
             <div className="space-y-2">
-              <Label>Note (optional)</Label>
+              <Label className="text-sm font-medium text-muted-foreground">Note (optional)</Label>
               <Textarea
-                placeholder="Any additional context or updates..."
+                placeholder="Any additional context..."
                 value={currentData.optionalNote}
                 onChange={(e) => updateField('optionalNote', e.target.value)}
-                className="bg-background"
+                className="bg-background resize-none"
                 rows={2}
               />
             </div>
@@ -249,25 +249,26 @@ export function CheckInPage() {
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="flex justify-between pt-2">
         <Button 
-          variant="outline" 
+          variant="ghost" 
           onClick={handlePrevious}
           disabled={currentStep === 0}
+          className="gap-2"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-4 h-4" />
           Previous
         </Button>
 
         {currentStep === editableOKRs.length - 1 ? (
           <Button onClick={handleSubmit} disabled={!canProceed} className="gap-2">
             <Check className="w-4 h-4" />
-            Submit All Check-ins
+            Submit
           </Button>
         ) : (
-          <Button onClick={handleNext} disabled={!canProceed}>
+          <Button onClick={handleNext} disabled={!canProceed} className="gap-2">
             Next
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight className="w-4 h-4" />
           </Button>
         )}
       </div>

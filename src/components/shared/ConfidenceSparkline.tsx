@@ -19,7 +19,7 @@ export function ConfidenceSparkline({
   if (sortedCheckIns.length === 0) {
     return (
       <div className={cn("sparkline flex items-center justify-center text-xs text-muted-foreground", className)}>
-        No data
+        —
       </div>
     );
   }
@@ -27,8 +27,8 @@ export function ConfidenceSparkline({
   const maxConfidence = 100;
   const minConfidence = 0;
   const range = maxConfidence - minConfidence;
-  const width = 96; // matches w-24
-  const height = 32; // matches h-8
+  const width = 80;
+  const height = 24;
   const padding = 2;
   const usableWidth = width - padding * 2;
   const usableHeight = height - padding * 2;
@@ -54,30 +54,15 @@ export function ConfidenceSparkline({
   return (
     <div className={cn("sparkline", className)}>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
-        {/* Gradient background */}
-        <defs>
-          <linearGradient id="sparklineGradient" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor={getColor(latestConfidence)} stopOpacity="0.2" />
-            <stop offset="100%" stopColor={getColor(latestConfidence)} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        
-        {/* Area fill */}
-        {points.length > 1 && (
-          <path
-            d={`${pathD} L ${points[points.length - 1].x} ${height} L ${points[0].x} ${height} Z`}
-            fill="url(#sparklineGradient)"
-          />
-        )}
-        
         {/* Line */}
         <path
           d={pathD}
           fill="none"
           stroke={getColor(latestConfidence)}
-          strokeWidth="2"
+          strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
+          opacity="0.7"
         />
         
         {/* End point */}
@@ -85,7 +70,7 @@ export function ConfidenceSparkline({
           <circle
             cx={points[points.length - 1].x}
             cy={points[points.length - 1].y}
-            r="3"
+            r="2.5"
             fill={getColor(latestConfidence)}
           />
         )}

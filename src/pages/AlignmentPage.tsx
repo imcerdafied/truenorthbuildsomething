@@ -29,9 +29,9 @@ function TreeNode({ okr, level, defaultExpanded = true }: TreeNodeProps) {
 
   const getLevelIcon = () => {
     switch (okr.level) {
-      case 'productArea': return <Layers className="w-4 h-4" />;
-      case 'domain': return <Building2 className="w-4 h-4" />;
-      case 'team': return <Users className="w-4 h-4" />;
+      case 'productArea': return <Layers className="w-3.5 h-3.5" />;
+      case 'domain': return <Building2 className="w-3.5 h-3.5" />;
+      case 'team': return <Users className="w-3.5 h-3.5" />;
     }
   };
 
@@ -39,10 +39,10 @@ function TreeNode({ okr, level, defaultExpanded = true }: TreeNodeProps) {
     <div className="animate-fade-in">
       <div 
         className={cn(
-          "flex items-center gap-2 py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group",
-          level > 0 && "ml-6 border-l-2 border-muted"
+          "flex items-center gap-2 py-2.5 px-2 rounded-md hover:bg-muted/40 transition-colors cursor-pointer group",
+          level > 0 && "ml-5 border-l border-border/40 pl-4"
         )}
-        style={{ marginLeft: level > 0 ? `${level * 24}px` : 0 }}
+        style={{ marginLeft: level > 0 ? `${level * 20}px` : 0 }}
       >
         {/* Expand/collapse toggle */}
         <button 
@@ -56,9 +56,9 @@ function TreeNode({ okr, level, defaultExpanded = true }: TreeNodeProps) {
           )}
         >
           {expanded ? (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
           )}
         </button>
 
@@ -71,7 +71,7 @@ function TreeNode({ okr, level, defaultExpanded = true }: TreeNodeProps) {
           onClick={() => navigate(`/okrs/${okr.id}`)}
         >
           <div className="flex items-center gap-2">
-            <span className="font-medium truncate group-hover:text-primary transition-colors">
+            <span className="font-medium text-sm truncate group-hover:text-primary transition-colors">
               {okr.objectiveText}
             </span>
             {okr.isOrphaned && <OrphanWarning />}
@@ -84,13 +84,14 @@ function TreeNode({ okr, level, defaultExpanded = true }: TreeNodeProps) {
           <ConfidenceBadge 
             confidence={okr.latestCheckIn.confidence}
             label={okr.latestCheckIn.confidenceLabel}
+            size="sm"
           />
         )}
       </div>
 
       {/* Children */}
       {expanded && hasChildren && (
-        <div className="mt-1">
+        <div className="mt-0.5">
           {okr.childOKRs.map(child => (
             <TreeNode 
               key={child.id} 
@@ -108,19 +109,14 @@ function TreeNode({ okr, level, defaultExpanded = true }: TreeNodeProps) {
 export function AlignmentPage() {
   const { 
     currentQuarter,
-    productAreas,
-    domains,
-    teams,
     getOKRsByLevel,
     getOKRsByQuarter
   } = useApp();
 
-  // Build the hierarchy
   const productAreaOKRs = getOKRsByLevel('productArea');
   const domainOKRs = getOKRsByLevel('domain');
   const teamOKRs = getOKRsByLevel('team');
 
-  // Get orphaned OKRs (those without parents)
   const allOKRs = getOKRsByQuarter(currentQuarter);
   const orphanedOKRs = allOKRs.filter(o => o.isOrphaned);
 
@@ -128,58 +124,61 @@ export function AlignmentPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Alignment</h1>
+        <h1 className="page-title">Alignment</h1>
         <p className="helper-text mt-1">
           View how OKRs cascade from Product Area to Domain to Team · {formatQuarter(currentQuarter)}
         </p>
       </div>
 
       {/* Summary */}
-      <div className="flex gap-4">
-        <Badge variant="secondary" className="gap-2">
+      <div className="flex gap-3 flex-wrap">
+        <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
           <Layers className="w-3 h-3" />
           {productAreaOKRs.length} Product Area
         </Badge>
-        <Badge variant="secondary" className="gap-2">
+        <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
           <Building2 className="w-3 h-3" />
           {domainOKRs.length} Domain
         </Badge>
-        <Badge variant="secondary" className="gap-2">
+        <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
           <Users className="w-3 h-3" />
           {teamOKRs.length} Team
         </Badge>
         {orphanedOKRs.length > 0 && (
-          <Badge variant="confidenceMedium" className="gap-2">
+          <Badge variant="confidenceMedium" className="gap-1.5 text-xs font-normal">
             {orphanedOKRs.length} not linked
           </Badge>
         )}
       </div>
 
       {/* Tree View */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">OKR Hierarchy</CardTitle>
+      <Card className="border-border/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium">OKR Hierarchy</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {productAreaOKRs.length === 0 && domainOKRs.length === 0 && teamOKRs.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Target className="w-12 h-12 mx-auto mb-4 opacity-30" />
-              <p>No OKRs found for this quarter</p>
+            <div className="empty-state">
+              <Target className="empty-state-icon" />
+              <p className="empty-state-title">No OKRs for this quarter</p>
+              <p className="empty-state-description">
+                Create OKRs at different levels to see how they align.
+              </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {/* Product Area OKRs at the top */}
+            <div className="space-y-1">
               {productAreaOKRs.map(okr => (
                 <TreeNode key={okr.id} okr={okr} level={0} />
               ))}
 
-              {/* Orphaned OKRs section */}
               {orphanedOKRs.length > 0 && (
-                <div className="mt-8 pt-6 border-t">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center gap-2">
+                <div className="mt-6 pt-5 border-t">
+                  <div className="flex items-center gap-2 mb-3">
                     <OrphanWarning />
-                    <span>OKRs not linked to parent outcomes</span>
-                  </h3>
+                    <span className="text-xs text-muted-foreground">
+                      OKRs not linked to parent outcomes
+                    </span>
+                  </div>
                   {orphanedOKRs.map(okr => (
                     <TreeNode key={okr.id} okr={okr} level={0} />
                   ))}

@@ -13,17 +13,18 @@ export function ProgressBar({
   showLabel = false,
   size = 'default' 
 }: ProgressBarProps) {
+  // Muted, sophisticated color based on progress
   const getColor = () => {
     if (value >= 80) return 'bg-confidence-high';
-    if (value >= 50) return 'bg-confidence-medium';
-    return 'bg-confidence-low';
+    if (value >= 50) return 'bg-muted-foreground/40';
+    return 'bg-muted-foreground/30';
   };
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <div className={cn(
         "progress-bar flex-1",
-        size === 'sm' ? 'h-1.5' : 'h-2'
+        size === 'sm' ? 'h-1' : 'h-1.5'
       )}>
         <div 
           className={cn("progress-bar-fill", getColor())}
@@ -31,7 +32,7 @@ export function ProgressBar({
         />
       </div>
       {showLabel && (
-        <span className="text-sm text-muted-foreground font-medium min-w-[3ch]">
+        <span className="text-xs text-muted-foreground font-medium tabular-nums min-w-[32px] text-right">
           {value}%
         </span>
       )}
