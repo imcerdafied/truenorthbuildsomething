@@ -220,62 +220,25 @@ export function OrganizationSetupPage() {
     setIsSubmitting(true);
 
     try {
-      // 1. Create organization
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .insert({ name: orgName, setup_complete: true })
-        .select()
-        .single();
+      // Call edge function to set up organization (uses service role to bypass RLS)
+      const { data, error } = await supabase.functions.invoke('setup-organization', {
+        body: {
+          orgName,
+          productAreas: productAreas.map(pa => ({
+            name: pa.name,
+            domains: pa.domains.map(d => ({
+              name: d.name,
+              teams: d.teams.map(t => ({
+                name: t.name,
+                pmName: t.pmName || undefined,
+              })),
+            })),
+          })),
+        },
+      });
 
-      if (orgError) throw orgError;
-
-      // 2. Update user profile with organization and assign admin role
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ organization_id: org.id })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // 3. Assign admin role to user
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: user.id, role: 'admin' });
-
-      if (roleError) throw roleError;
-
-      // 4. Create product areas, domains, and teams
-      for (const pa of productAreas) {
-        const { data: paData, error: paError } = await supabase
-          .from('product_areas')
-          .insert({ name: pa.name, organization_id: org.id })
-          .select()
-          .single();
-
-        if (paError) throw paError;
-
-        for (const domain of pa.domains) {
-          const { data: domainData, error: domainError } = await supabase
-            .from('domains')
-            .insert({ name: domain.name, product_area_id: paData.id })
-            .select()
-            .single();
-
-          if (domainError) throw domainError;
-
-          for (const team of domain.teams) {
-            const { error: teamError } = await supabase
-              .from('teams')
-              .insert({
-                name: team.name,
-                domain_id: domainData.id,
-                pm_name: team.pmName || null,
-              });
-
-            if (teamError) throw teamError;
-          }
-        }
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       await refreshProfile();
 
@@ -289,7 +252,7 @@ export function OrganizationSetupPage() {
       console.error('Error creating organization:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create organization. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to create organization. Please try again.',
         variant: 'destructive',
       });
     } finally {
