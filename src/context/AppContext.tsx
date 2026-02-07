@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   ProductArea,
   Domain,
@@ -11,19 +13,11 @@ import {
   OKRWithDetails,
   OKRLevel,
   Quarter,
+  Cadence,
   getConfidenceLabel,
   getTrend,
   getCurrentQuarter
 } from '@/types';
-import {
-  productAreas as seedProductAreas,
-  domains as seedDomains,
-  teams as seedTeams,
-  okrs as seedOKRs,
-  keyResults as seedKeyResults,
-  checkIns as seedCheckIns,
-  jiraLinks as seedJiraLinks
-} from '@/data/seedData';
 
 export interface CreateOKRData {
   level: OKRLevel;
@@ -47,12 +41,14 @@ interface AppState {
   currentQuarter: string;
   selectedTeamId: string;
   currentPM: string;
+  isLoading: boolean;
 }
 
 interface AppContextType extends AppState {
   setViewMode: (mode: ViewMode) => void;
   setCurrentQuarter: (quarter: string) => void;
   setSelectedTeamId: (teamId: string) => void;
+  refreshData: () => Promise<void>;
   
   // OKR operations
   getOKRWithDetails: (okrId: string) => OKRWithDetails | null;
@@ -89,19 +85,93 @@ interface AppContextType extends AppState {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { organization, profile } = useAuth();
+  
   const [state, setState] = useState<AppState>({
-    productAreas: seedProductAreas,
-    domains: seedDomains,
-    teams: seedTeams,
-    okrs: seedOKRs,
-    keyResults: seedKeyResults,
-    checkIns: seedCheckIns,
-    jiraLinks: seedJiraLinks,
+    productAreas: [],
+    domains: [],
+    teams: [],
+    okrs: [],
+    keyResults: [],
+    checkIns: [],
+    jiraLinks: [],
     viewMode: 'team',
     currentQuarter: getCurrentQuarter(),
-    selectedTeamId: 't-1', // Default to Booking Experience team
-    currentPM: 'Sarah Chen' // Default PM for prototype
+    selectedTeamId: '',
+    currentPM: '',
+    isLoading: true
   });
+
+  // Fetch organization structure from database
+  const refreshData = useCallback(async () => {
+    if (!organization?.id) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      return;
+    }
+
+    try {
+      // Fetch product areas
+      const { data: paData } = await supabase
+        .from('product_areas')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .order('name');
+
+      const productAreas: ProductArea[] = (paData || []).map(pa => ({
+        id: pa.id,
+        name: pa.name
+      }));
+
+      // Fetch domains
+      const { data: domainData } = await supabase
+        .from('domains')
+        .select('*')
+        .in('product_area_id', productAreas.map(pa => pa.id))
+        .order('name');
+
+      const domains: Domain[] = (domainData || []).map(d => ({
+        id: d.id,
+        name: d.name,
+        productAreaId: d.product_area_id
+      }));
+
+      // Fetch teams
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('*')
+        .in('domain_id', domains.map(d => d.id))
+        .order('name');
+
+      const teams: Team[] = (teamData || []).map(t => ({
+        id: t.id,
+        name: t.name,
+        domainId: t.domain_id,
+        pmName: t.pm_name || '',
+        cadence: (t.cadence || 'biweekly') as Cadence
+      }));
+
+      // Set default selected team
+      const firstTeamId = teams.length > 0 ? teams[0].id : '';
+
+      setState(prev => ({
+        ...prev,
+        productAreas,
+        domains,
+        teams,
+        selectedTeamId: prev.selectedTeamId || firstTeamId,
+        currentPM: profile?.full_name || '',
+        isLoading: false
+      }));
+    } catch (error) {
+      console.error('Error fetching organization data:', error);
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  }, [organization?.id, profile?.full_name]);
+
+  // Fetch data when organization changes
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   const setViewMode = useCallback((mode: ViewMode) => {
     setState(prev => ({ ...prev, viewMode: mode }));
@@ -130,8 +200,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (okr.level === 'team') {
       return isCurrentUserPM(okr.ownerId);
     }
-    // For domain and product area OKRs, allow if user is PM of any team in that domain
-    return true; // Simplified for prototype
+    return true;
   }, [state.okrs, isCurrentUserPM]);
 
   const getOKRWithDetails = useCallback((okrId: string): OKRWithDetails | null => {
@@ -147,7 +216,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const latestCheckIn = okrCheckIns[0];
     const previousCheckIn = okrCheckIns[1];
 
-    // Get owner name
     let ownerName = '';
     if (okr.level === 'team') {
       ownerName = state.teams.find(t => t.id === okr.ownerId)?.name || '';
@@ -157,10 +225,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ownerName = state.productAreas.find(pa => pa.id === okr.ownerId)?.name || '';
     }
 
-    // Check if orphaned (no parent and not a product area level)
     const isOrphaned = okr.level !== 'productArea' && !okr.parentOkrId;
 
-    // Get child OKRs
     const childOKRs = state.okrs
       .filter(o => o.parentOkrId === okrId)
       .map(childOkr => getOKRWithDetails(childOkr.id))
@@ -275,14 +341,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rolledOverFrom: okr.id
     };
 
-    // Also rollover key results
     const newKRs = state.keyResults
       .filter(kr => kr.okrId === okrId)
       .map(kr => ({
         ...kr,
         id: `kr-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         okrId: newOKR.id,
-        currentValue: kr.currentValue // Preserve current progress
+        currentValue: kr.currentValue
       }));
 
     setState(prev => ({
@@ -309,7 +374,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       parentOkrId: data.parentOkrId || undefined
     };
 
-    // Create key results
     const newKRs: KeyResult[] = data.keyResults
       .filter(kr => kr.metricName.trim())
       .map((kr, index) => ({
@@ -320,7 +384,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         currentValue: kr.baseline ? parseFloat(kr.baseline.replace(/[^0-9.]/g, '')) || 0 : 0
       }));
 
-    // Create initial check-in with confidence
     const initialCheckIn: CheckIn = {
       id: `ci-${Date.now()}`,
       okrId: newOkrId,
@@ -379,6 +442,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setViewMode,
     setCurrentQuarter,
     setSelectedTeamId,
+    refreshData,
     getOKRWithDetails,
     getOKRsByLevel,
     getOKRsByQuarter,

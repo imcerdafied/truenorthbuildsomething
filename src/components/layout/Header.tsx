@@ -62,15 +62,15 @@ export function Header() {
         </Select>
 
         {/* Team Selector (visible in team view) */}
-        {viewMode === 'team' && (
+        {viewMode === 'team' && teams.length > 0 && (
           <div className="flex flex-col">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
-                    <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                    <Select value={selectedTeamId || teams[0]?.id} onValueChange={setSelectedTeamId}>
                       <SelectTrigger className="w-44 bg-background h-8 text-sm">
-                        <SelectValue />
+                        <SelectValue placeholder="Select team" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover">
                         {teams.map(team => (
