@@ -1,6 +1,8 @@
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -9,7 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users } from 'lucide-react';
+import { Calendar, Users, LogOut } from 'lucide-react';
+import { OrganizationStructure } from '@/components/settings/OrganizationStructure';
 
 export function SettingsPage() {
   const { 
@@ -19,16 +22,22 @@ export function SettingsPage() {
     updateTeamCadence,
     currentPM 
   } = useApp();
+  
+  const { user, profile, role, signOut, organization } = useAuth();
 
   const currentTeam = getTeam(selectedTeamId);
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in max-w-xl">
+    <div className="space-y-6 animate-fade-in max-w-2xl">
       {/* Header */}
       <div>
         <h1 className="page-title">Settings</h1>
         <p className="helper-text mt-1">
-          Manage team preferences and check-in cadence
+          Manage your account, team preferences, and organization structure
         </p>
       </div>
 
@@ -37,22 +46,31 @@ export function SettingsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <Users className="w-4 h-4 text-muted-foreground" />
-            Current User
+            Your Account
           </CardTitle>
           <CardDescription className="text-xs">
-            You are logged in as the PM for prototype purposes
+            {organization?.name ? `Member of ${organization.name}` : 'Your account details'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-sm">{currentPM}</p>
-              <p className="text-xs text-muted-foreground">Product Manager</p>
+              <p className="font-medium text-sm">{profile?.full_name || user?.email}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
-            <Badge variant="secondary" className="text-xs">PM Role</Badge>
+            <Badge variant="secondary" className="text-xs capitalize">
+              {role || 'Member'}
+            </Badge>
           </div>
+          <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2">
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </Button>
         </CardContent>
       </Card>
+
+      {/* Organization Structure */}
+      <OrganizationStructure />
 
       {/* Team Settings */}
       <Card className="border-border/60">
