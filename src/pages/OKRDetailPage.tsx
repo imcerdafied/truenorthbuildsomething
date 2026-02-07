@@ -5,6 +5,7 @@ import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
 import { ConfidenceSparkline } from '@/components/shared/ConfidenceSparkline';
+import { RolloverDialog } from '@/components/okr/RolloverDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ import {
   GitBranch
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export function OKRDetailPage() {
   const { okrId } = useParams<{ okrId: string }>();
@@ -57,6 +59,7 @@ export function OKRDetailPage() {
 
   const [jiraInput, setJiraInput] = useState('');
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isRolloverDialogOpen, setIsRolloverDialogOpen] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string>('');
 
   const okr = okrId ? getOKRWithDetails(okrId) : null;
@@ -98,8 +101,14 @@ export function OKRDetailPage() {
     }
   };
 
-  const handleRollover = () => {
-    rolloverOKR(okr.id);
+  const handleRollover = (option: 'continue' | 'revise' | 'retire', notes?: string) => {
+    if (option === 'retire') {
+      // In a real app, this would mark the OKR as retired
+      toast.success('OKR retired. History preserved.');
+    } else {
+      rolloverOKR(okr.id);
+      toast.success(`OKR rolled over to next quarter. Confidence signal reset.`);
+    }
   };
 
   const handleLinkToParent = () => {
@@ -186,12 +195,20 @@ export function OKRDetailPage() {
               <Plus className="w-3.5 h-3.5" />
               Add Check-in
             </Button>
-            <Button variant="outline" size="sm" onClick={handleRollover} className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsRolloverDialogOpen(true)} className="gap-2">
               <RefreshCcw className="w-3.5 h-3.5" />
               Roll over
             </Button>
           </div>
         )}
+
+        {/* Rollover Dialog */}
+        <RolloverDialog
+          okr={okr}
+          open={isRolloverDialogOpen}
+          onOpenChange={setIsRolloverDialogOpen}
+          onRollover={handleRollover}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

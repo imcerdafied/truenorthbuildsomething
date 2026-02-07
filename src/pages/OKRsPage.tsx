@@ -6,6 +6,7 @@ import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatQuarter, OKRLevel } from '@/types';
-import { Target, Building2, Users, Layers } from 'lucide-react';
+import { Target, Building2, Users, Layers, Plus } from 'lucide-react';
 
 type StatusFilter = 'all' | 'at-risk' | 'on-track';
 
@@ -62,11 +63,17 @@ export function OKRsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div>
-        <h1 className="page-title">OKRs</h1>
-        <p className="helper-text mt-1">
-          View and manage OKRs across all levels · {formatQuarter(currentQuarter)}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="page-title">OKRs</h1>
+          <p className="helper-text mt-1">
+            View and manage OKRs across all levels · {formatQuarter(currentQuarter)}
+          </p>
+        </div>
+        <Button onClick={() => navigate('/okrs/create')} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Create OKR
+        </Button>
       </div>
 
       {/* Filters */}
