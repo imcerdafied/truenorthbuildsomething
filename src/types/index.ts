@@ -30,6 +30,8 @@ export interface KeyResult {
   text: string;
   targetValue: number;
   currentValue: number;
+  needsAttention?: boolean;
+  attentionReason?: string;
 }
 
 export interface CheckIn {

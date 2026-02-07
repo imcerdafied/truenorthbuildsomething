@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -25,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatQuarter, OKRLevel } from '@/types';
+import { formatQuarter, OKRLevel, KeyResult } from '@/types';
 import { 
   ArrowLeft, 
   Target, 
@@ -38,7 +41,8 @@ import {
   RefreshCcw,
   Calendar,
   X,
-  GitBranch
+  GitBranch,
+  AlertTriangle
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -264,6 +268,7 @@ export function OKRDetailPage() {
           <Card className="border-border/60">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-medium">Key Results</CardTitle>
+              <p className="helper-text">Track progress and flag items needing attention</p>
             </CardHeader>
             <CardContent className="pt-0">
               {okr.keyResults.length === 0 ? (
@@ -275,17 +280,13 @@ export function OKRDetailPage() {
                       ? Math.round((kr.currentValue / kr.targetValue) * 100) 
                       : 0;
                     return (
-                      <div key={kr.id} className="border border-border/60 rounded-lg p-4">
-                        <p className="text-sm font-medium mb-3">
-                          <span className="text-muted-foreground">KR{index + 1}:</span> {kr.text}
-                        </p>
-                        <div className="flex items-center gap-4">
-                          <ProgressBar value={progress} className="flex-1" />
-                          <span className="text-xs text-muted-foreground tabular-nums min-w-[80px] text-right">
-                            {kr.currentValue} / {kr.targetValue}
-                          </span>
-                        </div>
-                      </div>
+                      <KeyResultCard 
+                        key={kr.id}
+                        kr={kr}
+                        index={index}
+                        progress={progress}
+                        canEdit={canEdit}
+                      />
                     );
                   })}
                 </div>
@@ -451,6 +452,125 @@ export function OKRDetailPage() {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+// KeyResultCard component with Needs Attention signal
+interface KeyResultCardProps {
+  kr: KeyResult;
+  index: number;
+  progress: number;
+  canEdit: boolean;
+}
+
+function KeyResultCard({ kr, index, progress, canEdit }: KeyResultCardProps) {
+  const [needsAttention, setNeedsAttention] = useState(kr.needsAttention || false);
+  const [attentionReason, setAttentionReason] = useState(kr.attentionReason || '');
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleToggleAttention = () => {
+    const newValue = !needsAttention;
+    setNeedsAttention(newValue);
+    if (!newValue) {
+      setAttentionReason('');
+    } else {
+      setIsEditing(true);
+    }
+    // In a real app, this would persist to the database
+    toast.success(newValue ? 'Flagged as needing attention' : 'Attention flag removed');
+  };
+
+  const handleSaveReason = () => {
+    setIsEditing(false);
+    // In a real app, this would persist to the database
+    if (attentionReason.trim()) {
+      toast.success('Reason saved');
+    }
+  };
+
+  return (
+    <div className={`border rounded-lg p-4 transition-colors ${
+      needsAttention ? 'border-confidence-medium/50 bg-confidence-medium-bg/20' : 'border-border/60'
+    }`}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-start gap-2 flex-1">
+          {needsAttention && (
+            <AlertTriangle className="w-4 h-4 text-confidence-medium shrink-0 mt-0.5" />
+          )}
+          <p className="text-sm font-medium">
+            <span className="text-muted-foreground">KR{index + 1}:</span> {kr.text}
+          </p>
+        </div>
+        
+        {canEdit && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Label htmlFor={`attention-${kr.id}`} className="text-xs text-muted-foreground cursor-pointer">
+              Needs attention
+            </Label>
+            <Switch
+              id={`attention-${kr.id}`}
+              checked={needsAttention}
+              onCheckedChange={handleToggleAttention}
+              className="data-[state=checked]:bg-confidence-medium"
+            />
+          </div>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-4">
+        <ProgressBar value={progress} className="flex-1" />
+        <span className="text-xs text-muted-foreground tabular-nums min-w-[80px] text-right">
+          {kr.currentValue} / {kr.targetValue}
+        </span>
+      </div>
+      
+      {/* Attention reason input */}
+      {needsAttention && canEdit && (
+        <div className="mt-3 pt-3 border-t border-border/40">
+          {isEditing ? (
+            <div className="space-y-2">
+              <Textarea
+                placeholder="What's blocking this? (optional)"
+                value={attentionReason}
+                onChange={(e) => setAttentionReason(e.target.value)}
+                className="bg-background resize-none text-sm min-h-[60px]"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSaveReason}
+                className="h-7 text-xs"
+              >
+                Save
+              </Button>
+            </div>
+          ) : attentionReason ? (
+            <p 
+              className="text-sm text-muted-foreground italic cursor-pointer hover:text-foreground"
+              onClick={() => setIsEditing(true)}
+            >
+              "{attentionReason}"
+            </p>
+          ) : (
+            <button 
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+              onClick={() => setIsEditing(true)}
+            >
+              Add reason (optional)
+            </button>
+          )}
+        </div>
+      )}
+      
+      {/* Show reason in read-only mode */}
+      {needsAttention && !canEdit && attentionReason && (
+        <div className="mt-3 pt-3 border-t border-border/40">
+          <p className="text-sm text-muted-foreground italic">
+            "{attentionReason}"
+          </p>
+        </div>
+      )}
     </div>
   );
 }

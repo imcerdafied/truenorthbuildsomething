@@ -5,6 +5,7 @@ import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
+import { TeamWeeklyView } from '@/components/views/TeamWeeklyView';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,9 +16,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatQuarter, OKRLevel } from '@/types';
-import { Target, Building2, Users, Layers, Plus } from 'lucide-react';
+import { Target, Building2, Users, Layers, Plus, Calendar } from 'lucide-react';
 
 type StatusFilter = 'all' | 'at-risk' | 'on-track';
+type ViewTab = 'list' | 'weekly';
 
 export function OKRsPage() {
   const navigate = useNavigate();
@@ -27,13 +29,16 @@ export function OKRsPage() {
     domains, 
     productAreas,
     getOKRsByQuarter,
-    viewMode
+    viewMode,
+    selectedTeamId,
+    getTeamOKRs
   } = useApp();
 
   // In exec view, users can create OKRs; in team view, only PMs can
   // For this prototype, we allow creation in both modes
   const canCreateOKR = true;
 
+  const [viewTab, setViewTab] = useState<ViewTab>('list');
   const [levelFilter, setLevelFilter] = useState<OKRLevel | 'all'>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -42,6 +47,10 @@ export function OKRsPage() {
   const allOKRs = useMemo(() => {
     return getOKRsByQuarter(currentQuarter);
   }, [currentQuarter, getOKRsByQuarter]);
+
+  // Check if current team has OKRs for weekly view
+  const teamOKRs = getTeamOKRs(selectedTeamId);
+  const hasTeamOKRs = teamOKRs.length > 0;
 
   // Apply filters
   const filteredOKRs = useMemo(() => {
@@ -65,22 +74,52 @@ export function OKRsPage() {
     }
   };
 
+  // If viewing weekly tab in team mode, show TeamWeeklyView
+  if (viewTab === 'weekly' && viewMode === 'team') {
+    return <TeamWeeklyView onBack={() => setViewTab('list')} />;
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="page-title">OKRs</h1>
           <p className="helper-text mt-1">
             View and manage OKRs across all levels · {formatQuarter(currentQuarter)}
           </p>
         </div>
-        {canCreateOKR && (
-          <Button onClick={() => navigate('/okrs/create')} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Create OKR
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* View Toggle - only in team mode */}
+          {viewMode === 'team' && hasTeamOKRs && (
+            <div className="flex items-center bg-muted rounded-md p-0.5">
+              <Button
+                variant={viewTab === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewTab('list')}
+                className="gap-1.5 h-7 px-3 text-xs"
+              >
+                <Target className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">All OKRs</span>
+              </Button>
+              <Button
+                variant={viewTab === 'weekly' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewTab('weekly')}
+                className="gap-1.5 h-7 px-3 text-xs"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Team Weekly</span>
+              </Button>
+            </div>
+          )}
+          {canCreateOKR && (
+            <Button onClick={() => navigate('/okrs/create')} className="gap-2">
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Create OKR</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
