@@ -196,27 +196,30 @@ export function CreateOKRPage() {
     }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (draft.level === '') return;
-    
-    const newOkrId = createOKR({
-      level: draft.level as OKRLevel,
-      ownerId: draft.ownerId,
-      quarter: draft.quarter,
-      objectiveText: draft.objectiveText,
-      keyResults: draft.keyResults
-        .filter(kr => kr.metricName.trim())
-        .map(kr => ({
-          metricName: kr.metricName,
-          baseline: kr.baseline || undefined,
-          target: kr.target
-        })),
-      parentOkrId: draft.parentOkrId || undefined,
-      initialConfidence: draft.confidence
-    });
-    
-    toast.success('OKR created. Confidence signal established.');
-    navigate(`/okrs/${newOkrId}`);
+    try {
+      const newOkrId = await createOKR({
+        level: draft.level as OKRLevel,
+        ownerId: draft.ownerId,
+        quarter: draft.quarter,
+        objectiveText: draft.objectiveText,
+        keyResults: draft.keyResults
+          .filter(kr => kr.metricName.trim())
+          .map(kr => ({
+            metricName: kr.metricName,
+            baseline: kr.baseline || undefined,
+            target: kr.target
+          })),
+        parentOkrId: draft.parentOkrId || undefined,
+        initialConfidence: draft.confidence
+      });
+      toast.success('OKR created. Confidence signal established.');
+      navigate(`/okrs/${newOkrId}`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to create OKR. Please try again.');
+    }
   };
 
   const renderStep = () => {
