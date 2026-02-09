@@ -7,13 +7,64 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
+      check_ins: {
+        Row: {
+          id: string
+          okr_id: string
+          date: string
+          cadence: Database["public"]["Enums"]["cadence_type"]
+          progress: number
+          confidence: number
+          confidence_label: Database["public"]["Enums"]["confidence_label"]
+          reason_for_change: string | null
+          optional_note: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          okr_id: string
+          date?: string
+          cadence?: Database["public"]["Enums"]["cadence_type"]
+          progress?: number
+          confidence?: number
+          confidence_label?: Database["public"]["Enums"]["confidence_label"]
+          reason_for_change?: string | null
+          optional_note?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          okr_id?: string
+          date?: string
+          cadence?: Database["public"]["Enums"]["cadence_type"]
+          progress?: number
+          confidence?: number
+          confidence_label?: Database["public"]["Enums"]["confidence_label"]
+          reason_for_change?: string | null
+          optional_note?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domains: {
         Row: {
           created_at: string
@@ -42,6 +93,188 @@ export type Database = {
             columns: ["product_area_id"]
             isOneToOne: false
             referencedRelation: "product_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jira_links: {
+        Row: {
+          id: string
+          okr_id: string
+          epic_identifier_or_url: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          okr_id: string
+          epic_identifier_or_url: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          okr_id?: string
+          epic_identifier_or_url?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_links_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      key_results: {
+        Row: {
+          id: string
+          okr_id: string
+          text: string
+          target_value: number
+          current_value: number
+          needs_attention: boolean
+          attention_reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          okr_id: string
+          text: string
+          target_value?: number
+          current_value?: number
+          needs_attention?: boolean
+          attention_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          okr_id?: string
+          text?: string
+          target_value?: number
+          current_value?: number
+          needs_attention?: boolean
+          attention_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_results_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      okr_links: {
+        Row: {
+          id: string
+          parent_okr_id: string
+          child_okr_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          parent_okr_id: string
+          child_okr_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          parent_okr_id?: string
+          child_okr_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_links_parent_okr_id_fkey"
+            columns: ["parent_okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_links_child_okr_id_fkey"
+            columns: ["child_okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      okrs: {
+        Row: {
+          id: string
+          organization_id: string
+          level: Database["public"]["Enums"]["okr_level"]
+          owner_id: string
+          quarter: string
+          year: number
+          quarter_num: Database["public"]["Enums"]["quarter_label"]
+          objective_text: string
+          parent_okr_id: string | null
+          is_rolled_over: boolean
+          rolled_over_from: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          level: Database["public"]["Enums"]["okr_level"]
+          owner_id: string
+          quarter: string
+          year: number
+          quarter_num: Database["public"]["Enums"]["quarter_label"]
+          objective_text: string
+          parent_okr_id?: string | null
+          is_rolled_over?: boolean
+          rolled_over_from?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          level?: Database["public"]["Enums"]["okr_level"]
+          owner_id?: string
+          quarter?: string
+          year?: number
+          quarter_num?: Database["public"]["Enums"]["quarter_label"]
+          objective_text?: string
+          parent_okr_id?: string | null
+          is_rolled_over?: boolean
+          rolled_over_from?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okrs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okrs_parent_okr_id_fkey"
+            columns: ["parent_okr_id"]
+            isOneToOne: false
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okrs_rolled_over_from_fkey"
+            columns: ["rolled_over_from"]
+            isOneToOne: false
+            referencedRelation: "okrs"
             referencedColumns: ["id"]
           },
         ]
@@ -198,6 +431,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_okr_organization_id: { Args: { _okr_id: string }; Returns: string }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -210,6 +444,10 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member"
+      cadence_type: "weekly" | "biweekly"
+      confidence_label: "High" | "Medium" | "Low"
+      okr_level: "productArea" | "domain" | "team"
+      quarter_label: "Q1" | "Q2" | "Q3" | "Q4"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -338,6 +576,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member"],
+      cadence_type: ["weekly", "biweekly"],
+      confidence_label: ["High", "Medium", "Low"],
+      okr_level: ["productArea", "domain", "team"],
+      quarter_label: ["Q1", "Q2", "Q3", "Q4"],
     },
   },
 } as const

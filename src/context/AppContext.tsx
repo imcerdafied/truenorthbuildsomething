@@ -58,22 +58,22 @@ interface AppContextType extends AppState {
   getOKRsByLevel: (level: OKR['level'], ownerId?: string) => OKRWithDetails[];
   getOKRsByQuarter: (quarter: string) => OKRWithDetails[];
   getTeamOKRs: (teamId: string) => OKRWithDetails[];
-  createOKR: (data: CreateOKRData) => string;
+  createOKR: (data: CreateOKRData) => Promise<string>;
   
   // Check-in operations
-  addCheckIn: (checkIn: Omit<CheckIn, 'id' | 'confidenceLabel'>) => void;
+  addCheckIn: (checkIn: Omit<CheckIn, 'id' | 'confidenceLabel'>) => Promise<void>;
   
   // Team operations
   getTeam: (teamId: string) => Team | undefined;
-  updateTeamCadence: (teamId: string, cadence: 'weekly' | 'biweekly') => void;
+  updateTeamCadence: (teamId: string, cadence: 'weekly' | 'biweekly') => Promise<void>;
   
   // Linking operations
-  addOKRLink: (parentOkrId: string, childOkrId: string) => void;
-  addJiraLink: (okrId: string, epicIdentifierOrUrl: string) => void;
-  removeJiraLink: (linkId: string) => void;
+  addOKRLink: (parentOkrId: string, childOkrId: string) => Promise<void>;
+  addJiraLink: (okrId: string, epicIdentifierOrUrl: string) => Promise<void>;
+  removeJiraLink: (linkId: string) => Promise<void>;
   
   // Rollover operations
-  rolloverOKR: (okrId: string) => void;
+  rolloverOKR: (okrId: string) => Promise<void>;
   
   // Aggregations
   getOverallConfidence: (okrIds: string[]) => number;
@@ -89,11 +89,10 @@ interface AppContextType extends AppState {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { organization, profile } = useAuth();
+  const { organization, profile, user } = useAuth();
   const isDemoMode = checkDemoMode();
   
   const [state, setState] = useState<AppState>(() => {
-    // Initialize with demo data if in demo mode
     if (isDemoMode) {
       return {
         productAreas: seedData.productAreas,
@@ -129,12 +128,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   });
 
-  // Fetch organization structure from database
+  // ── Fetch ALL data from Supabase ──────────────────────────────────────
   const refreshData = useCallback(async () => {
-    // Skip fetching if in demo mode
-    if (isDemoMode) {
-      return;
-    }
+    if (isDemoMode) return;
     
     if (!organization?.id) {
       setState(prev => ({ ...prev, isLoading: false }));
@@ -142,7 +138,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      // Fetch product areas
+      // Fetch org structure
       const { data: paData } = await supabase
         .from('product_areas')
         .select('*')
@@ -154,7 +150,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         name: pa.name
       }));
 
-      // Fetch domains
       const { data: domainData } = await supabase
         .from('domains')
         .select('*')
@@ -167,7 +162,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         productAreaId: d.product_area_id
       }));
 
-      // Fetch teams
       const { data: teamData } = await supabase
         .from('teams')
         .select('*')
@@ -182,7 +176,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
         cadence: (t.cadence || 'biweekly') as Cadence
       }));
 
-      // Set default selected team
+      // Fetch OKR data
+      const { data: okrData } = await supabase
+        .from('okrs')
+        .select('*')
+        .eq('organization_id', organization.id);
+
+      const okrs: OKR[] = (okrData || []).map(o => ({
+        id: o.id,
+        level: o.level as OKRLevel,
+        ownerId: o.owner_id,
+        quarter: o.quarter,
+        year: o.year,
+        quarterNum: o.quarter_num as Quarter,
+        objectiveText: o.objective_text,
+        parentOkrId: o.parent_okr_id || undefined,
+        isRolledOver: o.is_rolled_over,
+        rolledOverFrom: o.rolled_over_from || undefined
+      }));
+
+      const okrIds = okrs.map(o => o.id);
+
+      // Only fetch child data if we have OKRs
+      let keyResults: KeyResult[] = [];
+      let checkIns: CheckIn[] = [];
+      let jiraLinks: JiraLink[] = [];
+
+      if (okrIds.length > 0) {
+        const { data: krData } = await supabase
+          .from('key_results')
+          .select('*')
+          .in('okr_id', okrIds);
+
+        keyResults = (krData || []).map(kr => ({
+          id: kr.id,
+          okrId: kr.okr_id,
+          text: kr.text,
+          targetValue: Number(kr.target_value),
+          currentValue: Number(kr.current_value),
+          needsAttention: kr.needs_attention,
+          attentionReason: kr.attention_reason || undefined
+        }));
+
+        const { data: ciData } = await supabase
+          .from('check_ins')
+          .select('*')
+          .in('okr_id', okrIds)
+          .order('date', { ascending: false });
+
+        checkIns = (ciData || []).map(ci => ({
+          id: ci.id,
+          okrId: ci.okr_id,
+          date: ci.date,
+          cadence: ci.cadence as Cadence,
+          progress: ci.progress,
+          confidence: ci.confidence,
+          confidenceLabel: ci.confidence_label as CheckIn['confidenceLabel'],
+          reasonForChange: ci.reason_for_change || undefined,
+          optionalNote: ci.optional_note || undefined
+        }));
+
+        const { data: jlData } = await supabase
+          .from('jira_links')
+          .select('*')
+          .in('okr_id', okrIds);
+
+        jiraLinks = (jlData || []).map(jl => ({
+          id: jl.id,
+          okrId: jl.okr_id,
+          epicIdentifierOrUrl: jl.epic_identifier_or_url
+        }));
+      }
+
       const firstTeamId = teams.length > 0 ? teams[0].id : '';
 
       setState(prev => ({
@@ -190,6 +255,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         productAreas,
         domains,
         teams,
+        okrs,
+        keyResults,
+        checkIns,
+        jiraLinks,
         selectedTeamId: prev.selectedTeamId || firstTeamId,
         currentPM: profile?.full_name || '',
         isLoading: false,
@@ -201,10 +270,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [organization?.id, profile?.full_name, isDemoMode]);
 
-  // Fetch data when organization changes
   useEffect(() => {
     refreshData();
   }, [refreshData]);
+
+  // ── Simple setters ────────────────────────────────────────────────────
 
   const setViewMode = useCallback((mode: ViewMode) => {
     setState(prev => ({ ...prev, viewMode: mode }));
@@ -235,6 +305,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     return true;
   }, [state.okrs, isCurrentUserPM]);
+
+  // ── Read helpers (computed from local state) ──────────────────────────
 
   const getOKRWithDetails = useCallback((okrId: string): OKRWithDetails | null => {
     const okr = state.okrs.find(o => o.id === okrId);
@@ -300,52 +372,256 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .filter(Boolean) as OKRWithDetails[];
   }, [state.okrs, state.currentQuarter, getOKRWithDetails]);
 
-  const addCheckIn = useCallback((checkIn: Omit<CheckIn, 'id' | 'confidenceLabel'>) => {
-    const newCheckIn: CheckIn = {
-      ...checkIn,
-      id: `ci-${Date.now()}`,
-      confidenceLabel: getConfidenceLabel(checkIn.confidence)
-    };
-    setState(prev => ({
-      ...prev,
-      checkIns: [...prev.checkIns, newCheckIn]
-    }));
-  }, []);
+  // ── Mutations (write to Supabase, then refresh) ───────────────────────
 
-  const updateTeamCadence = useCallback((teamId: string, cadence: 'weekly' | 'biweekly') => {
-    setState(prev => ({
-      ...prev,
-      teams: prev.teams.map(t => t.id === teamId ? { ...t, cadence } : t)
-    }));
-  }, []);
+  const createOKR = useCallback(async (data: CreateOKRData): Promise<string> => {
+    // Demo mode: in-memory only
+    if (isDemoMode) {
+      const [year, q] = data.quarter.split('-');
+      const newOkrId = `okr-${Date.now()}`;
+      const newOKR: OKR = {
+        id: newOkrId,
+        level: data.level,
+        ownerId: data.ownerId,
+        quarter: data.quarter,
+        year: parseInt(year),
+        quarterNum: q as Quarter,
+        objectiveText: data.objectiveText,
+        parentOkrId: data.parentOkrId || undefined
+      };
+      const newKRs: KeyResult[] = data.keyResults
+        .filter(kr => kr.metricName.trim())
+        .map((kr, index) => ({
+          id: `kr-${Date.now()}-${index}`,
+          okrId: newOkrId,
+          text: `${kr.metricName}${kr.baseline ? ` from ${kr.baseline}` : ''} to ${kr.target}`,
+          targetValue: parseFloat(kr.target.replace(/[^0-9.]/g, '')) || 100,
+          currentValue: kr.baseline ? parseFloat(kr.baseline.replace(/[^0-9.]/g, '')) || 0 : 0
+        }));
+      const initialCheckIn: CheckIn = {
+        id: `ci-${Date.now()}`,
+        okrId: newOkrId,
+        date: new Date().toISOString().split('T')[0],
+        cadence: 'biweekly',
+        progress: 0,
+        confidence: data.initialConfidence,
+        confidenceLabel: getConfidenceLabel(data.initialConfidence),
+        optionalNote: 'Initial confidence established at OKR creation.'
+      };
+      setState(prev => ({
+        ...prev,
+        okrs: [...prev.okrs, newOKR],
+        keyResults: [...prev.keyResults, ...newKRs],
+        checkIns: [...prev.checkIns, initialCheckIn]
+      }));
+      return newOkrId;
+    }
 
-  const addOKRLink = useCallback((parentOkrId: string, childOkrId: string) => {
-    setState(prev => ({
-      ...prev,
-      okrs: prev.okrs.map(o => o.id === childOkrId ? { ...o, parentOkrId } : o)
-    }));
-  }, []);
+    // Real mode: persist to Supabase
+    const [year, q] = data.quarter.split('-');
 
-  const addJiraLink = useCallback((okrId: string, epicIdentifierOrUrl: string) => {
-    const newLink: JiraLink = {
-      id: `jl-${Date.now()}`,
-      okrId,
-      epicIdentifierOrUrl
-    };
-    setState(prev => ({
-      ...prev,
-      jiraLinks: [...prev.jiraLinks, newLink]
-    }));
-  }, []);
+    const { data: okrRow, error: okrError } = await supabase
+      .from('okrs')
+      .insert({
+        organization_id: organization!.id,
+        level: data.level,
+        owner_id: data.ownerId,
+        quarter: data.quarter,
+        year: parseInt(year),
+        quarter_num: q as Quarter,
+        objective_text: data.objectiveText,
+        parent_okr_id: data.parentOkrId || null,
+        created_by: user?.id || null
+      })
+      .select()
+      .single();
 
-  const removeJiraLink = useCallback((linkId: string) => {
-    setState(prev => ({
-      ...prev,
-      jiraLinks: prev.jiraLinks.filter(jl => jl.id !== linkId)
-    }));
-  }, []);
+    if (okrError) {
+      console.error('Error creating OKR:', okrError);
+      throw okrError;
+    }
 
-  const rolloverOKR = useCallback((okrId: string) => {
+    const newOkrId = okrRow.id;
+
+    // Insert key results
+    const krInserts = data.keyResults
+      .filter(kr => kr.metricName.trim())
+      .map(kr => ({
+        okr_id: newOkrId,
+        text: `${kr.metricName}${kr.baseline ? ` from ${kr.baseline}` : ''} to ${kr.target}`,
+        target_value: parseFloat(kr.target.replace(/[^0-9.]/g, '')) || 100,
+        current_value: kr.baseline ? parseFloat(kr.baseline.replace(/[^0-9.]/g, '')) || 0 : 0
+      }));
+
+    if (krInserts.length > 0) {
+      const { error: krError } = await supabase
+        .from('key_results')
+        .insert(krInserts);
+      if (krError) console.error('Error creating key results:', krError);
+    }
+
+    // Insert initial check-in
+    const { error: ciError } = await supabase
+      .from('check_ins')
+      .insert({
+        okr_id: newOkrId,
+        date: new Date().toISOString().split('T')[0],
+        cadence: 'biweekly',
+        progress: 0,
+        confidence: data.initialConfidence,
+        confidence_label: getConfidenceLabel(data.initialConfidence),
+        optional_note: 'Initial confidence established at OKR creation.',
+        created_by: user?.id || null
+      });
+    if (ciError) console.error('Error creating initial check-in:', ciError);
+
+    await refreshData();
+    return newOkrId;
+  }, [isDemoMode, organization, user, refreshData]);
+
+  const addCheckIn = useCallback(async (checkIn: Omit<CheckIn, 'id' | 'confidenceLabel'>) => {
+    if (isDemoMode) {
+      const newCheckIn: CheckIn = {
+        ...checkIn,
+        id: `ci-${Date.now()}`,
+        confidenceLabel: getConfidenceLabel(checkIn.confidence)
+      };
+      setState(prev => ({
+        ...prev,
+        checkIns: [...prev.checkIns, newCheckIn]
+      }));
+      return;
+    }
+
+    const { error } = await supabase
+      .from('check_ins')
+      .insert({
+        okr_id: checkIn.okrId,
+        date: checkIn.date,
+        cadence: checkIn.cadence,
+        progress: checkIn.progress,
+        confidence: checkIn.confidence,
+        confidence_label: getConfidenceLabel(checkIn.confidence),
+        reason_for_change: checkIn.reasonForChange || null,
+        optional_note: checkIn.optionalNote || null,
+        created_by: user?.id || null
+      });
+
+    if (error) {
+      console.error('Error adding check-in:', error);
+      throw error;
+    }
+
+    await refreshData();
+  }, [isDemoMode, user, refreshData]);
+
+  const updateTeamCadence = useCallback(async (teamId: string, cadence: 'weekly' | 'biweekly') => {
+    if (isDemoMode) {
+      setState(prev => ({
+        ...prev,
+        teams: prev.teams.map(t => t.id === teamId ? { ...t, cadence } : t)
+      }));
+      return;
+    }
+
+    const { error } = await supabase
+      .from('teams')
+      .update({ cadence })
+      .eq('id', teamId);
+
+    if (error) {
+      console.error('Error updating team cadence:', error);
+      throw error;
+    }
+
+    await refreshData();
+  }, [isDemoMode, refreshData]);
+
+  const addOKRLink = useCallback(async (parentOkrId: string, childOkrId: string) => {
+    if (isDemoMode) {
+      setState(prev => ({
+        ...prev,
+        okrs: prev.okrs.map(o => o.id === childOkrId ? { ...o, parentOkrId } : o)
+      }));
+      return;
+    }
+
+    // Update the child OKR's parent_okr_id
+    const { error: okrError } = await supabase
+      .from('okrs')
+      .update({ parent_okr_id: parentOkrId })
+      .eq('id', childOkrId);
+
+    if (okrError) {
+      console.error('Error linking OKR:', okrError);
+      throw okrError;
+    }
+
+    // Also create an entry in okr_links for explicit tracking
+    const { error: linkError } = await supabase
+      .from('okr_links')
+      .insert({
+        parent_okr_id: parentOkrId,
+        child_okr_id: childOkrId
+      });
+
+    if (linkError) console.error('Error creating okr_link:', linkError);
+
+    await refreshData();
+  }, [isDemoMode, refreshData]);
+
+  const addJiraLink = useCallback(async (okrId: string, epicIdentifierOrUrl: string) => {
+    if (isDemoMode) {
+      const newLink: JiraLink = {
+        id: `jl-${Date.now()}`,
+        okrId,
+        epicIdentifierOrUrl
+      };
+      setState(prev => ({
+        ...prev,
+        jiraLinks: [...prev.jiraLinks, newLink]
+      }));
+      return;
+    }
+
+    const { error } = await supabase
+      .from('jira_links')
+      .insert({
+        okr_id: okrId,
+        epic_identifier_or_url: epicIdentifierOrUrl
+      });
+
+    if (error) {
+      console.error('Error adding Jira link:', error);
+      throw error;
+    }
+
+    await refreshData();
+  }, [isDemoMode, refreshData]);
+
+  const removeJiraLink = useCallback(async (linkId: string) => {
+    if (isDemoMode) {
+      setState(prev => ({
+        ...prev,
+        jiraLinks: prev.jiraLinks.filter(jl => jl.id !== linkId)
+      }));
+      return;
+    }
+
+    const { error } = await supabase
+      .from('jira_links')
+      .delete()
+      .eq('id', linkId);
+
+    if (error) {
+      console.error('Error removing Jira link:', error);
+      throw error;
+    }
+
+    await refreshData();
+  }, [isDemoMode, refreshData]);
+
+  const rolloverOKR = useCallback(async (okrId: string) => {
     const okr = state.okrs.find(o => o.id === okrId);
     if (!okr) return;
 
@@ -353,7 +629,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const qNum = parseInt(q.replace('Q', ''));
     let nextQuarter: string;
     let nextYear = parseInt(year);
-    let nextQ: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+    let nextQ: Quarter;
     
     if (qNum === 4) {
       nextQuarter = `${nextYear + 1}-Q1`;
@@ -361,82 +637,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
       nextQ = 'Q1';
     } else {
       nextQuarter = `${year}-Q${qNum + 1}`;
-      nextQ = `Q${qNum + 1}` as 'Q1' | 'Q2' | 'Q3' | 'Q4';
+      nextQ = `Q${qNum + 1}` as Quarter;
     }
 
-    const newOKR: OKR = {
-      ...okr,
-      id: `okr-${Date.now()}`,
-      quarter: nextQuarter,
-      year: nextYear,
-      quarterNum: nextQ,
-      isRolledOver: true,
-      rolledOverFrom: okr.id
-    };
-
-    const newKRs = state.keyResults
-      .filter(kr => kr.okrId === okrId)
-      .map(kr => ({
-        ...kr,
-        id: `kr-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        okrId: newOKR.id,
-        currentValue: kr.currentValue
+    if (isDemoMode) {
+      const newOKR: OKR = {
+        ...okr,
+        id: `okr-${Date.now()}`,
+        quarter: nextQuarter,
+        year: nextYear,
+        quarterNum: nextQ,
+        isRolledOver: true,
+        rolledOverFrom: okr.id
+      };
+      const newKRs = state.keyResults
+        .filter(kr => kr.okrId === okrId)
+        .map(kr => ({
+          ...kr,
+          id: `kr-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          okrId: newOKR.id,
+          currentValue: kr.currentValue
+        }));
+      setState(prev => ({
+        ...prev,
+        okrs: [...prev.okrs, newOKR],
+        keyResults: [...prev.keyResults, ...newKRs]
       }));
+      return;
+    }
 
-    setState(prev => ({
-      ...prev,
-      okrs: [...prev.okrs, newOKR],
-      keyResults: [...prev.keyResults, ...newKRs]
-    }));
-  }, [state.okrs, state.keyResults]);
+    // Real mode: insert new OKR into Supabase
+    const { data: newOkrRow, error: okrError } = await supabase
+      .from('okrs')
+      .insert({
+        organization_id: organization!.id,
+        level: okr.level,
+        owner_id: okr.ownerId,
+        quarter: nextQuarter,
+        year: nextYear,
+        quarter_num: nextQ,
+        objective_text: okr.objectiveText,
+        parent_okr_id: okr.parentOkrId || null,
+        is_rolled_over: true,
+        rolled_over_from: okr.id,
+        created_by: user?.id || null
+      })
+      .select()
+      .single();
 
-  const createOKR = useCallback((data: CreateOKRData): string => {
-    const [year, q] = data.quarter.split('-');
-    const quarterNum = q as Quarter;
-    
-    const newOkrId = `okr-${Date.now()}`;
-    
-    const newOKR: OKR = {
-      id: newOkrId,
-      level: data.level,
-      ownerId: data.ownerId,
-      quarter: data.quarter,
-      year: parseInt(year),
-      quarterNum,
-      objectiveText: data.objectiveText,
-      parentOkrId: data.parentOkrId || undefined
-    };
+    if (okrError) {
+      console.error('Error rolling over OKR:', okrError);
+      throw okrError;
+    }
 
-    const newKRs: KeyResult[] = data.keyResults
-      .filter(kr => kr.metricName.trim())
-      .map((kr, index) => ({
-        id: `kr-${Date.now()}-${index}`,
-        okrId: newOkrId,
-        text: `${kr.metricName}${kr.baseline ? ` from ${kr.baseline}` : ''} to ${kr.target}`,
-        targetValue: parseFloat(kr.target.replace(/[^0-9.]/g, '')) || 100,
-        currentValue: kr.baseline ? parseFloat(kr.baseline.replace(/[^0-9.]/g, '')) || 0 : 0
+    // Copy key results to new OKR
+    const existingKRs = state.keyResults.filter(kr => kr.okrId === okrId);
+    if (existingKRs.length > 0) {
+      const krInserts = existingKRs.map(kr => ({
+        okr_id: newOkrRow.id,
+        text: kr.text,
+        target_value: kr.targetValue,
+        current_value: kr.currentValue
       }));
+      const { error: krError } = await supabase
+        .from('key_results')
+        .insert(krInserts);
+      if (krError) console.error('Error copying key results:', krError);
+    }
 
-    const initialCheckIn: CheckIn = {
-      id: `ci-${Date.now()}`,
-      okrId: newOkrId,
-      date: new Date().toISOString().split('T')[0],
-      cadence: 'biweekly',
-      progress: 0,
-      confidence: data.initialConfidence,
-      confidenceLabel: getConfidenceLabel(data.initialConfidence),
-      optionalNote: 'Initial confidence established at OKR creation.'
-    };
+    await refreshData();
+  }, [state.okrs, state.keyResults, isDemoMode, organization, user, refreshData]);
 
-    setState(prev => ({
-      ...prev,
-      okrs: [...prev.okrs, newOKR],
-      keyResults: [...prev.keyResults, ...newKRs],
-      checkIns: [...prev.checkIns, initialCheckIn]
-    }));
-
-    return newOkrId;
-  }, []);
+  // ── Aggregations (pure computation from state) ────────────────────────
 
   const getOverallConfidence = useCallback((okrIds: string[]) => {
     const confidences = okrIds
@@ -469,6 +741,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return latestCheckIn && latestCheckIn.confidence >= 40;
     }).length;
   }, [state.checkIns]);
+
+  // ── Context value ─────────────────────────────────────────────────────
 
   const value: AppContextType = {
     ...state,
