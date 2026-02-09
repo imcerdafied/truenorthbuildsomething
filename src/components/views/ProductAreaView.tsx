@@ -98,24 +98,36 @@ export function ProductAreaView() {
     });
   }, [productAreaTeams, getTeamOKRs, getOverallConfidence, getAtRiskCount, checkIns, keyResults]);
 
-  // Sort teams by: lowest confidence, negative trend, KRs needing attention
   const sortedTeams = useMemo(() => {
     return [...teamsWithMetrics].sort((a, b) => {
       // Priority 1: Has OKRs vs no OKRs
       if (a.hasOKRs !== b.hasOKRs) return b.hasOKRs ? 1 : -1;
 
-      // Priority 2: Lowest confidence first
-      if (a.confidence !== b.confidence) return a.confidence - b.confidence;
+      // Priority 2: Low confidence first (< 40)
+      const aLow = a.confidence < 40 ? 1 : 0;
+      const bLow = b.confidence < 40 ? 1 : 0;
+      if (aLow !== bLow) return bLow - aLow;
 
       // Priority 3: Negative trend
-      const aTrendScore = a.trend === 'down' ? 1 : 0;
-      const bTrendScore = b.trend === 'down' ? 1 : 0;
-      if (aTrendScore !== bTrendScore) return bTrendScore - aTrendScore;
+      const aDown = a.trend === 'down' ? 1 : 0;
+      const bDown = b.trend === 'down' ? 1 : 0;
+      if (aDown !== bDown) return bDown - aDown;
 
       // Priority 4: KRs needing attention
-      return b.krsNeedingAttention - a.krsNeedingAttention;
+      if (a.krsNeedingAttention !== b.krsNeedingAttention) return b.krsNeedingAttention - a.krsNeedingAttention;
+
+      // Priority 5: Lower confidence first within same tier
+      if (a.confidence !== b.confidence) return a.confidence - b.confidence;
+
+      return 0;
     });
   }, [teamsWithMetrics]);
+
+  const focusTeams = useMemo(() => {
+    return sortedTeams
+      .filter(t => t.hasOKRs && (t.confidence < 50 || t.trend === 'down' || t.krsNeedingAttention > 0))
+      .sort((a, b) => a.confidence - b.confidence);
+  }, [sortedTeams]);
 
   // Teams with changing confidence this week
   const teamsWithChangingConfidence = teamsWithMetrics.filter(t => 
@@ -152,9 +164,52 @@ export function ProductAreaView() {
           {productArea.name} — {formatQuarter(currentQuarter)}
         </h1>
         <p className="helper-text mt-1 text-sm">
-          Leadership view of team outcomes and confidence
+          Where outcomes stand, and where intervention may help.
         </p>
       </div>
+
+      {/* Focus this week */}
+      {focusTeams.length > 0 && (
+        <Card className="border-border/60 border-l-4 border-l-amber-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              Focus this week
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Teams where confidence or blockers may need leadership attention.
+            </p>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-2">
+              {focusTeams.slice(0, 5).map((team) => (
+                <div
+                  key={team.id}
+                  className="flex items-center justify-between p-3 border border-border/60 rounded-lg cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => setSelectedTeamId(team.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-medium text-sm">{team.name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{team.pmName}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ConfidenceBadge confidence={team.confidence} />
+                    <TrendIndicator trend={team.trend} />
+                    {team.krsNeedingAttention > 0 && (
+                      <span className="text-xs text-amber-600 font-medium">
+                        {team.krsNeedingAttention} need{team.krsNeedingAttention === 1 ? 's' : ''} help
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Teams Overview */}
       <Card className="border-border/60">
@@ -175,7 +230,7 @@ export function ProductAreaView() {
                 <div className="col-span-2">Confidence</div>
                 <div className="col-span-2">Trend</div>
                 <div className="col-span-2">OKRs</div>
-                <div className="col-span-2">Attention</div>
+                <div className="col-span-2">Help needed</div>
               </div>
 
               {/* Rows */}
@@ -222,7 +277,7 @@ export function ProductAreaView() {
                       <div className="flex items-center gap-1.5 text-confidence-medium">
                         <AlertTriangle className="w-3.5 h-3.5" />
                         <span className="text-sm font-medium">
-                          {team.krsNeedingAttention}
+                          {team.krsNeedingAttention} item{team.krsNeedingAttention !== 1 ? 's' : ''}
                         </span>
                       </div>
                     ) : (

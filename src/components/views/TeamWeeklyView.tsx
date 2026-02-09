@@ -88,7 +88,10 @@ export function TeamWeeklyView({ teamId, onBack }: TeamWeeklyViewProps) {
             {team.name} — {formatQuarter(currentQuarter)}
           </h1>
           <p className="helper-text mt-1 text-sm">
-            Weekly view of this quarter's outcomes and confidence
+            {onBack
+              ? 'Review confidence changes and blockers before reaching out.'
+              : `${team.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} view of outcomes and confidence`
+            }
           </p>
         </div>
         
