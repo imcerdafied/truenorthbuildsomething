@@ -72,27 +72,18 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
 
         {/* Team Selector (visible in team view) */}
         {viewMode === 'team' && teams.length > 0 && (
-          <div className="relative">
-            <div className="flex items-center gap-1.5">
-              <Select value={selectedTeamId || teams[0]?.id} onValueChange={setSelectedTeamId}>
-                <SelectTrigger className="w-44 bg-background h-8 text-sm">
-                  <SelectValue placeholder="Select team" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {teams.map(team => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {currentTeam && currentDomain && (
-              <p className="absolute top-full left-1 text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
-                {currentTeam.name} within {currentDomain.name}
-              </p>
-            )}
-          </div>
+          <Select value={selectedTeamId || teams[0]?.id} onValueChange={setSelectedTeamId}>
+            <SelectTrigger className="w-44 bg-background h-8 text-sm">
+              <SelectValue placeholder="Select team" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {teams.map(team => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
 
