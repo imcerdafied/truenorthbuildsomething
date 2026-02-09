@@ -143,6 +143,8 @@ export function CheckInPage() {
         </div>
       </div>
 
+      <h2 className="text-lg font-semibold text-center">Bi-weekly check-in</h2>
+
       {/* Progress indicator */}
       <div className="flex gap-1">
         {editableOKRs.map((_, index) => (
@@ -261,10 +263,15 @@ export function CheckInPage() {
         </Button>
 
         {currentStep === editableOKRs.length - 1 ? (
-          <Button onClick={handleSubmit} disabled={!canProceed} className="gap-2">
-            <Check className="w-4 h-4" />
-            Submit
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => navigate(-1)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={!canProceed} className="gap-2">
+              <Check className="w-4 h-4" />
+              Save
+            </Button>
+          </div>
         ) : (
           <Button onClick={handleNext} disabled={!canProceed} className="gap-2">
             Next

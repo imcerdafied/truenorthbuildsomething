@@ -96,7 +96,7 @@ export function TeamWeeklyView({ teamId, onBack }: TeamWeeklyViewProps) {
           {canRunCheckIn && teamOKRs.length > 0 && (
             <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2">
               <PlayCircle className="w-4 h-4" />
-              Run Check-in
+              Check-in
             </Button>
           )}
           {teamOKRs.length > 0 && (

@@ -155,7 +155,7 @@ export function HomePage() {
           {canRunCheckIn && hasOKRs && (
             <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2">
               <PlayCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Run Check-in</span>
+              <span className="hidden sm:inline">Check-in</span>
             </Button>
           )}
         </div>
