@@ -200,7 +200,7 @@ export function OKRsPage() {
               </p>
               <p className="empty-state-description max-w-md mx-auto">
                 {allOKRs.length === 0 
-                  ? "TrueNorth helps teams align on outcomes and make confidence explicit. Create your first OKR to establish your signal for the quarter."
+                  ? "TrueNorthOS helps teams align on outcomes and make confidence explicit. Create your first OKR to establish your signal for the quarter."
                   : "Try adjusting your filters to see more results."
                 }
               </p>

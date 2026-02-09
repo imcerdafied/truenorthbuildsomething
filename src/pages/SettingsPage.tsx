@@ -52,7 +52,7 @@ export function SettingsPage() {
             Demo Mode
           </CardTitle>
           <CardDescription className="text-xs">
-            Enable demo mode to showcase TrueNorth with fully populated sample data
+            Enable demo mode to showcase TrueNorthOS with fully populated sample data
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0 space-y-4">
@@ -64,7 +64,7 @@ export function SettingsPage() {
               <p className="text-xs text-muted-foreground">
                 {isDemoMode 
                   ? 'Showing sample data from the Booking product area with 3 teams' 
-                  : 'Switch to demo mode to see TrueNorth in action'}
+                  : 'Switch to demo mode to see TrueNorthOS in action'}
               </p>
             </div>
             <Switch 

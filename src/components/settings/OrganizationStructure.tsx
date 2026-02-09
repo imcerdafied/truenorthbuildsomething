@@ -215,7 +215,7 @@ export function OrganizationStructure() {
             <CardTitle className="text-lg">Organization Structure</CardTitle>
             <CardDescription className="text-sm mt-1">
               {isAdmin
-                ? 'Product areas, domains, and teams define how OKRs roll up in TrueNorth. Teams create OKRs within this structure.'
+                ? 'Product areas, domains, and teams define how OKRs roll up in TrueNorthOS. Teams create OKRs within this structure.'
                 : 'Product areas, domains, and teams define how OKRs roll up. This structure is managed by Product Ops or leadership.'}
             </CardDescription>
           </div>

@@ -51,7 +51,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
               <Target className="w-4 h-4 text-sidebar-primary" />
             </div>
             <span className="font-semibold text-sidebar-primary text-base tracking-tight">
-              TrueNorth
+              TrueNorthOS
             </span>
           </div>
         )}

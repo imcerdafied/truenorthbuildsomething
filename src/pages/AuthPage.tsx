@@ -120,7 +120,7 @@ export function AuthPage() {
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
             <Target className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-semibold text-xl tracking-tight">TrueNorth</span>
+          <span className="font-semibold text-xl tracking-tight">TrueNorthOS</span>
         </div>
 
         <Card className="bg-card border">
@@ -131,7 +131,7 @@ export function AuthPage() {
             <CardDescription>
               {isSignUp 
                 ? 'Get started with outcome-driven planning'
-                : 'Sign in to continue to TrueNorth'
+                : 'Sign in to continue to TrueNorthOS'
               }
             </CardDescription>
           </CardHeader>

@@ -181,7 +181,7 @@ export function QBRPage() {
               <Target className="empty-state-icon" />
               <p className="empty-state-title">No OKRs for this quarter</p>
               <p className="empty-state-description max-w-md mx-auto">
-                TrueNorth helps teams align on outcomes and make confidence explicit.
+                TrueNorthOS helps teams align on outcomes and make confidence explicit.
                 OKR results will appear here once they are defined and checked in.
               </p>
             </div>

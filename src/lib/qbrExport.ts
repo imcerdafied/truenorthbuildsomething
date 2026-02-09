@@ -898,7 +898,7 @@ export function generateQBRPresentation(data: QBRSlideData): void {
   const pptx = new PptxGenJS();
   
   // Set presentation properties
-  pptx.author = 'TrueNorth';
+  pptx.author = 'TrueNorthOS';
   pptx.title = `QBR - ${formatQuarter(data.quarter)}`;
   pptx.subject = 'Quarterly Business Review';
   pptx.company = data.scope;

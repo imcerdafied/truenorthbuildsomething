@@ -235,7 +235,7 @@ export function HomePage() {
               <Target className="empty-state-icon" />
               <p className="empty-state-title text-lg">Get started with your first OKR</p>
               <p className="empty-state-description max-w-md mx-auto mt-2">
-                TrueNorth helps teams align on outcomes and make confidence explicit.
+                TrueNorthOS helps teams align on outcomes and make confidence explicit.
                 Define your first OKR to establish your signal for the quarter.
               </p>
               {canCreateOKR && (
