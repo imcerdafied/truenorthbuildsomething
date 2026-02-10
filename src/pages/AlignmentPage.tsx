@@ -124,7 +124,7 @@ export function AlignmentPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="page-title">Outcome Model</h1>
+        <h1 className="page-title">Organization Structure</h1>
         <p className="helper-text mt-1">
           {formatQuarter(currentQuarter)}
         </p>
@@ -160,7 +160,7 @@ export function AlignmentPage() {
       {/* Tree View */}
       <Card className="border-border/60">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium">OKR Hierarchy</CardTitle>
+          <CardTitle className="text-base font-medium">OKR Alignment</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           {productAreaOKRs.length === 0 && domainOKRs.length === 0 && teamOKRs.length === 0 ? (

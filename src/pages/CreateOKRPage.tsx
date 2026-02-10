@@ -44,7 +44,6 @@ interface OKRDraft {
   quarter: string;
   objectiveText: string;
   keyResults: KeyResultDraft[];
-  parentOkrId: string;
   confidence: number;
 }
 
@@ -52,7 +51,6 @@ const STEPS = [
   { id: 'objective', title: 'Objective' },
   { id: 'keyresults', title: 'Key Results' },
   { id: 'confidence', title: 'Initial Confidence' },
-  { id: 'alignment', title: 'Alignment' },
   { id: 'review', title: 'Review & Create' },
 ];
 
@@ -63,7 +61,6 @@ export function CreateOKRPage() {
     domains,
     teams,
     selectedTeamId,
-    getOKRsByQuarter,
     createOKR,
     currentQuarter
   } = useApp();
@@ -83,7 +80,6 @@ export function CreateOKRPage() {
     quarter: currentQuarter,
     objectiveText: '',
     keyResults: [{ id: '1', metricName: '', baseline: '', target: '' }],
-    parentOkrId: '',
     confidence: 50,
   });
 
@@ -105,17 +101,6 @@ export function CreateOKRPage() {
         return [];
     }
   }, [draft.level, productAreas, domains, teams]);
-
-  const potentialParents = useMemo(() => {
-    const okrs = getOKRsByQuarter(draft.quarter);
-    if (draft.level === 'team') {
-      return okrs.filter(o => o.level === 'domain' || o.level === 'productArea');
-    }
-    if (draft.level === 'domain') {
-      return okrs.filter(o => o.level === 'productArea');
-    }
-    return [];
-  }, [draft.level, draft.quarter, getOKRsByQuarter]);
 
   const getOwnerName = () => {
     if (!draft.ownerId) return '';
@@ -148,7 +133,6 @@ export function CreateOKRPage() {
         return draft.keyResults.some(kr => kr.metricName.trim().length > 0 && kr.target.trim().length > 0);
       case 2:
       case 3:
-      case 4:
         return true;
       default:
         return false;
@@ -214,7 +198,6 @@ export function CreateOKRPage() {
             baseline: kr.baseline || undefined,
             target: kr.target
           })),
-        parentOkrId: draft.parentOkrId || undefined,
         initialConfidence: draft.confidence
       });
       toast.success('OKR created. Confidence signal established.');
@@ -350,47 +333,7 @@ export function CreateOKRPage() {
           </div>
         );
 
-      case 3: // Alignment
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">What does this ladder to?</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Link to a parent objective to show how this team's work connects to broader outcomes. This is optional — you can add alignment later.
-              </p>
-              {potentialParents.length > 0 ? (
-                <Select value={draft.parentOkrId} onValueChange={(v) => updateDraft('parentOkrId', v)}>
-                  <SelectTrigger className="mt-2 bg-background">
-                    <SelectValue placeholder="Select a parent OKR" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover">
-                    <SelectItem value="">None</SelectItem>
-                    {potentialParents.map(okr => (
-                      <SelectItem key={okr.id} value={okr.id}>
-                        <div className="flex items-center gap-2">
-                          {getLevelIcon(okr.level)}
-                          <span className="truncate">{okr.objectiveText}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 mt-2">
-                  No parent OKRs available for {formatQuarter(draft.quarter)}. You can link this OKR to a parent later.
-                </div>
-              )}
-            </div>
-            {!draft.parentOkrId && draft.level !== 'productArea' && (
-              <div className="bg-confidence-medium-bg text-confidence-medium rounded-lg px-4 py-3 text-sm">
-                This OKR will not be linked to a parent outcome. You can add alignment later.
-              </div>
-            )}
-          </div>
-        );
-
-      case 4: // Review
-        const parentOkr = potentialParents.find(o => o.id === draft.parentOkrId);
+      case 3: // Review
         return (
           <div className="space-y-5">
             <div className="border border-border/60 rounded-lg p-4">
@@ -436,19 +379,6 @@ export function CreateOKRPage() {
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="border border-border/60 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Alignment</span>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(3)}>
-                  Edit
-                </Button>
-              </div>
-              {parentOkr ? (
-                <p className="text-sm">→ {parentOkr.objectiveText}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">Not linked to a parent OKR</p>
-              )}
             </div>
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
