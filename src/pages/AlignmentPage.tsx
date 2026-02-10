@@ -130,20 +130,26 @@ export function AlignmentPage() {
         </p>
       </div>
 
-      {/* Summary */}
+      {/* Summary - only show levels that have OKRs */}
       <div className="flex gap-3 flex-wrap">
-        <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
-          <Layers className="w-3 h-3" />
-          {productAreaOKRs.length} Product Area
-        </Badge>
-        <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
-          <Building2 className="w-3 h-3" />
-          {domainOKRs.length} Domain
-        </Badge>
-        <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
-          <Users className="w-3 h-3" />
-          {teamOKRs.length} Team
-        </Badge>
+        {productAreaOKRs.length > 0 && (
+          <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
+            <Layers className="w-3 h-3" />
+            {productAreaOKRs.length} product area objective{productAreaOKRs.length !== 1 ? 's' : ''}
+          </Badge>
+        )}
+        {domainOKRs.length > 0 && (
+          <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
+            <Building2 className="w-3 h-3" />
+            {domainOKRs.length} domain objective{domainOKRs.length !== 1 ? 's' : ''}
+          </Badge>
+        )}
+        {teamOKRs.length > 0 && (
+          <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
+            <Users className="w-3 h-3" />
+            {teamOKRs.length} team objective{teamOKRs.length !== 1 ? 's' : ''}
+          </Badge>
+        )}
         {orphanedOKRs.length > 0 && (
           <Badge variant="confidenceMedium" className="gap-1.5 text-xs font-normal">
             {orphanedOKRs.length} top-level
