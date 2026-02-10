@@ -3,7 +3,6 @@ import { useAuth } from '@/context/AuthContext';
 import { 
   Home, 
   Target, 
-  GitBranch, 
   Download,
   Settings,
   ChevronLeft,
@@ -19,7 +18,6 @@ const primaryNav = [
 ];
 
 const secondaryNavAdmin = [
-  { to: '/structure', icon: GitBranch, label: 'Structure' },
   { to: '/exports', icon: Download, label: 'Exports' },
   { to: '/settings', icon: Settings, label: 'Organization Setup' },
 ];
@@ -96,12 +94,10 @@ export function Sidebar({ onNavigate }: SidebarProps) {
         {secondaryNav.map((item) => {
           const isActive = location.pathname === item.to ||
             (item.to !== '/' && location.pathname.startsWith(item.to));
-          const isStructure = item.to === '/structure';
           return (
             <NavLink key={item.to} to={item.to} onClick={handleNavClick}
               className={cn(
                 "flex flex-row items-center gap-3 px-3 py-2 rounded-md text-sm text-[hsl(0,0%,70%)]",
-                isStructure && "font-normal",
                 isActive && "bg-[hsl(220,15%,16%)] text-white font-medium"
               )}>
               <item.icon className="w-4 h-4 flex-shrink-0" />

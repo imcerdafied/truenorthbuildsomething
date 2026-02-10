@@ -361,16 +361,13 @@ export function HomePage() {
       )}
 
       {alignmentStats && (
-        <div className="flex items-center justify-between px-1">
+        <div className="px-1">
           <p className="t3">
             {alignmentStats.linked > 0
               ? `${alignmentStats.linked} of ${alignmentStats.total} outcome${alignmentStats.total !== 1 ? 's' : ''} linked to parent objectives`
               : `${alignmentStats.total} top-level outcome${alignmentStats.total !== 1 ? 's' : ''}`
             }
           </p>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/structure')} className="t3 h-6 px-2">
-            View structure →
-          </Button>
         </div>
       )}
 

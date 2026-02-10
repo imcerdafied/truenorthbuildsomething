@@ -11,7 +11,6 @@ import { OKRsPage } from "@/pages/OKRsPage";
 import { OKRDetailPage } from "@/pages/OKRDetailPage";
 import { CreateOKRPage } from "@/pages/CreateOKRPage";
 import { CheckInPage } from "@/pages/CheckInPage";
-import { AlignmentPage } from "@/pages/AlignmentPage";
 import { QBRPage } from "@/pages/QBRPage";
 import { ExportsPage } from "@/pages/ExportsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
@@ -61,8 +60,8 @@ const App = () => (
                 <Route path="okrs/create" element={<CreateOKRPage />} />
                 <Route path="okrs/:okrId" element={<OKRDetailPage />} />
                 <Route path="checkin" element={<CheckInPage />} />
-                <Route path="structure" element={<AdminRoute><AlignmentPage /></AdminRoute>} />
-                <Route path="alignment" element={<Navigate to="/structure" replace />} />
+                <Route path="structure" element={<Navigate to="/" replace />} />
+                <Route path="alignment" element={<Navigate to="/" replace />} />
                 <Route path="qbr" element={<QBRPage />} />
                 <Route path="exports" element={<ExportsPage />} />
                 <Route path="settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
