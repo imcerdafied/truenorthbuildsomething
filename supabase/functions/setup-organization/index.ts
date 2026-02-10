@@ -8,7 +8,6 @@ const corsHeaders = {
 interface SetupRequest {
   orgName: string;
   teamName: string;
-  pmName?: string;
 }
 
 Deno.serve(async (req) => {
@@ -45,10 +44,10 @@ Deno.serve(async (req) => {
     // Use service role client for all operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if user already has an organization
+    // Check if user already has an organization and get full_name for PM
     const { data: profile } = await supabase
       .from("profiles")
-      .select("organization_id")
+      .select("organization_id, full_name")
       .eq("id", user.id)
       .single();
 
@@ -59,7 +58,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { orgName, teamName, pmName }: SetupRequest = await req.json();
+    const { orgName, teamName }: SetupRequest = await req.json();
 
     if (!orgName?.trim()) {
       return new Response(
@@ -144,13 +143,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 6. Create the user's team
+    // 6. Create the user's team (use profile full_name as PM)
     const { error: teamError } = await supabase
       .from("teams")
       .insert({
         name: teamName,
         domain_id: domain.id,
-        pm_name: pmName || null,
+        pm_name: profile?.full_name ?? null,
       });
 
     if (teamError) {

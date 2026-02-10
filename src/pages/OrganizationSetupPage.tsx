@@ -16,7 +16,6 @@ export function OrganizationSetupPage() {
 
   const [orgName, setOrgName] = useState('');
   const [teamName, setTeamName] = useState('');
-  const [pmName, setPmName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = orgName.trim().length > 0 && teamName.trim().length > 0;
@@ -28,11 +27,7 @@ export function OrganizationSetupPage() {
 
     try {
       const { data, error } = await supabase.functions.invoke('setup-organization', {
-        body: {
-          orgName,
-          teamName,
-          pmName: pmName.trim() || undefined,
-        },
+        body: { orgName, teamName },
       });
 
       if (error) throw error;
@@ -96,18 +91,6 @@ export function OrganizationSetupPage() {
                 <p className="text-xs text-muted-foreground">
                   The team that will own OKRs.
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="pmName">
-                  Your name <span className="text-muted-foreground font-normal">(optional)</span>
-                </Label>
-                <Input
-                  id="pmName"
-                  placeholder="e.g., Sarah Chen"
-                  value={pmName}
-                  onChange={(e) => setPmName(e.target.value)}
-                />
               </div>
 
               <Button
