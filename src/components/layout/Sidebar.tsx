@@ -5,6 +5,7 @@ import {
   Target, 
   Download,
   Settings,
+  Info,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -19,11 +20,13 @@ const primaryNav = [
 
 const secondaryNavAdmin = [
   { to: '/exports', icon: Download, label: 'Exports' },
+  { to: '/about', icon: Info, label: 'About TrueNorthOS' },
   { to: '/settings', icon: Settings, label: 'Organization Setup' },
 ];
 
 const secondaryNavMember = [
   { to: '/exports', icon: Download, label: 'Exports' },
+  { to: '/about', icon: Info, label: 'About TrueNorthOS' },
 ];
 
 interface SidebarProps {

@@ -14,6 +14,7 @@ import { CheckInPage } from "@/pages/CheckInPage";
 import { QBRPage } from "@/pages/QBRPage";
 import { ExportsPage } from "@/pages/ExportsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { AboutPage } from "@/pages/AboutPage";
 import { AuthPage } from "@/pages/AuthPage";
 import { OrganizationSetupPage } from "@/pages/OrganizationSetupPage";
 import { FirstOutcomePage } from "@/pages/FirstOutcomePage";
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="alignment" element={<Navigate to="/" replace />} />
                 <Route path="qbr" element={<QBRPage />} />
                 <Route path="exports" element={<ExportsPage />} />
+                <Route path="about" element={<AboutPage />} />
                 <Route path="settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
               </Route>
             </Routes>
