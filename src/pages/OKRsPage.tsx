@@ -24,9 +24,7 @@ export function OKRsPage() {
   const navigate = useNavigate();
   const { 
     currentQuarter, 
-    teams, 
-    domains, 
-    productAreas,
+    teams,
     getOKRsByQuarter,
     viewMode,
     selectedTeamId,
@@ -200,12 +198,6 @@ export function OKRsPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
                   <SelectItem value="all">All Owners</SelectItem>
-                  {productAreas.map(pa => (
-                    <SelectItem key={pa.id} value={pa.id}>{pa.name}</SelectItem>
-                  ))}
-                  {domains.map(d => (
-                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                  ))}
                   {teams.map(t => (
                     <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                   ))}
