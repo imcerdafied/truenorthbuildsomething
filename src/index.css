@@ -19,7 +19,7 @@
     --popover-foreground: 220 25% 12%;
     
     /* Primary - Blue accent, not charcoal */
-    --primary: 219 58% 43%;
+    --primary: 217 40% 44%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - Cool gray chrome */
@@ -31,11 +31,11 @@
     --muted-foreground: 220 8% 50%;
     
     /* Accent - Soft blue */
-    --accent: 219 30% 93%;
-    --accent-foreground: 219 45% 35%;
+    --accent: 215 15% 93%;
+    --accent-foreground: 215 20% 35%;
 
     /* Ring - match primary */
-    --ring: 219 58% 43%;
+    --ring: 217 40% 44%;
     
     /* Destructive */
     --destructive: 0 55% 50%;
@@ -93,7 +93,7 @@
     --popover: 220 16% 11%;
     --popover-foreground: 220 10% 92%;
     
-    --primary: 219 55% 55%;
+    --primary: 217 55% 55%;
     --primary-foreground: 220 18% 8%;
 
     --secondary: 220 12% 18%;
@@ -105,7 +105,7 @@
     --accent: 219 20% 22%;
     --accent-foreground: 219 30% 80%;
 
-    --ring: 219 55% 55%;
+    --ring: 217 55% 55%;
     
     --destructive: 0 50% 45%;
     --destructive-foreground: 0 0% 98%;
