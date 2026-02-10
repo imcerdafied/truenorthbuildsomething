@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { getConfidenceLabel } from '@/types';
 import { ArrowLeft, ArrowRight, Check, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CheckInFormData {
   okrId: string;
@@ -88,19 +89,25 @@ export function CheckInPage() {
     }
   };
 
-  const handleSubmit = () => {
-    Object.values(formData).forEach(data => {
-      addCheckIn({
-        okrId: data.okrId,
-        date: new Date().toISOString().split('T')[0],
-        cadence: team?.cadence || 'biweekly',
-        progress: data.progress,
-        confidence: data.confidence,
-        reasonForChange: data.reasonForChange || undefined,
-        optionalNote: data.optionalNote || undefined
-      });
-    });
-    navigate('/');
+  const handleSubmit = async () => {
+    try {
+      for (const data of Object.values(formData)) {
+        await addCheckIn({
+          okrId: data.okrId,
+          date: new Date().toISOString().split('T')[0],
+          cadence: team?.cadence || 'biweekly',
+          progress: data.progress,
+          confidence: data.confidence,
+          reasonForChange: data.reasonForChange || undefined,
+          optionalNote: data.optionalNote || undefined
+        });
+      }
+      toast.success('Check-in saved.');
+      navigate('/');
+    } catch (error) {
+      console.error('Error saving check-in:', error);
+      toast.error('Failed to save check-in. Please try again.');
+    }
   };
 
   if (!isCurrentUserPM(selectedTeamId)) {

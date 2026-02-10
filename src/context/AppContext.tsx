@@ -428,27 +428,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     // Real mode: persist to Supabase
+    if (!organization?.id) throw new Error('No organization found');
+
     const [year, q] = data.quarter.split('-');
+    const quarterNum = q as Quarter;
 
     const { data: okrRow, error: okrError } = await supabase
       .from('okrs')
       .insert({
-        organization_id: organization!.id,
+        organization_id: organization.id,
         level: data.level,
         owner_id: data.ownerId,
         quarter: data.quarter,
         year: parseInt(year),
-        quarter_num: q as Quarter,
+        quarter_num: quarterNum,
         objective_text: data.objectiveText,
         parent_okr_id: data.parentOkrId || null,
-        created_by: user?.id || null
+        created_by: user?.id || null,
       })
-      .select()
+      .select('id')
       .single();
 
-    if (okrError) {
+    if (okrError || !okrRow) {
       console.error('Error creating OKR:', okrError);
-      throw okrError;
+      throw new Error(okrError?.message || 'Failed to create OKR');
     }
 
     const newOkrId = okrRow.id;
@@ -487,14 +490,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     await refreshData();
     return newOkrId;
-  }, [isDemoMode, organization, user, refreshData]);
+  }, [isDemoMode, organization?.id, user?.id, refreshData]);
 
-  const addCheckIn = useCallback(async (checkIn: Omit<CheckIn, 'id' | 'confidenceLabel'>) => {
+  const addCheckIn = useCallback(async (checkIn: Omit<CheckIn, 'id' | 'confidenceLabel'>): Promise<void> => {
+    const confidenceLabel = getConfidenceLabel(checkIn.confidence);
+
     if (isDemoMode) {
       const newCheckIn: CheckIn = {
         ...checkIn,
         id: `ci-${Date.now()}`,
-        confidenceLabel: getConfidenceLabel(checkIn.confidence)
+        confidenceLabel,
       };
       setState(prev => ({
         ...prev,
@@ -511,19 +516,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         cadence: checkIn.cadence,
         progress: checkIn.progress,
         confidence: checkIn.confidence,
-        confidence_label: getConfidenceLabel(checkIn.confidence),
+        confidence_label: confidenceLabel,
         reason_for_change: checkIn.reasonForChange || null,
         optional_note: checkIn.optionalNote || null,
-        created_by: user?.id || null
+        created_by: user?.id || null,
       });
 
     if (error) {
-      console.error('Error adding check-in:', error);
-      throw error;
+      console.error('Error saving check-in:', error);
+      throw new Error(error.message);
     }
 
     await refreshData();
-  }, [isDemoMode, user, refreshData]);
+  }, [isDemoMode, user?.id, refreshData]);
 
   const updateTeamCadence = useCallback(async (teamId: string, cadence: 'weekly' | 'biweekly') => {
     if (isDemoMode) {
