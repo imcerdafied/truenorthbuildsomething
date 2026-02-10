@@ -19,7 +19,6 @@ import {
   TrendingDown,
   Minus,
   Plus,
-  Calendar,
   Check,
   Circle
 } from 'lucide-react';
@@ -134,30 +133,9 @@ export function HomePage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-foreground">{currentTeam?.name || 'Team'}</p>
-          <span className="text-xs text-muted-foreground">{formatQuarter(currentQuarter)}</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {hasOKRs && (
-            <button
-              type="button"
-              onClick={() => setShowWeeklyView(true)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-            >
-              <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Weekly View</span>
-            </button>
-          )}
-          {canRunCheckIn && hasOKRs && (
-            <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2">
-              <PlayCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Check-in</span>
-            </Button>
-          )}
-        </div>
+      <div>
+        <p className="text-sm font-medium text-foreground">{currentTeam?.name || 'Team'}</p>
+        <span className="text-xs text-muted-foreground">{formatQuarter(currentQuarter)}</span>
       </div>
 
       {/* Confidence banner — bold signal header (single-outcome teams) */}
