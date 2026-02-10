@@ -10,9 +10,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Users, Building2, Menu, X } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Users, Building2, Menu, X, ChevronDown, Settings, LogOut } from 'lucide-react';
 import { formatQuarter } from '@/types';
 import { cn } from '@/lib/utils';
+
+function getInitials(name: string | null | undefined, email: string | null | undefined): string {
+  if (name?.trim()) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+  if (email?.trim()) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return '?';
+}
 
 const quarters = [
   '2026-Q1',
@@ -41,7 +64,7 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
     currentPM
   } = useApp();
 
-  const { profile, isAdmin, role } = useAuth();
+  const { profile, isAdmin, role, signOut } = useAuth();
 
   // Teams the user can access: admins see all; PMs see only teams where they are the PM
   const visibleTeams = useMemo(() => {
@@ -60,6 +83,14 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
       setViewMode('team');
     }
   }, [isAdmin, viewMode, setViewMode]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth', { replace: true });
+  };
+
+  const displayName = profile?.full_name || currentPM || 'User';
+  const initials = getInitials(profile?.full_name ?? null, profile?.email ?? null);
 
   return (
     <header className="h-14 border-b bg-card flex items-center justify-between px-3 sm:px-5">
@@ -144,16 +175,63 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
           </div>
         )}
 
-        {/* Current User - hidden on small screens, clickable → Settings (admins) or Home (members) */}
-        <button
-          type="button"
-          onClick={() => navigate(isAdmin ? '/settings' : '/')}
-          className="hidden sm:flex items-center text-xs text-muted-foreground border-l pl-3 cursor-pointer hover:opacity-80 focus:outline-none focus:ring-0"
-        >
-          <span className="font-medium text-foreground">{profile?.full_name || currentPM}</span>
-          <span className="mx-1.5 text-border">·</span>
-          <span>{role === 'admin' ? 'Admin' : 'PM'}</span>
-        </button>
+        {/* User avatar dropdown - hidden on small screens */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground border-l pl-3 cursor-pointer hover:opacity-80 focus:outline-none focus:ring-0 focus:ring-ring focus:ring-offset-2 rounded"
+            >
+              <Avatar className="h-8 w-8 rounded-full border border-border">
+                <AvatarFallback className="bg-muted text-sm font-medium text-foreground">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="font-medium text-foreground">{displayName}</span>
+              <span className="text-border">·</span>
+              <span>{role === 'admin' ? 'Admin' : 'PM'}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-56 bg-white dark:bg-card border rounded-lg shadow-lg py-1"
+          >
+            <DropdownMenuLabel className="px-4 py-2 font-normal">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-foreground">{displayName}</span>
+                {profile?.email && (
+                  <span className="text-xs text-muted-foreground truncate">{profile.email}</span>
+                )}
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled className="px-4 py-2 text-sm text-muted-foreground cursor-default">
+              My preferences
+              <span className="ml-2 text-xs opacity-70">Coming soon</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {isAdmin && (
+              <>
+                <DropdownMenuItem
+                  className="px-4 py-2 text-sm cursor-pointer"
+                  onClick={() => navigate('/settings')}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Organization Setup
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem
+              className="px-4 py-2 text-sm cursor-pointer"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
