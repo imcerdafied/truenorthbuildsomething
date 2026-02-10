@@ -35,9 +35,16 @@ export function ProtectedRoute({ children, requireSetup = true }: ProtectedRoute
           .update({ organization_id: pendingOrgId })
           .eq('id', user.id);
         if (profileError) throw profileError;
-        await supabase
+        const { data: existingRole } = await supabase
           .from('user_roles')
-          .insert({ user_id: user.id, role: 'member' });
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (!existingRole) {
+          await supabase
+            .from('user_roles')
+            .insert({ user_id: user.id, role: 'member' });
+        }
         if (cancelled) return;
         try {
           window.localStorage.removeItem(PENDING_ORG_JOIN_KEY);

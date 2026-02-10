@@ -106,9 +106,16 @@ export function OrganizationSetupPage() {
         throw new Error(profileError.message || 'Failed to update profile');
       }
 
-      await supabase
+      const { data: existingRole } = await supabase
         .from('user_roles')
-        .insert({ user_id: user.id, role: 'admin' });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!existingRole) {
+        await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role: 'admin' });
+      }
 
       setOrgId(org.id);
       setStep(2);
