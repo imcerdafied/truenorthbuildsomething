@@ -1,10 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
-import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
-import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
-import { TeamWeeklyView } from '@/components/views/TeamWeeklyView';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,72 +11,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatQuarter, OKRLevel } from '@/types';
-import { Target, Building2, Users, Layers, Plus, Calendar } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { formatQuarter } from '@/types';
+import { Target, Plus, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronRight } from 'lucide-react';
+import type { OKRWithDetails } from '@/types';
 
 type StatusFilter = 'all' | 'at-risk' | 'on-track';
-type ViewTab = 'list' | 'weekly';
+
+const CONF_HIGH = 70;
+const CONF_MEDIUM = 40;
+
+function confidenceTier(confidence: number): 'low' | 'medium' | 'high' {
+  if (confidence >= CONF_HIGH) return 'high';
+  if (confidence >= CONF_MEDIUM) return 'medium';
+  return 'low';
+}
 
 export function OKRsPage() {
   const navigate = useNavigate();
-  const { 
-    currentQuarter, 
+  const {
+    currentQuarter,
     teams,
     getOKRsByQuarter,
     viewMode,
     selectedTeamId,
-    getTeamOKRs
   } = useApp();
 
-  // In exec view, users can create OKRs; in team view, only PMs can
-  // For this prototype, we allow creation in both modes
   const canCreateOKR = true;
 
-  const [viewTab, setViewTab] = useState<ViewTab>('list');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showAllParents, setShowAllParents] = useState(false);
+  const [openLow, setOpenLow] = useState(true);
+  const [openMedium, setOpenMedium] = useState(true);
+  const [openHigh, setOpenHigh] = useState(true);
+  const [openRelatedLow, setOpenRelatedLow] = useState(true);
+  const [openRelatedMedium, setOpenRelatedMedium] = useState(true);
+  const [openRelatedHigh, setOpenRelatedHigh] = useState(true);
 
-  // Get all OKRs for current quarter
-  const allOKRs = useMemo(() => {
-    return getOKRsByQuarter(currentQuarter);
-  }, [currentQuarter, getOKRsByQuarter]);
+  const allOKRs = useMemo(() => getOKRsByQuarter(currentQuarter), [currentQuarter, getOKRsByQuarter]);
 
-  // Check if current team has OKRs for weekly view
-  const teamOKRs = getTeamOKRs(selectedTeamId);
-  const hasTeamOKRs = teamOKRs.length > 0;
-
-  // Apply filters
   const filteredOKRs = useMemo(() => {
     return allOKRs.filter(okr => {
       if (ownerFilter !== 'all' && okr.ownerId !== ownerFilter) return false;
       if (statusFilter !== 'all') {
-        const confidence = okr.latestCheckIn?.confidence || 0;
-        if (statusFilter === 'at-risk' && confidence >= 40) return false;
-        if (statusFilter === 'on-track' && confidence < 40) return false;
+        const confidence = okr.latestCheckIn?.confidence ?? 0;
+        if (statusFilter === 'at-risk' && confidence >= CONF_MEDIUM) return false;
+        if (statusFilter === 'on-track' && confidence < CONF_MEDIUM) return false;
       }
       return true;
     });
   }, [allOKRs, ownerFilter, statusFilter]);
 
-  // Exec mode: sort by check-in first, then lowest confidence, then down trend first
-  const sortedOKRsForExec = useMemo(() => {
-    if (viewMode !== 'exec') return filteredOKRs;
-    return [...filteredOKRs].sort((a, b) => {
-      const aHas = a.latestCheckIn ? 1 : 0;
-      const bHas = b.latestCheckIn ? 1 : 0;
-      if (aHas !== bHas) return bHas - aHas; // with check-in first
-      const aConf = a.latestCheckIn?.confidence ?? 0;
-      const bConf = b.latestCheckIn?.confidence ?? 0;
-      if (aConf !== bConf) return aConf - bConf; // lowest first
-      const aDown = a.trend === 'down' ? 1 : 0;
-      const bDown = b.trend === 'down' ? 1 : 0;
-      return bDown - aDown; // down first
-    });
-  }, [filteredOKRs, viewMode]);
-
-  // Team mode: group into my team, parent objectives, other teams (other teams only if they have check-in)
-  const groupedOKRs = useMemo(() => {
+  // Team view: my team vs other teams
+  const { myTeam, parentObjectives, otherTeams } = useMemo(() => {
     const myTeam = filteredOKRs.filter(o => o.level === 'team' && o.ownerId === selectedTeamId);
     const parentObjectives = filteredOKRs.filter(o => o.level === 'productArea' || o.level === 'domain');
     const otherTeams = filteredOKRs.filter(o =>
@@ -88,240 +73,274 @@ export function OKRsPage() {
     return { myTeam, parentObjectives, otherTeams };
   }, [filteredOKRs, selectedTeamId]);
 
-  const getLevelIcon = (level: OKRLevel) => {
-    switch (level) {
-      case 'productArea': return <Layers className="w-3.5 h-3.5" />;
-      case 'domain': return <Building2 className="w-3.5 h-3.5" />;
-      case 'team': return <Users className="w-3.5 h-3.5" />;
+  // Quarter health stats: tier counts, average confidence, trend vs previous check-in
+  const { highCount, mediumCount, lowCount, avgConfidence, trendDelta } = useMemo(() => {
+    const withConfidence = filteredOKRs.filter(o => o.latestCheckIn != null);
+    let high = 0, medium = 0, low = 0, sum = 0;
+    withConfidence.forEach(o => {
+      const c = o.latestCheckIn!.confidence;
+      sum += c;
+      if (c >= CONF_HIGH) high++;
+      else if (c >= CONF_MEDIUM) medium++;
+      else low++;
+    });
+    const avg = withConfidence.length ? Math.round(sum / withConfidence.length) : 0;
+    let delta: number | null = null;
+    const withPrevious = filteredOKRs.filter(o => o.checkIns.length >= 2);
+    if (withPrevious.length > 0) {
+      const sorted = withPrevious.map(o => ({
+        latest: o.latestCheckIn!.confidence,
+        prev: [...o.checkIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[1].confidence,
+      }));
+      const currentAvg = sorted.reduce((s, x) => s + x.latest, 0) / sorted.length;
+      const previousAvg = sorted.reduce((s, x) => s + x.prev, 0) / sorted.length;
+      delta = Math.round(currentAvg - previousAvg);
     }
-  };
+    return { highCount: high, mediumCount: medium, lowCount: low, avgConfidence: avg, trendDelta: delta };
+  }, [filteredOKRs]);
 
-  const renderOKRRow = (okr: (typeof filteredOKRs)[number]) => (
-    <div
-      key={okr.id}
-      className="grid grid-cols-12 gap-4 px-2 py-3.5 data-row cursor-pointer items-center"
-      onClick={() => navigate(`/okrs/${okr.id}`)}
-    >
-      <div className="col-span-5">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">{getLevelIcon(okr.level)}</span>
-          <span className="decision-text truncate">{okr.objectiveText}</span>
-          {okr.isOrphaned && <OrphanWarning />}
+  // Group by health: main list = my team (team view) or all (exec)
+  const byHealth = useMemo(() => {
+    const list = viewMode === 'team' ? myTeam : filteredOKRs;
+    const low: OKRWithDetails[] = [];
+    const medium: OKRWithDetails[] = [];
+    const high: OKRWithDetails[] = [];
+    list.forEach(okr => {
+      const c = okr.latestCheckIn?.confidence ?? 0;
+      const tier = confidenceTier(c);
+      if (tier === 'low') low.push(okr);
+      else if (tier === 'medium') medium.push(okr);
+      else high.push(okr);
+    });
+    return { low, medium, high };
+  }, [filteredOKRs, viewMode, myTeam]);
+
+  const directParentIds = useMemo(() => new Set(
+    myTeam.filter(o => o.parentOkrId).map(o => o.parentOkrId!)
+  ), [myTeam]);
+  const directParents = parentObjectives.filter(o => directParentIds.has(o.id));
+  const otherParents = parentObjectives.filter(o => !directParentIds.has(o.id));
+  const visibleParents = directParents.length > 0 ? directParents : parentObjectives.slice(0, 2);
+  const moreParents = directParents.length > 0 ? otherParents : parentObjectives.slice(2);
+
+  const renderOKRRow = (okr: OKRWithDetails) => {
+    const conf = okr.latestCheckIn?.confidence ?? 0;
+    const tier = confidenceTier(conf);
+    const tierColor = tier === 'high' ? 'emerald' : tier === 'medium' ? 'amber' : 'red';
+    const borderColor = tier === 'high' ? 'border-emerald-400' : tier === 'medium' ? 'border-amber-400' : 'border-red-400';
+    const trendColor = okr.trend === 'up' ? 'text-emerald-600' : okr.trend === 'down' ? 'text-red-500' : 'text-muted-foreground';
+    const TrendIcon = okr.trend === 'up' ? TrendingUp : okr.trend === 'down' ? TrendingDown : Minus;
+    const progress = okr.latestCheckIn?.progress ?? 0;
+    return (
+      <div
+        key={okr.id}
+        className={`flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-3 rounded-md hover:bg-muted/30 transition-colors cursor-pointer border-l-[3px] ${borderColor}`}
+        onClick={() => navigate(`/okrs/${okr.id}`)}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-base font-medium text-foreground truncate">{okr.objectiveText}</span>
+            {okr.isOrphaned && <OrphanWarning />}
+          </div>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-xs text-muted-foreground">{okr.ownerName}</span>
+            <div className="flex items-center gap-2">
+              <div className="w-16 h-1.5 rounded-full bg-muted/30 overflow-hidden">
+                <div className="h-full rounded-full bg-foreground/60" style={{ width: `${Math.min(100, progress)}%` }} />
+              </div>
+              <span className="text-xs text-muted-foreground tabular-nums">{progress}%</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {okr.latestCheckIn ? (
+            <>
+              <span className={`text-sm font-bold tabular-nums ${tierColor === 'emerald' ? 'text-emerald-600' : tierColor === 'amber' ? 'text-amber-500' : 'text-red-500'}`}>
+                {conf}
+              </span>
+              <TrendIcon className={`w-4 h-4 ${trendColor}`} />
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">No signal yet</span>
+          )}
         </div>
       </div>
-      <div className="col-span-2">
-        <span className="text-xs text-muted-foreground">{okr.ownerName}</span>
-      </div>
-      <div className="col-span-2">
-        <span className="text-xs text-muted-foreground">
-          {okr.latestCheckIn ? `${okr.latestCheckIn.progress}% toward measures` : 'No signal yet'}
-        </span>
-      </div>
-      <div className="col-span-2">
-        {okr.latestCheckIn ? (
-          <ConfidenceBadge
-            confidence={okr.latestCheckIn.confidence}
-            label={okr.latestCheckIn.confidenceLabel}
-          />
-        ) : (
-          <span className="text-xs text-muted-foreground">No signal yet</span>
-        )}
-      </div>
-      <div className="col-span-1">
-        {okr.latestCheckIn ? (
-          <TrendIndicator trend={okr.trend} size="sm" />
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
-  // If viewing weekly tab in team mode, show TeamWeeklyView
-  if (viewTab === 'weekly' && viewMode === 'team') {
-    return <TeamWeeklyView onBack={() => setViewTab('list')} />;
-  }
+  const renderHealthSection = (
+    title: string,
+    count: number,
+    open: boolean,
+    onOpenChange: (v: boolean) => void,
+    okrs: OKRWithDetails[],
+    dotColor: 'red' | 'amber' | 'emerald'
+  ) => {
+    const bgTint = dotColor === 'red' ? 'bg-red-50/30' : '';
+    const dotClass = dotColor === 'red' ? 'bg-red-500' : dotColor === 'amber' ? 'bg-amber-500' : 'bg-emerald-500';
+    return (
+      <Collapsible open={open} onOpenChange={onOpenChange} className={`mb-8 rounded-lg ${bgTint}`}>
+        <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 px-1 text-left rounded">
+          {open ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+          <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
+          <span className="text-sm font-semibold">{title} ({count})</span>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="space-y-0 pt-1">
+            {okrs.map((okr) => renderOKRRow(okr))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="page-title">Outcomes</h1>
-          <p className="helper-text mt-1">
-            {formatQuarter(currentQuarter)}
-          </p>
+      {/* Quarter Health header */}
+      <div className="space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-xl font-semibold text-foreground">{formatQuarter(currentQuarter)} — Outcomes Overview</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="rounded-lg px-4 py-2 text-sm font-medium bg-red-50 text-red-700 border border-red-200">
+              {lowCount} Low
+            </span>
+            <span className="rounded-lg px-4 py-2 text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200">
+              {mediumCount} Medium
+            </span>
+            <span className="rounded-lg px-4 py-2 text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {highCount} High
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* View Toggle - only in team mode */}
-          {viewMode === 'team' && hasTeamOKRs && (
-            <div className="flex items-center bg-muted rounded-md p-0.5">
-              <Button
-                variant={viewTab === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewTab('list')}
-                className="gap-1.5 h-7 px-3 text-xs"
-              >
-                <Target className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Browse all</span>
-              </Button>
-              <Button
-                variant={viewTab === 'weekly' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewTab('weekly')}
-                className="gap-1.5 h-7 px-3 text-xs"
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Team Weekly</span>
-              </Button>
-            </div>
+        <p className="text-sm text-muted-foreground">
+          Average confidence: {avgConfidence}
+          {trendDelta !== null && (
+            <> · Trending: {trendDelta > 0 ? '↑' : trendDelta < 0 ? '↓' : '→'} {trendDelta > 0 ? '+' : ''}{trendDelta} from last check-in</>
           )}
-          {canCreateOKR && (
-            <Button onClick={() => navigate('/okrs/create')} className="gap-2">
+        </p>
+      </div>
+
+      {/* Top controls: filters + Create outcome */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Owner</label>
+            <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+              <SelectTrigger className="w-40 bg-background h-8 text-xs border border-border/60">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="all">All Owners</SelectItem>
+                {teams.filter(t => t.id).map(t => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+              <SelectTrigger className="w-28 bg-background h-8 text-xs border border-border/60">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="on-track">On Track (≥40)</SelectItem>
+                <SelectItem value="at-risk">At Risk (&lt;40)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {canCreateOKR && (
+          <Button onClick={() => navigate('/okrs/create')} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Create outcome
+          </Button>
+        )}
+      </div>
+
+      {/* Contributes to — team view only */}
+      {viewMode === 'team' && (visibleParents.length > 0 || moreParents.length > 0) && (
+        <div className="bg-muted/20 rounded-lg p-4 mb-4">
+          <h2 className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-3">Contributes to</h2>
+          <div className="space-y-2">
+            {[...visibleParents, ...(showAllParents ? moreParents : [])].map((okr) => (
+              <div key={okr.id} className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-sm font-medium text-foreground">{okr.objectiveText}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-muted rounded px-2 py-0.5 text-muted-foreground">Top-level</span>
+                  {okr.latestCheckIn ? (
+                    <span className={`text-xs font-medium tabular-nums ${confidenceTier(okr.latestCheckIn.confidence) === 'high' ? 'text-emerald-600' : confidenceTier(okr.latestCheckIn.confidence) === 'medium' ? 'text-amber-500' : 'text-red-500'}`}>
+                      {okr.latestCheckIn.confidence}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No signal</span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {moreParents.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAllParents(!showAllParents)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showAllParents ? 'Show less' : `Show ${moreParents.length} more`}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Outcome list — grouped by health */}
+      {filteredOKRs.length === 0 ? (
+        <div className="empty-state py-16">
+          <Target className="empty-state-icon" />
+          <p className="text-lg font-semibold text-foreground">
+            {allOKRs.length === 0 ? 'No outcomes for this quarter' : 'No outcomes match your filters'}
+          </p>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mt-2">
+            {allOKRs.length === 0
+              ? 'TrueNorthOS helps teams align on outcomes and make confidence explicit. Create your first outcome to establish your signal for the quarter.'
+              : 'Try adjusting your filters to see more results.'}
+          </p>
+          {allOKRs.length === 0 && canCreateOKR && (
+            <Button onClick={() => navigate('/okrs/create')} className="mt-6 gap-2">
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Create outcome</span>
+              Create your first outcome
             </Button>
           )}
         </div>
-      </div>
+      ) : (
+        <div>
+          {renderHealthSection('Needs Attention', byHealth.low.length, openLow, setOpenLow, byHealth.low, 'red')}
+          {renderHealthSection('On Track', byHealth.medium.length, openMedium, setOpenMedium, byHealth.medium, 'amber')}
+          {renderHealthSection('Strong Momentum', byHealth.high.length, openHigh, setOpenHigh, byHealth.high, 'emerald')}
+        </div>
+      )}
 
-      {/* Filters */}
-      <Card className="border-border/60">
-        <CardContent className="py-4">
-          <div className="flex flex-wrap items-end gap-4">
-            {/* Owner Filter */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Owner</label>
-              <Select value={ownerFilter} onValueChange={setOwnerFilter}>
-                <SelectTrigger className="w-44 bg-background h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="all">All Owners</SelectItem>
-                  {teams.filter(t => t.id).map(t => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Status Filter */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <SelectTrigger className="w-32 bg-background h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="on-track">On Track (≥40)</SelectItem>
-                  <SelectItem value="at-risk">At Risk (&lt;40)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Results count */}
-            <div className="ml-auto">
-              <span className="text-xs text-muted-foreground">
-                {filteredOKRs.length} outcome{filteredOKRs.length !== 1 ? 's' : ''}
-              </span>
+      {/* Related teams — team view: other teams grouped by health */}
+      {viewMode === 'team' && otherTeams.length > 0 && (() => {
+        const otherLow = otherTeams.filter(o => confidenceTier(o.latestCheckIn?.confidence ?? 0) === 'low');
+        const otherMedium = otherTeams.filter(o => confidenceTier(o.latestCheckIn?.confidence ?? 0) === 'medium');
+        const otherHigh = otherTeams.filter(o => confidenceTier(o.latestCheckIn?.confidence ?? 0) === 'high');
+        return (
+          <div className="mt-8 pt-6 border-t border-muted/50">
+            <h2 className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-4">Related teams</h2>
+            <div>
+              {otherLow.length > 0 && renderHealthSection('Needs Attention', otherLow.length, openRelatedLow, setOpenRelatedLow, otherLow, 'red')}
+              {otherMedium.length > 0 && renderHealthSection('On Track', otherMedium.length, openRelatedMedium, setOpenRelatedMedium, otherMedium, 'amber')}
+              {otherHigh.length > 0 && renderHealthSection('Strong Momentum', otherHigh.length, openRelatedHigh, setOpenRelatedHigh, otherHigh, 'emerald')}
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Outcome list */}
-      <Card className="border-border/60">
-        <CardContent className="py-0">
-          {filteredOKRs.length === 0 ? (
-            <div className="empty-state">
-              <Target className="empty-state-icon" />
-              <p className="empty-state-title">
-                {allOKRs.length === 0 ? "No outcomes for this quarter" : "No outcomes match your filters"}
-              </p>
-              <p className="empty-state-description max-w-md mx-auto">
-                {allOKRs.length === 0 
-                  ? "TrueNorthOS helps teams align on outcomes and make confidence explicit. Create your first outcome to establish your signal for the quarter."
-                  : "Try adjusting your filters to see more results."
-                }
-              </p>
-              {allOKRs.length === 0 && canCreateOKR && (
-                <Button 
-                  onClick={() => navigate('/okrs/create')} 
-                  className="mt-6 gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create your first outcome
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div>
-              {viewMode === 'team' ? (
-                <>
-                  {groupedOKRs.myTeam.length > 0 && (
-                    <>
-                      <div className="section-header px-2 py-2.5 border-b bg-muted/30">
-                        Your team
-                      </div>
-                      {groupedOKRs.myTeam.map((okr) => renderOKRRow(okr))}
-                    </>
-                  )}
-                  {groupedOKRs.parentObjectives.length > 0 && (() => {
-                    const directParentIds = new Set(
-                      groupedOKRs.myTeam
-                        .filter(o => o.parentOkrId)
-                        .map(o => o.parentOkrId!)
-                    );
-                    const directParents = groupedOKRs.parentObjectives.filter(o => directParentIds.has(o.id));
-                    const otherParents = groupedOKRs.parentObjectives.filter(o => !directParentIds.has(o.id));
-                    const visibleByDefault = directParents.length > 0 ? directParents : groupedOKRs.parentObjectives.slice(0, 2);
-                    const moreParents = directParents.length > 0 ? otherParents : groupedOKRs.parentObjectives.slice(2);
-                    return (
-                      <>
-                        <div className="section-header px-2 py-2.5 border-b border-t bg-muted/30">
-                          Business outcomes this team contributes to
-                        </div>
-                        {visibleByDefault.map((okr) => renderOKRRow(okr))}
-                        {showAllParents && moreParents.map((okr) => renderOKRRow(okr))}
-                        {moreParents.length > 0 && (
-                          <button
-                            onClick={() => setShowAllParents(!showAllParents)}
-                            className="w-full px-2 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
-                          >
-                            {showAllParents
-                              ? 'Show less'
-                              : `+ ${moreParents.length} more top-level objective${moreParents.length !== 1 ? 's' : ''}`}
-                          </button>
-                        )}
-                      </>
-                    );
-                  })()}
-                  {groupedOKRs.otherTeams.length > 0 && (
-                    <>
-                      <div className="section-header px-2 py-2.5 border-b border-t bg-muted/30">
-                        Related teams
-                      </div>
-                      {groupedOKRs.otherTeams.map((okr) => renderOKRRow(okr))}
-                    </>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="grid grid-cols-12 gap-4 px-2 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
-                    <div className="col-span-5">Objective</div>
-                    <div className="col-span-2">Owner</div>
-                    <div className="col-span-2">Progress</div>
-                    <div className="col-span-2">Confidence</div>
-                    <div className="col-span-1">Trend</div>
-                  </div>
-                  {sortedOKRsForExec.map((okr) => renderOKRRow(okr))}
-                </>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        );
+      })()}
+      {viewMode === 'exec' && (
+        <div className="mt-8 pt-6 border-t border-muted/50">
+          <h2 className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-4">Across the organization</h2>
+          <p className="text-sm text-muted-foreground">All outcomes above are org-wide. Use filters to narrow by owner.</p>
+        </div>
+      )}
     </div>
   );
 }
