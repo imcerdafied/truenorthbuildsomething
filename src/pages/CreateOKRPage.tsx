@@ -16,12 +16,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { OKRLevel, formatQuarter, getConfidenceLabel, getCurrentQuarter, getNextQuarter } from '@/types';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Check, 
-  Layers, 
-  Building2, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Layers,
+  Building2,
   Users,
   Target,
   Plus,
@@ -48,29 +48,36 @@ interface OKRDraft {
 }
 
 const STEPS = [
-  { id: 'scope', title: 'Scope & Ownership' },
   { id: 'objective', title: 'Objective' },
   { id: 'keyresults', title: 'Key Results' },
-  { id: 'alignment', title: 'Alignment' },
   { id: 'confidence', title: 'Initial Confidence' },
+  { id: 'alignment', title: 'Alignment' },
   { id: 'review', title: 'Review & Create' },
 ];
 
 export function CreateOKRPage() {
   const navigate = useNavigate();
-  const { 
-    productAreas, 
-    domains, 
+  const {
+    productAreas,
+    domains,
     teams,
+    selectedTeamId,
     getOKRsByQuarter,
     createOKR,
     currentQuarter
   } = useApp();
 
+  const currentTeam = teams.find(t => t.id === selectedTeamId);
+  const currentDomain = domains.find(d => d.id === currentTeam?.domainId);
+  const currentProductArea = productAreas.find(pa =>
+    domains.some(d => d.id === currentTeam?.domainId && d.productAreaId === pa.id)
+  );
+
   const [currentStep, setCurrentStep] = useState(0);
+  const [showAdvancedOwnership, setShowAdvancedOwnership] = useState(false);
   const [draft, setDraft] = useState<OKRDraft>({
-    level: '',
-    ownerId: '',
+    level: 'team',
+    ownerId: selectedTeamId || '',
     quarter: currentQuarter,
     objectiveText: '',
     keyResults: [{ id: '1', metricName: '', baseline: '', target: '' }],
@@ -78,14 +85,12 @@ export function CreateOKRPage() {
     confidence: 50,
   });
 
-  // Get available quarters
   const quarters = useMemo(() => {
     const current = getCurrentQuarter();
     const next = getNextQuarter(current);
     return [current, next];
   }, []);
 
-  // Get owners based on selected level
   const owners = useMemo(() => {
     switch (draft.level) {
       case 'productArea':
@@ -99,7 +104,6 @@ export function CreateOKRPage() {
     }
   }, [draft.level, productAreas, domains, teams]);
 
-  // Get potential parent OKRs
   const potentialParents = useMemo(() => {
     const okrs = getOKRsByQuarter(draft.quarter);
     if (draft.level === 'team') {
@@ -133,20 +137,16 @@ export function CreateOKRPage() {
     }
   };
 
-  // Validation
   const canProceed = useMemo(() => {
+    if (!draft.level || !draft.ownerId) return false;
     switch (currentStep) {
-      case 0: // Scope
-        return draft.level !== '' && draft.ownerId !== '';
-      case 1: // Objective
+      case 0:
         return draft.objectiveText.trim().length > 0;
-      case 2: // Key Results
+      case 1:
         return draft.keyResults.some(kr => kr.metricName.trim().length > 0 && kr.target.trim().length > 0);
-      case 3: // Alignment (optional)
-        return true;
-      case 4: // Confidence
-        return true;
-      case 5: // Review
+      case 2:
+      case 3:
+      case 4:
         return true;
       default:
         return false;
@@ -160,7 +160,7 @@ export function CreateOKRPage() {
   const updateKeyResult = (index: number, field: keyof KeyResultDraft, value: string) => {
     setDraft(prev => ({
       ...prev,
-      keyResults: prev.keyResults.map((kr, i) => 
+      keyResults: prev.keyResults.map((kr, i) =>
         i === index ? { ...kr, [field]: value } : kr
       )
     }));
@@ -224,91 +224,26 @@ export function CreateOKRPage() {
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0: // Scope & Ownership
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label className="text-sm font-medium">Level</Label>
-              <p className="text-xs text-muted-foreground mt-1 mb-3">
-                This sets accountability and visibility. Choose the level where the outcome is owned.
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                {(['productArea', 'domain', 'team'] as OKRLevel[]).map(level => (
-                  <button
-                    key={level}
-                    onClick={() => {
-                      updateDraft('level', level);
-                      updateDraft('ownerId', '');
-                    }}
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-lg border transition-colors",
-                      draft.level === level
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:bg-muted/50"
-                    )}
-                  >
-                    {getLevelIcon(level)}
-                    <span className="text-sm font-medium">{getLevelLabel(level)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {draft.level && (
-              <div className="animate-fade-in">
-                <Label className="text-sm font-medium">Owner</Label>
-                <Select value={draft.ownerId} onValueChange={(v) => updateDraft('ownerId', v)}>
-                  <SelectTrigger className="mt-2 bg-background">
-                    <SelectValue placeholder={`Select ${getLevelLabel(draft.level as OKRLevel)}`} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover">
-                    {owners.map(owner => (
-                      <SelectItem key={owner.id} value={owner.id}>
-                        {owner.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div>
-              <Label className="text-sm font-medium">Quarter</Label>
-              <Select value={draft.quarter} onValueChange={(v) => updateDraft('quarter', v)}>
-                <SelectTrigger className="mt-2 bg-background w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {quarters.map(q => (
-                    <SelectItem key={q} value={q}>
-                      {formatQuarter(q)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-
-      case 1: // Objective
+      case 0: // Objective
         return (
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Objective</Label>
-              <p className="text-xs text-muted-foreground mt-1 mb-3">
-                A strong objective describes a meaningful outcome for users or the business.
+              <Label className="text-sm font-medium">What outcome are you trying to achieve?</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Write the outcome, not the activity. Good: "Reduce checkout abandonment rate." Not: "Redesign checkout flow."
               </p>
-              <Textarea
-                placeholder="Describe the change you want to see, not the feature you plan to build."
-                value={draft.objectiveText}
-                onChange={(e) => updateDraft('objectiveText', e.target.value)}
-                className="min-h-[120px] bg-background resize-none"
-              />
             </div>
+            <Textarea
+              value={draft.objectiveText}
+              onChange={(e) => updateDraft('objectiveText', e.target.value)}
+              placeholder="e.g., Improve search relevance and speed"
+              className="min-h-[100px] text-base bg-background resize-none"
+              autoFocus
+            />
           </div>
         );
 
-      case 2: // Key Results
+      case 1: // Key Results
         return (
           <div className="space-y-4">
             <div>
@@ -317,7 +252,6 @@ export function CreateOKRPage() {
                 Key Results should be measurable and time-bound. Add 1–3 key results.
               </p>
             </div>
-
             <div className="space-y-4">
               {draft.keyResults.map((kr, index) => (
                 <div key={kr.id} className="border border-border/60 rounded-lg p-4 animate-fade-in">
@@ -368,14 +302,8 @@ export function CreateOKRPage() {
                 </div>
               ))}
             </div>
-
             {draft.keyResults.length < 3 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addKeyResult}
-                className="gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={addKeyResult} className="gap-2">
                 <Plus className="w-3.5 h-3.5" />
                 Add Key Result
               </Button>
@@ -383,21 +311,51 @@ export function CreateOKRPage() {
           </div>
         );
 
+      case 2: // Initial Confidence
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label className="text-sm font-medium">Initial Confidence</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                This is your best judgment today. You'll update confidence as you learn.
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                Confidence is not a commitment. It's a signal.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <ConfidenceBadge confidence={draft.confidence} label={getConfidenceLabel(draft.confidence)} />
+                <span className="text-2xl font-semibold tabular-nums">{draft.confidence}</span>
+              </div>
+              <Slider
+                value={[draft.confidence]}
+                onValueChange={(v) => updateDraft('confidence', v[0])}
+                min={0}
+                max={100}
+                step={5}
+                className="py-4"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Low (&lt;40)</span>
+                <span>Medium (40–74)</span>
+                <span>High (≥75)</span>
+              </div>
+            </div>
+          </div>
+        );
+
       case 3: // Alignment
         return (
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Parent OKR (optional)</Label>
-              <p className="text-xs text-muted-foreground mt-1 mb-3">
-                Linking OKRs makes alignment visible. You can add or change this later.
+              <Label className="text-sm font-medium">What does this ladder to?</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Link to a parent objective to show how this team's work connects to broader outcomes. This is optional — you can add alignment later.
               </p>
-              
               {potentialParents.length > 0 ? (
-                <Select 
-                  value={draft.parentOkrId} 
-                  onValueChange={(v) => updateDraft('parentOkrId', v)}
-                >
-                  <SelectTrigger className="bg-background">
+                <Select value={draft.parentOkrId} onValueChange={(v) => updateDraft('parentOkrId', v)}>
+                  <SelectTrigger className="mt-2 bg-background">
                     <SelectValue placeholder="Select a parent OKR" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover">
@@ -413,13 +371,11 @@ export function CreateOKRPage() {
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4">
-                  No parent OKRs available for {formatQuarter(draft.quarter)}. 
-                  You can link this OKR to a parent later.
+                <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 mt-2">
+                  No parent OKRs available for {formatQuarter(draft.quarter)}. You can link this OKR to a parent later.
                 </div>
               )}
             </div>
-
             {!draft.parentOkrId && draft.level !== 'productArea' && (
               <div className="bg-confidence-medium-bg text-confidence-medium rounded-lg px-4 py-3 text-sm">
                 This OKR will not be linked to a parent outcome. You can add alignment later.
@@ -428,55 +384,14 @@ export function CreateOKRPage() {
           </div>
         );
 
-      case 4: // Initial Confidence
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label className="text-sm font-medium">Initial Confidence</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                This is your best judgment today. You'll update confidence as you learn.
-              </p>
-              <p className="text-xs text-muted-foreground/70 mt-1">
-                Confidence is not a commitment. It's a signal.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <ConfidenceBadge 
-                  confidence={draft.confidence} 
-                  label={getConfidenceLabel(draft.confidence)}
-                />
-                <span className="text-2xl font-semibold tabular-nums">{draft.confidence}</span>
-              </div>
-              
-              <Slider
-                value={[draft.confidence]}
-                onValueChange={(v) => updateDraft('confidence', v[0])}
-                min={0}
-                max={100}
-                step={5}
-                className="py-4"
-              />
-
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Low (&lt;40)</span>
-                <span>Medium (40–74)</span>
-                <span>High (≥75)</span>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 5: // Review
+      case 4: // Review
         const parentOkr = potentialParents.find(o => o.id === draft.parentOkrId);
         return (
           <div className="space-y-5">
-            {/* Scope */}
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Scope</span>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(0)}>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setShowAdvancedOwnership(true)}>
                   Edit
                 </Button>
               </div>
@@ -490,23 +405,19 @@ export function CreateOKRPage() {
                 </div>
               </div>
             </div>
-
-            {/* Objective */}
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Objective</span>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(1)}>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(0)}>
                   Edit
                 </Button>
               </div>
               <p className="text-sm">{draft.objectiveText}</p>
             </div>
-
-            {/* Key Results */}
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Key Results</span>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(2)}>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(1)}>
                   Edit
                 </Button>
               </div>
@@ -521,8 +432,6 @@ export function CreateOKRPage() {
                 ))}
               </div>
             </div>
-
-            {/* Alignment */}
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Alignment</span>
@@ -536,19 +445,14 @@ export function CreateOKRPage() {
                 <p className="text-sm text-muted-foreground">Not linked to a parent OKR</p>
               )}
             </div>
-
-            {/* Confidence */}
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Initial Confidence</span>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(4)}>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(2)}>
                   Edit
                 </Button>
               </div>
-              <ConfidenceBadge 
-                confidence={draft.confidence} 
-                label={getConfidenceLabel(draft.confidence)}
-              />
+              <ConfidenceBadge confidence={draft.confidence} label={getConfidenceLabel(draft.confidence)} />
             </div>
           </div>
         );
@@ -557,18 +461,16 @@ export function CreateOKRPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
-      {/* Back button */}
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={() => navigate('/okrs')} 
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate('/okrs')}
         className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to OKRs
       </Button>
 
-      {/* Header */}
       <div>
         <h1 className="page-title flex items-center gap-2">
           <Target className="w-6 h-6" />
@@ -579,7 +481,100 @@ export function CreateOKRPage() {
         </p>
       </div>
 
-      {/* Progress steps */}
+      {/* Ownership bar - always visible */}
+      <div className="flex items-center justify-between px-4 py-3 bg-muted/30 rounded-lg border border-border/40">
+        <div className="flex items-center gap-2 text-sm">
+          <Users className="w-4 h-4 text-muted-foreground" />
+          <span className="text-muted-foreground">Owner:</span>
+          <span className="font-medium">{getOwnerName()}</span>
+          {draft.level === 'team' && currentDomain && (
+            <span className="text-xs text-muted-foreground">
+              · {currentDomain.name}{currentProductArea ? ` · ${currentProductArea.name}` : ''}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={draft.quarter} onValueChange={(v) => updateDraft('quarter', v)}>
+            <SelectTrigger className="h-7 w-28 text-xs border-0 bg-transparent">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {quarters.map(q => (
+                <SelectItem key={q} value={q}>{formatQuarter(q)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-6 px-2"
+            onClick={() => setShowAdvancedOwnership(!showAdvancedOwnership)}
+          >
+            {showAdvancedOwnership ? 'Hide' : 'Change'}
+          </Button>
+        </div>
+      </div>
+
+      {showAdvancedOwnership && (
+        <Card className="border-border/40">
+          <CardContent className="py-4 space-y-4">
+            <div>
+              <Label className="text-xs text-muted-foreground">Level</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {(['team', 'domain', 'productArea'] as OKRLevel[]).map(level => {
+                  const options = level === 'productArea' ? productAreas
+                    : level === 'domain' ? domains : teams;
+                  return (
+                    <button
+                      key={level}
+                      onClick={() => {
+                        updateDraft('level', level);
+                        if (options.length === 1) {
+                          updateDraft('ownerId', options[0].id);
+                        } else {
+                          updateDraft('ownerId', '');
+                        }
+                      }}
+                      className={cn(
+                        "px-3 py-2 rounded-md border text-sm transition-colors",
+                        draft.level === level
+                          ? "border-foreground/30 bg-foreground/5 font-medium"
+                          : "border-border hover:border-foreground/20"
+                      )}
+                    >
+                      {level === 'productArea' ? 'Product Area' : level === 'domain' ? 'Domain' : 'Team'}
+                      {options.length === 1 && (
+                        <span className="block text-xs text-muted-foreground mt-0.5">
+                          {options[0].name} (auto)
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {owners.length > 1 && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Owner</Label>
+                <Select value={draft.ownerId} onValueChange={(v) => updateDraft('ownerId', v)}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select owner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {owners.map(o => (
+                      <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Most OKRs are team-level. Domain and Product Area levels are for cross-team outcomes.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center gap-1">
         {STEPS.map((step, index) => (
           <div key={step.id} className="flex items-center">
@@ -588,7 +583,7 @@ export function CreateOKRPage() {
               disabled={index > currentStep}
               className={cn(
                 "flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors",
-                index === currentStep && "bg-primary text-primary-foreground",
+                index === currentStep && "bg-secondary text-secondary-foreground",
                 index < currentStep && "text-muted-foreground hover:text-foreground cursor-pointer",
                 index > currentStep && "text-muted-foreground/50 cursor-not-allowed"
               )}
@@ -612,7 +607,6 @@ export function CreateOKRPage() {
         ))}
       </div>
 
-      {/* Step content */}
       <Card className="border-border/60">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-medium">{STEPS[currentStep].title}</CardTitle>
@@ -622,7 +616,6 @@ export function CreateOKRPage() {
         </CardContent>
       </Card>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
@@ -633,21 +626,13 @@ export function CreateOKRPage() {
           <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
-
         {currentStep < STEPS.length - 1 ? (
-          <Button
-            onClick={handleNext}
-            disabled={!canProceed}
-            className="gap-2"
-          >
+          <Button onClick={handleNext} disabled={!canProceed} className="gap-2">
             Next
             <ArrowRight className="w-4 h-4" />
           </Button>
         ) : (
-          <Button
-            onClick={handleCreate}
-            className="gap-2"
-          >
+          <Button onClick={handleCreate} className="gap-2">
             <Check className="w-4 h-4" />
             Create OKR
           </Button>
