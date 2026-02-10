@@ -39,7 +39,6 @@ export function OKRsPage() {
   const canCreateOKR = true;
 
   const [viewTab, setViewTab] = useState<ViewTab>('list');
-  const [levelFilter, setLevelFilter] = useState<OKRLevel | 'all'>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showAllParents, setShowAllParents] = useState(false);
@@ -56,7 +55,6 @@ export function OKRsPage() {
   // Apply filters
   const filteredOKRs = useMemo(() => {
     return allOKRs.filter(okr => {
-      if (levelFilter !== 'all' && okr.level !== levelFilter) return false;
       if (ownerFilter !== 'all' && okr.ownerId !== ownerFilter) return false;
       if (statusFilter !== 'all') {
         const confidence = okr.latestCheckIn?.confidence || 0;
@@ -65,7 +63,7 @@ export function OKRsPage() {
       }
       return true;
     });
-  }, [allOKRs, levelFilter, ownerFilter, statusFilter]);
+  }, [allOKRs, ownerFilter, statusFilter]);
 
   // Exec mode: sort by check-in first, then lowest confidence, then down trend first
   const sortedOKRsForExec = useMemo(() => {
@@ -200,22 +198,6 @@ export function OKRsPage() {
       <Card className="border-border/60">
         <CardContent className="py-4">
           <div className="flex flex-wrap items-end gap-4">
-            {/* Level Filter */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Level</label>
-              <Select value={levelFilter} onValueChange={(v) => setLevelFilter(v as OKRLevel | 'all')}>
-                <SelectTrigger className="w-36 bg-background h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="productArea">Product Area</SelectItem>
-                  <SelectItem value="domain">Domain</SelectItem>
-                  <SelectItem value="team">Team</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Owner Filter */}
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Owner</label>
