@@ -133,11 +133,7 @@ export function CheckInPage() {
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2 -ml-2 text-muted-foreground">
-          <ArrowLeft className="w-4 h-4" />
-          Cancel
-        </Button>
+      <div className="flex items-center justify-end">
         <div className="text-xs text-muted-foreground">
           {currentStep + 1} of {editableOKRs.length}
         </div>
@@ -252,15 +248,18 @@ export function CheckInPage() {
 
       {/* Navigation */}
       <div className="flex justify-between pt-2">
-        <Button 
-          variant="ghost" 
-          onClick={handlePrevious}
-          disabled={currentStep === 0}
-          className="gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Previous
-        </Button>
+        {currentStep > 0 ? (
+          <Button 
+            variant="ghost" 
+            onClick={handlePrevious}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Previous
+          </Button>
+        ) : (
+          <div />
+        )}
 
         {currentStep === editableOKRs.length - 1 ? (
           <div className="flex items-center gap-2">
