@@ -3,7 +3,6 @@ import {
   Home, 
   Target, 
   GitBranch, 
-  Presentation, 
   Download,
   Settings,
   ChevronLeft,
@@ -20,7 +19,6 @@ const primaryNav = [
 
 const secondaryNav = [
   { to: '/alignment', icon: GitBranch, label: 'Outcome Model' },
-  { to: '/qbr', icon: Presentation, label: 'QBR' },
   { to: '/exports', icon: Download, label: 'Exports' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
