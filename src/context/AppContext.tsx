@@ -21,6 +21,7 @@ import {
   getTrend,
   getCurrentQuarter
 } from '@/types';
+import { toast } from '@/hooks/use-toast';
 
 export interface CreateOKRData {
   level: OKRLevel;
@@ -277,6 +278,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error fetching organization data:', error);
       setState(prev => ({ ...prev, isLoading: false }));
+      toast({
+        title: 'Failed to load data',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   }, [organization?.id, profile?.full_name, isDemoMode]);
 
@@ -424,6 +430,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         keyResults: [...prev.keyResults, ...newKRs],
         checkIns: [...prev.checkIns, initialCheckIn]
       }));
+      toast({ title: 'OKR created' });
       return newOkrId;
     }
 
@@ -451,6 +458,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (okrError || !okrRow) {
       console.error('Error creating OKR:', okrError);
+      toast({
+        title: 'Failed to create OKR',
+        description: okrError?.message || 'Please try again.',
+        variant: 'destructive',
+      });
       throw new Error(okrError?.message || 'Failed to create OKR');
     }
 
@@ -489,6 +501,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (ciError) console.error('Error creating initial check-in:', ciError);
 
     await refreshData();
+    toast({ title: 'OKR created' });
     return newOkrId;
   }, [isDemoMode, organization?.id, user?.id, refreshData]);
 
@@ -505,6 +518,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
         checkIns: [...prev.checkIns, newCheckIn]
       }));
+      toast({ title: 'Check-in saved' });
       return;
     }
 
@@ -524,10 +538,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error('Error saving check-in:', error);
+      toast({
+        title: 'Failed to save check-in',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
+      });
       throw new Error(error.message);
     }
 
     await refreshData();
+    toast({ title: 'Check-in saved' });
   }, [isDemoMode, user?.id, refreshData]);
 
   const updateTeamCadence = useCallback(async (teamId: string, cadence: 'weekly' | 'biweekly') => {
@@ -536,6 +556,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
         teams: prev.teams.map(t => t.id === teamId ? { ...t, cadence } : t)
       }));
+      toast({ title: 'Cadence updated' });
       return;
     }
 
@@ -546,10 +567,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error('Error updating team cadence:', error);
+      toast({
+        title: 'Failed to update cadence',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
+      });
       throw error;
     }
 
     await refreshData();
+    toast({ title: 'Cadence updated' });
   }, [isDemoMode, refreshData]);
 
   const addOKRLink = useCallback(async (parentOkrId: string, childOkrId: string) => {
@@ -558,6 +585,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
         okrs: prev.okrs.map(o => o.id === childOkrId ? { ...o, parentOkrId } : o)
       }));
+      toast({ title: 'OKR linked' });
       return;
     }
 
@@ -569,6 +597,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (okrError) {
       console.error('Error linking OKR:', okrError);
+      toast({
+        title: 'Failed to link OKR',
+        description: okrError.message || 'Please try again.',
+        variant: 'destructive',
+      });
       throw okrError;
     }
 
@@ -583,6 +616,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (linkError) console.error('Error creating okr_link:', linkError);
 
     await refreshData();
+    toast({ title: 'OKR linked' });
   }, [isDemoMode, refreshData]);
 
   const addJiraLink = useCallback(async (okrId: string, epicIdentifierOrUrl: string) => {
@@ -596,6 +630,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
         jiraLinks: [...prev.jiraLinks, newLink]
       }));
+      toast({ title: 'Jira link added' });
       return;
     }
 
@@ -608,10 +643,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error('Error adding Jira link:', error);
+      toast({
+        title: 'Failed to add Jira link',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
+      });
       throw error;
     }
 
     await refreshData();
+    toast({ title: 'Jira link added' });
   }, [isDemoMode, refreshData]);
 
   const removeJiraLink = useCallback(async (linkId: string) => {
@@ -620,6 +661,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
         jiraLinks: prev.jiraLinks.filter(jl => jl.id !== linkId)
       }));
+      toast({ title: 'Jira link removed' });
       return;
     }
 
@@ -630,10 +672,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error('Error removing Jira link:', error);
+      toast({
+        title: 'Failed to remove Jira link',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
+      });
       throw error;
     }
 
     await refreshData();
+    toast({ title: 'Jira link removed' });
   }, [isDemoMode, refreshData]);
 
   const rolloverOKR = useCallback(async (okrId: string) => {
@@ -678,6 +726,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         okrs: [...prev.okrs, newOKR],
         keyResults: [...prev.keyResults, ...newKRs]
       }));
+      toast({ title: 'OKR rolled over' });
       return;
     }
 
@@ -702,6 +751,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (okrError) {
       console.error('Error rolling over OKR:', okrError);
+      toast({
+        title: 'Failed to roll over OKR',
+        description: okrError.message || 'Please try again.',
+        variant: 'destructive',
+      });
       throw okrError;
     }
 
@@ -721,6 +775,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     await refreshData();
+    toast({ title: 'OKR rolled over' });
   }, [state.okrs, state.keyResults, isDemoMode, organization, user, refreshData]);
 
   // ── Aggregations (pure computation from state) ────────────────────────

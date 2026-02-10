@@ -25,7 +25,8 @@ import {
   Users,
   Target,
   Plus,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -75,6 +76,7 @@ export function CreateOKRPage() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [showAdvancedOwnership, setShowAdvancedOwnership] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [draft, setDraft] = useState<OKRDraft>({
     level: 'team',
     ownerId: selectedTeamId || '',
@@ -198,6 +200,7 @@ export function CreateOKRPage() {
 
   const handleCreate = async () => {
     if (draft.level === '') return;
+    setIsSubmitting(true);
     try {
       const newOkrId = await createOKR({
         level: draft.level as OKRLevel,
@@ -219,6 +222,8 @@ export function CreateOKRPage() {
     } catch (e) {
       console.error(e);
       toast.error('Failed to create OKR. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -632,8 +637,8 @@ export function CreateOKRPage() {
             <ArrowRight className="w-4 h-4" />
           </Button>
         ) : (
-          <Button onClick={handleCreate} className="gap-2">
-            <Check className="w-4 h-4" />
+          <Button onClick={handleCreate} disabled={isSubmitting} className="gap-2">
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             Create OKR
           </Button>
         )}
