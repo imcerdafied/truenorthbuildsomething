@@ -93,6 +93,18 @@ export function HomePage() {
     return 'flat';
   }, [checkIns, allTeamOKRIds, hasOKRs]);
 
+  // Alignment summary (team mode, when OKRs exist)
+  const alignmentStats = useMemo(() => {
+    if (!hasOKRs) return null;
+    const linked = teamOKRs.filter(o => o.parentOkrId);
+    const unlinked = teamOKRs.filter(o => !o.parentOkrId);
+    return {
+      total: teamOKRs.length,
+      linked: linked.length,
+      unlinked: unlinked.length,
+    };
+  }, [teamOKRs, hasOKRs]);
+
   // Get peer teams in the same domain
   const peerTeams = teams.filter(t => t.domainId === currentTeam?.domainId && t.id !== selectedTeamId);
 
@@ -376,6 +388,20 @@ export function HomePage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {alignmentStats && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs text-muted-foreground">
+            {alignmentStats.linked > 0
+              ? `${alignmentStats.linked} of ${alignmentStats.total} OKR${alignmentStats.total !== 1 ? 's' : ''} linked to parent objectives`
+              : `${alignmentStats.total} top-level OKR${alignmentStats.total !== 1 ? 's' : ''}`
+            }
+          </p>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/alignment')} className="text-xs h-6 px-2 text-muted-foreground">
+            View outcome model →
+          </Button>
+        </div>
       )}
 
       {/* Peer Teams - only show if current team has OKRs OR any peer has OKRs */}

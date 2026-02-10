@@ -13,10 +13,13 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
-const navItems = [
+const primaryNav = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/okrs', icon: Target, label: 'OKRs' },
-  { to: '/alignment', icon: GitBranch, label: 'Alignment' },
+];
+
+const secondaryNav = [
+  { to: '/alignment', icon: GitBranch, label: 'Outcome Model' },
   { to: '/qbr', icon: Presentation, label: 'QBR' },
   { to: '/exports', icon: Download, label: 'Exports' },
   { to: '/settings', icon: Settings, label: 'Settings' },
@@ -64,20 +67,27 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-0.5">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.to || 
+        {primaryNav.map((item) => {
+          const isActive = location.pathname === item.to ||
             (item.to !== '/' && location.pathname.startsWith(item.to));
-          
           return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={handleNavClick}
-              className={cn(
-                "nav-item",
-                isActive && "active"
-              )}
-            >
+            <NavLink key={item.to} to={item.to} onClick={handleNavClick}
+              className={cn("nav-item", isActive && "active")}>
+              <item.icon className="w-4 h-4 flex-shrink-0" />
+              {!collapsed && <span>{item.label}</span>}
+            </NavLink>
+          );
+        })}
+
+        {/* Divider */}
+        <div className="!my-3 border-t border-sidebar-border" />
+
+        {secondaryNav.map((item) => {
+          const isActive = location.pathname === item.to ||
+            (item.to !== '/' && location.pathname.startsWith(item.to));
+          return (
+            <NavLink key={item.to} to={item.to} onClick={handleNavClick}
+              className={cn("nav-item", isActive && "active")}>
               <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </NavLink>

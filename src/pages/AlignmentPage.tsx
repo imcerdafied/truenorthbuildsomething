@@ -124,9 +124,9 @@ export function AlignmentPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="page-title">Alignment</h1>
+        <h1 className="page-title">Outcome Model</h1>
         <p className="helper-text mt-1">
-          View how OKRs cascade from Product Area to Domain to Team · {formatQuarter(currentQuarter)}
+          How objectives connect from top-level outcomes to team execution · {formatQuarter(currentQuarter)}
         </p>
       </div>
 
@@ -146,7 +146,7 @@ export function AlignmentPage() {
         </Badge>
         {orphanedOKRs.length > 0 && (
           <Badge variant="confidenceMedium" className="gap-1.5 text-xs font-normal">
-            {orphanedOKRs.length} not linked
+            {orphanedOKRs.length} top-level
           </Badge>
         )}
       </div>
