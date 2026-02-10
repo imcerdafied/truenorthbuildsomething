@@ -135,9 +135,6 @@ export function HomePage() {
           <p className="helper-text mt-1 text-sm">
             What are we trying to achieve, and are we on track?
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {formatQuarter(currentQuarter)} · Source of truth for quarterly business reviews
-          </p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -161,12 +158,46 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Signal Cards - calm briefing */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <SignalCard
-          title="Overall Confidence"
-          value={
-            hasOKRs ? (
+      {/* Signal summary: compact strip for 1 OKR, 4-card grid for 2+ OKRs */}
+      {hasOKRs && teamOKRs.length === 1 && (
+        <Card className="border-border/60">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Confidence</span>
+                  <span className="text-lg font-semibold">{overallConfidence}</span>
+                  <ConfidenceBadge confidence={overallConfidence} showValue={false} />
+                  {overallTrend && <TrendIndicator trend={overallTrend} size="sm" />}
+                </div>
+                {latestCheckIn && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Last check-in</span>
+                    <span className="text-sm">{new Date(latestCheckIn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                )}
+                {nextCheckInDate && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Next</span>
+                    <span className="text-sm">{nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                )}
+              </div>
+              {/* Status badge */}
+              {hasOKRs && overallConfidence >= 60 && overallTrend !== 'down' && atRiskCount === 0 && (
+                <span className="text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full font-medium">
+                  No action needed
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {hasOKRs && teamOKRs.length > 1 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <SignalCard
+            title="Overall Confidence"
+            value={
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <span>{overallConfidence}</span>
                 <ConfidenceBadge confidence={overallConfidence} showValue={false} />
@@ -183,41 +214,36 @@ export function HomePage() {
                   <span className="text-xs text-muted-foreground">—</span>
                 )}
               </div>
-            ) : (
-              <span className="text-base sm:text-lg font-medium text-muted-foreground">Not yet established</span>
-            )
-          }
-          subtitle={hasOKRs ? "Aggregate across all OKRs" : "No OKRs have been defined for this quarter."}
-          icon={<Target className="w-5 h-5" />}
-        />
-        
-        <SignalCard
-          title="On Track"
-          value={hasOKRs ? onTrackCount : <span className="text-base sm:text-lg font-medium text-muted-foreground">No signal yet</span>}
-          subtitle={hasOKRs ? `of ${teamOKRs.length} OKRs with confidence ≥40` : "OKRs appear here once teams define outcomes."}
-          icon={<CheckCircle2 className="w-5 h-5" />}
-          variant={hasOKRs && onTrackCount > 0 ? "success" : "default"}
-        />
-        
-        <SignalCard
-          title="At Risk"
-          value={hasOKRs ? atRiskCount : <span className="text-base sm:text-lg font-medium text-muted-foreground">No signal yet</span>}
-          subtitle={hasOKRs ? "OKRs with confidence <40" : "Risk becomes visible as confidence is tracked."}
-          icon={<AlertTriangle className="w-5 h-5" />}
-          variant={hasOKRs && atRiskCount > 0 ? 'danger' : 'default'}
-        />
-        
-        <SignalCard
-          title="Next Check-in"
-          value={
-            hasOKRs && nextCheckInDate 
-              ? nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
-              : <span className="text-base sm:text-lg font-medium text-muted-foreground">Not scheduled</span>
-          }
-          subtitle={hasOKRs ? `${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence` : "Check-ins begin after OKRs are created."}
-          icon={<Clock className="w-5 h-5" />}
-        />
-      </div>
+            }
+            subtitle="Aggregate across all OKRs"
+            icon={<Target className="w-5 h-5" />}
+          />
+          <SignalCard
+            title="On Track"
+            value={onTrackCount}
+            subtitle={`of ${teamOKRs.length} OKRs with confidence ≥40`}
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            variant={onTrackCount > 0 ? "success" : "default"}
+          />
+          <SignalCard
+            title="At Risk"
+            value={atRiskCount}
+            subtitle="OKRs with confidence <40"
+            icon={<AlertTriangle className="w-5 h-5" />}
+            variant={atRiskCount > 0 ? 'danger' : 'default'}
+          />
+          <SignalCard
+            title="Next Check-in"
+            value={
+              nextCheckInDate
+                ? nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : <span className="text-base sm:text-lg font-medium text-muted-foreground">Not scheduled</span>
+            }
+            subtitle={`${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence`}
+            icon={<Clock className="w-5 h-5" />}
+          />
+        </div>
+      )}
 
       {/* Team OKRs */}
       <Card className="border-border/60">
@@ -255,54 +281,112 @@ export function HomePage() {
             </div>
           ) : (
             <div className="space-y-0">
-              {teamOKRs.map((okr) => (
-                <div 
-                  key={okr.id}
-                  className="data-row flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3.5 px-2 cursor-pointer rounded-md -mx-2"
-                  onClick={() => navigate(`/okrs/${okr.id}`)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
-                      {okr.isOrphaned && <OrphanWarning />}
+              {teamOKRs.map((okr) => {
+                let changeSummary = '';
+                if (okr.latestCheckIn && okr.previousCheckIn) {
+                  const confDiff = okr.latestCheckIn.confidence - okr.previousCheckIn.confidence;
+                  const progDiff = okr.latestCheckIn.progress - okr.previousCheckIn.progress;
+
+                  if (confDiff !== 0) {
+                    changeSummary += `Confidence ${confDiff > 0 ? '↑' : '↓'} from ${okr.previousCheckIn.confidence} → ${okr.latestCheckIn.confidence}`;
+                  } else {
+                    changeSummary += 'Confidence unchanged';
+                  }
+
+                  if (progDiff !== 0) {
+                    changeSummary += ` · Progress ${progDiff > 0 ? '+' : ''}${progDiff}%`;
+                  }
+
+                  if (okr.latestCheckIn.reasonForChange) {
+                    changeSummary += ` · ${okr.latestCheckIn.reasonForChange}`;
+                  }
+                }
+
+                return (
+                  <div key={okr.id}>
+                    <div
+                      className="data-row flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3.5 px-2 cursor-pointer rounded-md -mx-2"
+                      onClick={() => navigate(`/okrs/${okr.id}`)}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
+                          {okr.isOrphaned && <OrphanWarning />}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="w-24 sm:w-28">
+                          <ProgressBar value={okr.latestCheckIn?.progress || 0} showLabel size="sm" />
+                        </div>
+
+                        <div className="w-16 sm:w-20 hidden sm:block">
+                          <ConfidenceSparkline checkIns={okr.checkIns} />
+                        </div>
+
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-[100px] sm:min-w-[140px] justify-end">
+                          {okr.latestCheckIn && (
+                            <ConfidenceBadge
+                              confidence={okr.latestCheckIn.confidence}
+                              label={okr.latestCheckIn.confidenceLabel}
+                            />
+                          )}
+                          <TrendIndicator trend={okr.trend} size="sm" />
+                        </div>
+                      </div>
                     </div>
+                    {changeSummary && (
+                      <p className="text-xs text-muted-foreground px-2 pb-2 -mt-1 truncate">
+                        {changeSummary}
+                      </p>
+                    )}
                   </div>
-                  
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="w-24 sm:w-28">
-                      <ProgressBar value={okr.latestCheckIn?.progress || 0} showLabel size="sm" />
-                    </div>
-                    
-                    <div className="w-16 sm:w-20 hidden sm:block">
-                      <ConfidenceSparkline checkIns={okr.checkIns} />
-                    </div>
-                    
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-[100px] sm:min-w-[140px] justify-end">
-                      {okr.latestCheckIn && (
-                        <ConfidenceBadge 
-                          confidence={okr.latestCheckIn.confidence} 
-                          label={okr.latestCheckIn.confidenceLabel}
-                        />
-                      )}
-                      <TrendIndicator trend={okr.trend} size="sm" />
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Confidence narrative - single-OKR teams with check-in history */}
+      {teamOKRs.length === 1 && teamOKRs[0].latestCheckIn && (teamOKRs[0].latestCheckIn.reasonForChange || teamOKRs[0].latestCheckIn.optionalNote) && (
+        <Card className="border-border/60">
+          <CardContent className="py-5 space-y-4">
+            {teamOKRs[0].latestCheckIn.reasonForChange && (
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                  {teamOKRs[0].latestCheckIn.confidence >= 60 ? 'Why confidence is high' :
+                    teamOKRs[0].latestCheckIn.confidence >= 40 ? 'Current confidence context' :
+                    'Why confidence is low'}
+                </h3>
+                <p className="text-sm text-foreground/80">
+                  {teamOKRs[0].latestCheckIn.reasonForChange}
+                </p>
+              </div>
+            )}
+            {teamOKRs[0].latestCheckIn.optionalNote && (
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                  What could change confidence
+                </h3>
+                <p className="text-sm text-foreground/80">
+                  {teamOKRs[0].latestCheckIn.optionalNote}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Peer Teams - only show if current team has OKRs OR any peer has OKRs */}
       {peerTeams.length > 0 && (hasOKRs || anyPeerHasOKRs) && (
         <Card className="border-border/60">
           <CardHeader className="pb-4">
             <CardTitle className="text-base font-medium">
-              Peer Teams in {currentDomain?.name}
+              Related teams that influence this outcome
             </CardTitle>
             <p className="helper-text">
-              Read-only view of team confidence levels within your domain
+              Teams whose work may impact your outcomes.
             </p>
           </CardHeader>
           <CardContent className="pt-0">
