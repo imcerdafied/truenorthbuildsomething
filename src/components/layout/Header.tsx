@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Users, Building2, Menu, X } from 'lucide-react';
 import { formatQuarter } from '@/types';
+import { cn } from '@/lib/utils';
 
 const quarters = [
   '2026-Q1',
@@ -25,6 +27,7 @@ interface HeaderProps {
 }
 
 export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
+  const navigate = useNavigate();
   const { 
     viewMode, 
     setViewMode, 
@@ -94,7 +97,10 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
             variant={viewMode === 'team' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('team')}
-            className="gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs"
+            className={cn(
+              "gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs",
+              viewMode === 'team' ? "text-foreground font-semibold" : "text-muted-foreground"
+            )}
           >
             <Users className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Team</span>
@@ -103,19 +109,26 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
             variant={viewMode === 'exec' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('exec')}
-            className="gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs"
+            className={cn(
+              "gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs",
+              viewMode === 'exec' ? "text-foreground font-semibold" : "text-muted-foreground"
+            )}
           >
             <Building2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Exec</span>
           </Button>
         </div>
 
-        {/* Current User - hidden on small screens */}
-        <div className="hidden sm:block text-xs text-muted-foreground border-l pl-3">
+        {/* Current User - hidden on small screens, clickable → Settings */}
+        <button
+          type="button"
+          onClick={() => navigate('/settings')}
+          className="hidden sm:flex items-center text-xs text-muted-foreground border-l pl-3 cursor-pointer hover:opacity-80 focus:outline-none focus:ring-0"
+        >
           <span className="font-medium text-foreground">{profile?.full_name || currentPM}</span>
           <span className="mx-1.5 text-border">·</span>
           <span>PM</span>
-        </div>
+        </button>
       </div>
     </header>
   );
