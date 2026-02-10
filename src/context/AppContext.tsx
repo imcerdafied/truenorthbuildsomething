@@ -16,6 +16,7 @@ import {
   OKRLevel,
   Quarter,
   Cadence,
+  ConfidenceLabel,
   getConfidenceLabel,
   getTrend,
   getCurrentQuarter
@@ -176,11 +177,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         cadence: (t.cadence || 'biweekly') as Cadence
       }));
 
-      // Fetch OKR data
-      const { data: okrData } = await supabase
+      // Fetch OKRs for this organization
+      const { data: okrData, error: okrError } = await supabase
         .from('okrs')
         .select('*')
-        .eq('organization_id', organization.id);
+        .eq('organization_id', organization.id)
+        .order('created_at', { ascending: false });
+
+      if (okrError) console.error('Error fetching OKRs:', okrError);
 
       const okrs: OKR[] = (okrData || []).map(o => ({
         id: o.id,
@@ -203,10 +207,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       let jiraLinks: JiraLink[] = [];
 
       if (okrIds.length > 0) {
-        const { data: krData } = await supabase
+        const { data: krData, error: krError } = await supabase
           .from('key_results')
           .select('*')
           .in('okr_id', okrIds);
+
+        if (krError) console.error('Error fetching key results:', krError);
 
         keyResults = (krData || []).map(kr => ({
           id: kr.id,
@@ -218,11 +224,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           attentionReason: kr.attention_reason || undefined
         }));
 
-        const { data: ciData } = await supabase
+        const { data: ciData, error: ciError } = await supabase
           .from('check_ins')
           .select('*')
           .in('okr_id', okrIds)
           .order('date', { ascending: false });
+
+        if (ciError) console.error('Error fetching check-ins:', ciError);
 
         checkIns = (ciData || []).map(ci => ({
           id: ci.id,
@@ -236,10 +244,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           optionalNote: ci.optional_note || undefined
         }));
 
-        const { data: jlData } = await supabase
+        const { data: jlData, error: jiraError } = await supabase
           .from('jira_links')
           .select('*')
           .in('okr_id', okrIds);
+
+        if (jiraError) console.error('Error fetching jira links:', jiraError);
 
         jiraLinks = (jlData || []).map(jl => ({
           id: jl.id,
