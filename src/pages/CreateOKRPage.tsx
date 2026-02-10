@@ -48,10 +48,10 @@ interface OKRDraft {
 }
 
 const STEPS = [
-  { id: 'objective', title: 'Objective' },
-  { id: 'keyresults', title: 'Key Results' },
-  { id: 'confidence', title: 'Initial Confidence' },
-  { id: 'review', title: 'Review & Create' },
+  { id: 'objective', title: 'Outcome' },
+  { id: 'keyresults', title: 'Measures' },
+  { id: 'confidence', title: 'Confidence' },
+  { id: 'review', title: 'Review' },
 ];
 
 export function CreateOKRPage() {
@@ -212,7 +212,7 @@ export function CreateOKRPage() {
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0: // Objective
+      case 0: // Outcome
         return (
           <div className="space-y-4">
             <div>
@@ -231,13 +231,13 @@ export function CreateOKRPage() {
           </div>
         );
 
-      case 1: // Key Results
+      case 1: // Measures
         return (
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Key Results</Label>
+              <Label className="text-sm font-medium">Measures</Label>
               <p className="text-xs text-muted-foreground mt-1 mb-4">
-                Key Results should be measurable and time-bound. Add 1–3 key results.
+                Key results should be measurable and time-bound. Add 1–3 measures.
               </p>
             </div>
             <div className="space-y-4">
@@ -299,11 +299,11 @@ export function CreateOKRPage() {
           </div>
         );
 
-      case 2: // Initial Confidence
+      case 2: // Confidence
         return (
           <div className="space-y-6">
             <div>
-              <Label className="text-sm font-medium">Initial Confidence</Label>
+              <Label className="text-sm font-medium">Confidence</Label>
               <p className="text-xs text-muted-foreground mt-1">
                 This is your best judgment today. You'll update confidence as you learn.
               </p>
@@ -338,6 +338,18 @@ export function CreateOKRPage() {
           <div className="space-y-5">
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Confidence</span>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(2)}>
+                  Edit
+                </Button>
+              </div>
+              <ConfidenceBadge confidence={draft.confidence} label={getConfidenceLabel(draft.confidence)} />
+              <p className="text-sm text-muted-foreground mt-2">
+                This is your current judgment. You&apos;ll revisit it over time as the quarter unfolds.
+              </p>
+            </div>
+            <div className="border border-border/60 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Scope</span>
                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setShowAdvancedOwnership(true)}>
                   Edit
@@ -355,7 +367,7 @@ export function CreateOKRPage() {
             </div>
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Objective</span>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Outcome</span>
                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(0)}>
                   Edit
                 </Button>
@@ -364,7 +376,7 @@ export function CreateOKRPage() {
             </div>
             <div className="border border-border/60 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Key Results</span>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Measures</span>
                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(1)}>
                   Edit
                 </Button>
@@ -379,15 +391,6 @@ export function CreateOKRPage() {
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="border border-border/60 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Initial Confidence</span>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setCurrentStep(2)}>
-                  Edit
-                </Button>
-              </div>
-              <ConfidenceBadge confidence={draft.confidence} label={getConfidenceLabel(draft.confidence)} />
             </div>
           </div>
         );
@@ -412,7 +415,7 @@ export function CreateOKRPage() {
           Create OKR
         </h1>
         <p className="helper-text mt-1">
-          Define an outcome with clarity, alignment, and an explicit confidence signal.
+          Define an outcome, how you&apos;ll measure it, and your current confidence.
         </p>
       </div>
 

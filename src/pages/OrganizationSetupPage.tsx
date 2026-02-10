@@ -1,35 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+function domainNameFromEmail(email: string): string {
+  const part = email.split('@')[1] || '';
+  const stripped = part.toLowerCase().replace(/\.(com|io|co|org|net)$/i, '');
+  const base = stripped || 'workspace';
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
 
 export function OrganizationSetupPage() {
   const { user, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [orgName, setOrgName] = useState('');
-  const [teamName, setTeamName] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSettingUp, setIsSettingUp] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const hasRun = useRef(false);
 
-  const canSubmit = orgName.trim().length > 0 && teamName.trim().length > 0;
+  const runSetup = async () => {
+    if (!user?.email) {
+      setError('No user email');
+      setIsSettingUp(false);
+      return;
+    }
 
-  const handleSubmit = async () => {
-    if (!user || !canSubmit) return;
-
-    setIsSubmitting(true);
+    setIsSettingUp(true);
+    setError(null);
 
     try {
-      // 1. Create organization
+      const domainName = domainNameFromEmail(user.email);
+
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .insert({ name: orgName, setup_complete: true })
+        .insert({ name: domainName, setup_complete: true })
         .select('id')
         .single();
 
@@ -37,163 +45,87 @@ export function OrganizationSetupPage() {
         throw new Error(orgError?.message || 'Failed to create organization');
       }
 
-      // 2. Link user profile to organization
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ organization_id: org.id })
         .eq('id', user.id);
 
       if (profileError) {
-        // Rollback: delete the org we just created
         await supabase.from('organizations').delete().eq('id', org.id);
         throw new Error(profileError.message || 'Failed to update profile');
       }
 
-      // 3. Assign admin role to user
-      const { error: roleError } = await supabase
+      await supabase
         .from('user_roles')
         .insert({ user_id: user.id, role: 'admin' });
 
-      if (roleError) {
-        console.error('Error assigning admin role:', roleError);
-        // Continue — role can be fixed later, org is already created
+      const { data: paData, error: paError } = await supabase
+        .from('product_areas')
+        .insert({ name: 'General', organization_id: org.id })
+        .select('id')
+        .single();
+
+      if (paError || !paData) {
+        throw new Error(paError?.message || 'Failed to create product area');
       }
 
-      // 4. Create product areas, domains, and teams (single PA/domain/team from form)
-      const productAreas = [
-        {
-          name: 'Main',
-          domains: [
-            {
-              name: 'Default',
-              teams: [{ name: teamName.trim(), pmName: null as string | null }],
-            },
-          ],
-        },
-      ];
+      const { data: domainData, error: domainError } = await supabase
+        .from('domains')
+        .insert({ name: 'General', product_area_id: paData.id })
+        .select('id')
+        .single();
 
-      for (const pa of productAreas) {
-        if (!pa.name?.trim()) continue;
+      if (domainError || !domainData) {
+        throw new Error(domainError?.message || 'Failed to create domain');
+      }
 
-        const { data: paData, error: paError } = await supabase
-          .from('product_areas')
-          .insert({ name: pa.name, organization_id: org.id })
-          .select('id')
-          .single();
+      const { error: teamError } = await supabase
+        .from('teams')
+        .insert({ name: 'Team 1', domain_id: domainData.id });
 
-        if (paError || !paData) {
-          console.error('Error creating product area:', paError);
-          continue;
-        }
-
-        for (const domain of pa.domains || []) {
-          if (!domain.name?.trim()) continue;
-
-          const { data: domainData, error: domainError } = await supabase
-            .from('domains')
-            .insert({ name: domain.name, product_area_id: paData.id })
-            .select('id')
-            .single();
-
-          if (domainError || !domainData) {
-            console.error('Error creating domain:', domainError);
-            continue;
-          }
-
-          for (const team of domain.teams || []) {
-            if (!team.name?.trim()) continue;
-
-            const { error: teamError } = await supabase
-              .from('teams')
-              .insert({
-                name: team.name,
-                domain_id: domainData.id,
-                pm_name: team.pmName || null,
-              });
-
-            if (teamError) {
-              console.error('Error creating team:', teamError);
-            }
-          }
-        }
+      if (teamError) {
+        throw new Error(teamError?.message || 'Failed to create team');
       }
 
       await refreshProfile();
-
-      toast({
-        title: 'Organization created',
-        description: 'Your organization structure is ready. You can now create OKRs.',
-      });
-
       navigate('/first-outcome');
-    } catch (error) {
-      console.error('Error creating organization:', error);
+    } catch (err) {
+      console.error('Setup error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to set up workspace.');
+      setIsSettingUp(false);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create organization. Please try again.',
+        description: err instanceof Error ? err.message : 'Failed to create organization. Please try again.',
         variant: 'destructive',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md">
-        <Card className="border-border/60">
-          <CardContent className="pt-8 pb-8 px-8">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Get started
-              </h1>
-              <p className="text-sm text-muted-foreground mt-2">
-                Set up your organization and first team. You can add more teams and structure later in Settings.
-              </p>
-            </div>
+  useEffect(() => {
+    if (!user || hasRun.current) return;
+    hasRun.current = true;
+    runSetup();
+  }, [user?.id]);
 
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="orgName">Organization</Label>
-                <Input
-                  id="orgName"
-                  placeholder="Acme Inc."
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  autoFocus
-                />
-                <p className="text-xs text-muted-foreground">
-                  Your company or business unit.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="teamName">Your team</Label>
-                <Input
-                  id="teamName"
-                  placeholder="e.g., Booking Experience"
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  The team that will own OKRs.
-                </p>
-              </div>
-
-              <Button
-                onClick={handleSubmit}
-                disabled={!canSubmit || isSubmitting}
-                className="w-full mt-2"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
-                Start tracking outcomes
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+  if (isSettingUp && !error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Setting up your workspace...</p>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background gap-4">
+        <p className="text-sm text-destructive text-center max-w-sm">{error}</p>
+        <Button onClick={runSetup} variant="outline">
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
 }
