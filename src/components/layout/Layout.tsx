@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { DemoBanner } from '@/components/shared/DemoBanner';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { cn } from '@/lib/utils';
 
 export function Layout() {
@@ -38,7 +39,9 @@ export function Layout() {
           />
           <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
             <div className="max-w-6xl mx-auto">
-              <Outlet />
+              <ErrorBoundary>
+                <Outlet />
+              </ErrorBoundary>
             </div>
           </main>
         </div>
