@@ -4,7 +4,6 @@ import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
-import { ConfidenceSparkline } from '@/components/shared/ConfidenceSparkline';
 import { TeamWeeklyView } from '@/components/views/TeamWeeklyView';
 import { ProductAreaView } from '@/components/views/ProductAreaView';
 import { Button } from '@/components/ui/button';
@@ -140,11 +139,10 @@ export function HomePage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="page-title text-xl sm:text-2xl">
-            {currentTeam?.name || 'Team'}
-          </h1>
+          <h1 className="t2">{currentTeam?.name || 'Team'}</h1>
+          <span className="t3">{formatQuarter(currentQuarter)}</span>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {hasOKRs && (
             <Button 
@@ -173,27 +171,26 @@ export function HomePage() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Confidence</span>
-                  <span className="text-lg font-semibold">{overallConfidence}</span>
+                  <span className="t3 uppercase tracking-wide">Confidence</span>
+                  <span className="t3">{overallConfidence}</span>
                   <ConfidenceBadge confidence={overallConfidence} showValue={false} />
                   {overallTrend && <TrendIndicator trend={overallTrend} size="sm" />}
                 </div>
                 {latestCheckIn && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Last check-in</span>
-                    <span className="text-sm">{new Date(latestCheckIn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span className="t3 uppercase tracking-wide">Last check-in</span>
+                    <span className="t3">{new Date(latestCheckIn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   </div>
                 )}
                 {nextCheckInDate && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Next</span>
-                    <span className="text-sm">{nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span className="t3 uppercase tracking-wide">Next</span>
+                    <span className="t3">{nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   </div>
                 )}
               </div>
-              {/* Status badge */}
               {hasOKRs && overallConfidence >= 60 && overallTrend !== 'down' && atRiskCount === 0 && (
-                <span className="text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full font-medium">
+                <span className="t3 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
                   No action needed
                 </span>
               )}
@@ -256,7 +253,7 @@ export function HomePage() {
       {/* Team OKRs */}
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle className="text-base font-medium">Your Team OKRs</CardTitle>
+          <CardTitle className="t2">Your Team OKRs</CardTitle>
           {hasOKRs && (
             <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-1 text-xs h-8">
               View all <ArrowRight className="w-3.5 h-3.5" />
@@ -267,8 +264,8 @@ export function HomePage() {
           {teamOKRs.length === 0 ? (
             <div className="empty-state py-16">
               <Target className="empty-state-icon" />
-              <p className="empty-state-title text-lg">Get started with your first OKR</p>
-              <p className="empty-state-description max-w-md mx-auto mt-2">
+              <p className="t2 mb-1">Get started with your first OKR</p>
+              <p className="t3 max-w-md mx-auto mt-2">
                 TrueNorthOS helps teams align on outcomes and make confidence explicit.
                 Define your first OKR to establish your signal for the quarter.
               </p>
@@ -289,71 +286,41 @@ export function HomePage() {
             </div>
           ) : (
             <div className="space-y-0">
-              {teamOKRs.map((okr) => {
-                let changeSummary = '';
-                if (okr.latestCheckIn && okr.previousCheckIn) {
-                  const confDiff = okr.latestCheckIn.confidence - okr.previousCheckIn.confidence;
-                  const progDiff = okr.latestCheckIn.progress - okr.previousCheckIn.progress;
+              {teamOKRs.map((okr) => (
+                <div
+                  key={okr.id}
+                  className="py-4 px-2 cursor-pointer rounded-md -mx-2 hover:bg-muted/30 transition-colors"
+                  onClick={() => navigate(`/okrs/${okr.id}`)}
+                >
+                  <p className="t1-medium">{okr.objectiveText}</p>
 
-                  if (confDiff !== 0) {
-                    changeSummary += `Confidence ${confDiff > 0 ? '↑' : '↓'} from ${okr.previousCheckIn.confidence} → ${okr.latestCheckIn.confidence}`;
-                  } else {
-                    changeSummary += 'Confidence unchanged';
-                  }
+                  {okr.latestCheckIn && (
+                    <p className="t1 mt-1 text-foreground/70">
+                      {okr.checkIns.length >= 2 && (() => {
+                        const sorted = [...okr.checkIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                        const latest = sorted[0];
+                        const prev = sorted[1];
+                        const delta = latest.confidence - prev.confidence;
+                        const arrow = delta > 0 ? '↑' : delta < 0 ? '↓' : '→';
+                        return `Confidence ${arrow} from ${prev.confidence} → ${latest.confidence} · `;
+                      })()}
+                      {`${okr.latestCheckIn.progress}% toward KRs`}
+                      {okr.latestCheckIn.reasonForChange && ` · ${okr.latestCheckIn.reasonForChange}`}
+                      {okr.latestCheckIn.optionalNote && !okr.latestCheckIn.reasonForChange && ` · ${okr.latestCheckIn.optionalNote}`}
+                    </p>
+                  )}
 
-                  if (progDiff !== 0) {
-                    changeSummary += ` · Progress ${progDiff > 0 ? '+' : ''}${progDiff}%`;
-                  }
-
-                  if (okr.latestCheckIn.reasonForChange) {
-                    changeSummary += ` · ${okr.latestCheckIn.reasonForChange}`;
-                  }
-                }
-
-                return (
-                  <div key={okr.id}>
-                    <div
-                      className="data-row flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3.5 px-2 cursor-pointer rounded-md -mx-2"
-                      onClick={() => navigate(`/okrs/${okr.id}`)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="decision-text truncate">{okr.objectiveText}</span>
-                          {okr.isOrphaned && <OrphanWarning />}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <span className="text-xs text-muted-foreground w-24 sm:w-28 text-right">
-                          {okr.latestCheckIn
-                            ? `${okr.latestCheckIn.progress}% toward KRs`
-                            : ''
-                          }
-                        </span>
-
-                        <div className="w-16 sm:w-20 hidden sm:block">
-                          <ConfidenceSparkline checkIns={okr.checkIns} />
-                        </div>
-
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-[100px] sm:min-w-[140px] justify-end">
-                          {okr.latestCheckIn && (
-                            <ConfidenceBadge
-                              confidence={okr.latestCheckIn.confidence}
-                              label={okr.latestCheckIn.confidenceLabel}
-                            />
-                          )}
-                          <TrendIndicator trend={okr.trend} size="sm" />
-                        </div>
-                      </div>
-                    </div>
-                    {changeSummary && (
-                      <p className="narrative-text px-2 pb-2 -mt-1 truncate">
-                        {changeSummary}
-                      </p>
-                    )}
+                  <div className="flex items-center gap-4 mt-2">
+                    <span className="t3">
+                      {okr.latestCheckIn
+                        ? `${okr.latestCheckIn.confidence} ${okr.latestCheckIn.confidenceLabel}`
+                        : 'No signal yet'}
+                    </span>
+                    {okr.latestCheckIn && <TrendIndicator trend={okr.trend} size="sm" />}
+                    {okr.isOrphaned && <OrphanWarning />}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -365,22 +332,22 @@ export function HomePage() {
           <CardContent className="py-5 space-y-4">
             {teamOKRs[0].latestCheckIn.reasonForChange && (
               <div>
-                <h3 className="section-header mb-2">
+                <h3 className="t3 uppercase tracking-wide mb-2">
                   {teamOKRs[0].latestCheckIn.confidence >= 60 ? 'Why confidence is high' :
                     teamOKRs[0].latestCheckIn.confidence >= 40 ? 'Current confidence context' :
                     'Why confidence is low'}
                 </h3>
-                <p className="narrative-text">
+                <p className="t1">
                   {teamOKRs[0].latestCheckIn.reasonForChange}
                 </p>
               </div>
             )}
             {teamOKRs[0].latestCheckIn.optionalNote && (
               <div>
-                <h3 className="section-header mb-2">
+                <h3 className="t3 uppercase tracking-wide mb-2">
                   What could change confidence
                 </h3>
-                <p className="narrative-text">
+                <p className="t1">
                   {teamOKRs[0].latestCheckIn.optionalNote}
                 </p>
               </div>
@@ -407,12 +374,8 @@ export function HomePage() {
       {peerTeams.length > 0 && (hasOKRs || anyPeerHasOKRs) && (
         <Card className="border-border/60">
           <CardHeader className="pb-4">
-            <CardTitle className="text-base font-medium">
-              Related teams that influence this outcome
-            </CardTitle>
-            <p className="helper-text">
-              Teams whose work may impact your outcomes.
-            </p>
+            <CardTitle className="t2">Related teams that influence this outcome</CardTitle>
+            <p className="t3 mt-1">Teams whose work may impact your outcomes.</p>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -430,21 +393,21 @@ export function HomePage() {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium text-sm">{team.name}</h4>
-                        <p className="text-xs text-muted-foreground mt-0.5">PM: {team.pmName}</p>
+                        <h4 className="t2">{team.name}</h4>
+                        <p className="t3 mt-0.5">PM: {team.pmName}</p>
                       </div>
                       <div className="text-right">
                         {hasTeamOKRs ? (
                           <>
                             <ConfidenceBadge confidence={confidence} />
                             {atRisk > 0 && (
-                              <p className="text-xs text-confidence-low mt-1">
+                              <p className="t3 text-confidence-low mt-1">
                                 {atRisk} at risk
                               </p>
                             )}
                           </>
                         ) : (
-                          <span className="text-xs text-muted-foreground">No signal yet</span>
+                          <span className="t3">No signal yet</span>
                         )}
                       </div>
                     </div>
