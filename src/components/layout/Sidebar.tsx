@@ -70,7 +70,10 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             (item.to !== '/' && location.pathname.startsWith(item.to));
           return (
             <NavLink key={item.to} to={item.to} onClick={handleNavClick}
-              className={cn("flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors text-[hsl(0,0%,70%)]", isActive && "bg-[hsl(220,15%,16%)] text-white font-medium")}>
+              className={cn(
+                "flex flex-row items-center gap-3 px-3 py-2 rounded-md text-sm text-[hsl(0,0%,70%)]",
+                isActive && "bg-[hsl(220,15%,16%)] text-white font-medium"
+              )}>
               <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </NavLink>
@@ -85,7 +88,10 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             (item.to !== '/' && location.pathname.startsWith(item.to));
           return (
             <NavLink key={item.to} to={item.to} onClick={handleNavClick}
-              className={cn("flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors text-[hsl(0,0%,70%)]", isActive && "bg-[hsl(220,15%,16%)] text-white font-medium")}>
+              className={cn(
+                "flex flex-row items-center gap-3 px-3 py-2 rounded-md text-sm text-[hsl(0,0%,70%)]",
+                isActive && "bg-[hsl(220,15%,16%)] text-white font-medium"
+              )}>
               <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </NavLink>

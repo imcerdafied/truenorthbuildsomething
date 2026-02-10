@@ -139,7 +139,7 @@ export function HomePage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="t2">{currentTeam?.name || 'Team'}</h1>
+          <p className="t2">{currentTeam?.name || 'Team'}</p>
           <span className="t3">{formatQuarter(currentQuarter)}</span>
         </div>
 
@@ -171,20 +171,20 @@ export function HomePage() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
-                  <span className="t3 uppercase tracking-wide">Confidence</span>
-                  <span className="t3">{overallConfidence}</span>
+                  <span className="t3 uppercase tracking-wider">Confidence</span>
+                  <span className="t3 font-semibold">{overallConfidence}</span>
                   <ConfidenceBadge confidence={overallConfidence} showValue={false} />
                   {overallTrend && <TrendIndicator trend={overallTrend} size="sm" />}
                 </div>
                 {latestCheckIn && (
                   <div className="flex items-center gap-2">
-                    <span className="t3 uppercase tracking-wide">Last check-in</span>
+                    <span className="t3 uppercase tracking-wider">Last check-in</span>
                     <span className="t3">{new Date(latestCheckIn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   </div>
                 )}
                 {nextCheckInDate && (
                   <div className="flex items-center gap-2">
-                    <span className="t3 uppercase tracking-wide">Next</span>
+                    <span className="t3 uppercase tracking-wider">Next</span>
                     <span className="t3">{nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   </div>
                 )}
@@ -216,7 +216,7 @@ export function HomePage() {
                   />
                 )}
                 {!overallTrend && hasOKRs && (
-                  <span className="text-xs text-muted-foreground">—</span>
+                  <span className="t3">—</span>
                 )}
               </div>
             }
@@ -242,7 +242,7 @@ export function HomePage() {
             value={
               nextCheckInDate
                 ? nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                : <span className="text-base sm:text-lg font-medium text-muted-foreground">Not scheduled</span>
+                : <span className="t3 font-medium">Not scheduled</span>
             }
             subtitle={`${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence`}
             icon={<Clock className="w-5 h-5" />}
@@ -255,7 +255,7 @@ export function HomePage() {
         <CardHeader className="flex flex-row items-center justify-between pb-4">
           <CardTitle className="t2">Your Team OKRs</CardTitle>
           {hasOKRs && (
-            <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-1 text-xs h-8">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-1 t3 h-8">
               View all <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           )}
@@ -264,7 +264,7 @@ export function HomePage() {
           {teamOKRs.length === 0 ? (
             <div className="empty-state py-16">
               <Target className="empty-state-icon" />
-              <p className="t2 mb-1">Get started with your first OKR</p>
+              <p className="t1-medium mb-1">Get started with your first OKR</p>
               <p className="t3 max-w-md mx-auto mt-2">
                 TrueNorthOS helps teams align on outcomes and make confidence explicit.
                 Define your first OKR to establish your signal for the quarter.
@@ -278,7 +278,7 @@ export function HomePage() {
                     <Plus className="w-4 h-4" />
                     Create OKR
                   </Button>
-                  <p className="text-xs text-muted-foreground mt-3">
+                  <p className="t3 mt-3">
                     Start with an outcome your team owns this quarter.
                   </p>
                 </>
@@ -295,7 +295,7 @@ export function HomePage() {
                   <p className="t1-medium">{okr.objectiveText}</p>
 
                   {okr.latestCheckIn && (
-                    <p className="t1 mt-1 text-foreground/70">
+                    <p className="t1 mt-1 text-foreground/60">
                       {okr.checkIns.length >= 2 && (() => {
                         const sorted = [...okr.checkIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                         const latest = sorted[0];
@@ -332,7 +332,7 @@ export function HomePage() {
           <CardContent className="py-5 space-y-4">
             {teamOKRs[0].latestCheckIn.reasonForChange && (
               <div>
-                <h3 className="t3 uppercase tracking-wide mb-2">
+                <h3 className="t3 uppercase tracking-wider mb-2">
                   {teamOKRs[0].latestCheckIn.confidence >= 60 ? 'Why confidence is high' :
                     teamOKRs[0].latestCheckIn.confidence >= 40 ? 'Current confidence context' :
                     'Why confidence is low'}
@@ -344,7 +344,7 @@ export function HomePage() {
             )}
             {teamOKRs[0].latestCheckIn.optionalNote && (
               <div>
-                <h3 className="t3 uppercase tracking-wide mb-2">
+                <h3 className="t3 uppercase tracking-wider mb-2">
                   What could change confidence
                 </h3>
                 <p className="t1">
@@ -358,13 +358,13 @@ export function HomePage() {
 
       {alignmentStats && (
         <div className="flex items-center justify-between px-1">
-          <p className="text-xs text-muted-foreground">
+          <p className="t3">
             {alignmentStats.linked > 0
               ? `${alignmentStats.linked} of ${alignmentStats.total} OKR${alignmentStats.total !== 1 ? 's' : ''} linked to parent objectives`
               : `${alignmentStats.total} top-level OKR${alignmentStats.total !== 1 ? 's' : ''}`
             }
           </p>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/alignment')} className="text-xs h-6 px-2 text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/alignment')} className="t3 h-6 px-2">
             View outcome model →
           </Button>
         </div>

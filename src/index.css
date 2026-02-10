@@ -160,56 +160,20 @@
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-medium;
+    font-size: inherit;
+    font-weight: inherit;
     letter-spacing: -0.01em;
-    color: hsl(var(--foreground) / 0.7);
   }
-
-  h1 { font-size: 0.9375rem; }   /* 15px - page titles are Tier 2 */
-  h2 { font-size: 0.875rem; }    /* 14px */
-  h3 { font-size: 0.875rem; }    /* 14px */
 }
 
 @layer components {
   /* ============================================
      THREE-TIER TYPOGRAPHY — no exceptions
      ============================================ */
-
-  /* Tier 1: Primary narrative — the stuff you READ
-     OKR titles, narrative sentences, confidence explanations
-     18-20px, regular/medium weight, generous line height */
-  .t1 {
-    font-size: 1.125rem;     /* 18px */
-    line-height: 1.6;
-    font-weight: 400;
-    color: hsl(var(--foreground));
-  }
-  .t1-medium {
-    font-size: 1.125rem;
-    line-height: 1.6;
-    font-weight: 500;
-    color: hsl(var(--foreground));
-  }
-
-  /* Tier 2: Structural anchors — orients, doesn't dominate
-     Section headers, page title, card titles
-     14px, medium weight, slightly muted */
-  .t2 {
-    font-size: 0.875rem;     /* 14px */
-    line-height: 1.4;
-    font-weight: 500;
-    color: hsl(var(--foreground) / 0.7);
-  }
-
-  /* Tier 3: Metadata and signals — glanceable, not readable
-     Confidence numbers, dates, labels, helper text
-     12-13px, regular weight, muted */
-  .t3 {
-    font-size: 0.8125rem;    /* 13px */
-    line-height: 1.4;
-    font-weight: 400;
-    color: hsl(var(--muted-foreground));
-  }
+  .t1 { font-size: 1.125rem !important; line-height: 1.6 !important; font-weight: 400 !important; color: hsl(var(--foreground)) !important; }
+  .t1-medium { font-size: 1.125rem !important; line-height: 1.6 !important; font-weight: 500 !important; color: hsl(var(--foreground)) !important; }
+  .t2 { font-size: 0.875rem !important; line-height: 1.4 !important; font-weight: 500 !important; color: hsl(var(--foreground) / 0.7) !important; }
+  .t3 { font-size: 0.8125rem !important; line-height: 1.4 !important; font-weight: 400 !important; color: hsl(var(--muted-foreground)) !important; }
 
   /* Confidence indicators - subtle, not loud */
   .confidence-dot {
