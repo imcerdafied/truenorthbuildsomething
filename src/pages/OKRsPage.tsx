@@ -42,6 +42,7 @@ export function OKRsPage() {
   const [levelFilter, setLevelFilter] = useState<OKRLevel | 'all'>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [showAllParents, setShowAllParents] = useState(false);
 
   // Get all OKRs for current quarter
   const allOKRs = useMemo(() => {
@@ -173,7 +174,7 @@ export function OKRsPage() {
                 className="gap-1.5 h-7 px-3 text-xs"
               >
                 <Target className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">All OKRs</span>
+                <span className="hidden sm:inline">Browse all</span>
               </Button>
               <Button
                 variant={viewTab === 'weekly' ? 'default' : 'ghost'}
@@ -299,18 +300,40 @@ export function OKRsPage() {
                       {groupedOKRs.myTeam.map((okr) => renderOKRRow(okr))}
                     </>
                   )}
-                  {groupedOKRs.parentObjectives.length > 0 && (
-                    <>
-                      <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b border-t bg-muted/30">
-                        Parent objectives
-                      </div>
-                      {groupedOKRs.parentObjectives.map((okr) => renderOKRRow(okr))}
-                    </>
-                  )}
+                  {groupedOKRs.parentObjectives.length > 0 && (() => {
+                    const directParentIds = new Set(
+                      groupedOKRs.myTeam
+                        .filter(o => o.parentOkrId)
+                        .map(o => o.parentOkrId!)
+                    );
+                    const directParents = groupedOKRs.parentObjectives.filter(o => directParentIds.has(o.id));
+                    const otherParents = groupedOKRs.parentObjectives.filter(o => !directParentIds.has(o.id));
+                    const visibleByDefault = directParents.length > 0 ? directParents : groupedOKRs.parentObjectives.slice(0, 2);
+                    const moreParents = directParents.length > 0 ? otherParents : groupedOKRs.parentObjectives.slice(2);
+                    return (
+                      <>
+                        <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b border-t bg-muted/30">
+                          Business outcomes this team contributes to
+                        </div>
+                        {visibleByDefault.map((okr) => renderOKRRow(okr))}
+                        {showAllParents && moreParents.map((okr) => renderOKRRow(okr))}
+                        {moreParents.length > 0 && (
+                          <button
+                            onClick={() => setShowAllParents(!showAllParents)}
+                            className="w-full px-2 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
+                          >
+                            {showAllParents
+                              ? 'Show less'
+                              : `+ ${moreParents.length} more top-level objective${moreParents.length !== 1 ? 's' : ''}`}
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
                   {groupedOKRs.otherTeams.length > 0 && (
                     <>
                       <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b border-t bg-muted/30">
-                        Other teams
+                        Related teams
                       </div>
                       {groupedOKRs.otherTeams.map((okr) => renderOKRRow(okr))}
                     </>
