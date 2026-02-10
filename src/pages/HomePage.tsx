@@ -7,7 +7,6 @@ import { OrphanWarning } from '@/components/shared/OrphanWarning';
 import { TeamWeeklyView } from '@/components/views/TeamWeeklyView';
 import { ProductAreaView } from '@/components/views/ProductAreaView';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { 
   Target, 
@@ -20,7 +19,9 @@ import {
   TrendingDown,
   Minus,
   Plus,
-  Calendar
+  Calendar,
+  Check,
+  Circle
 } from 'lucide-react';
 import { formatQuarter, getNextCheckInDate } from '@/types';
 import { useMemo } from 'react';
@@ -57,38 +58,34 @@ export function HomePage() {
   const atRiskCount = getAtRiskCount(allTeamOKRIds);
   const onTrackCount = getOnTrackCount(allTeamOKRIds);
 
-  // Calculate overall trend based on aggregated check-in history
-  const overallTrend = useMemo(() => {
-    if (!hasOKRs) return null;
-    
-    // Get all check-ins for team OKRs sorted by date
+  // Confidence color system: High 70+, Medium 40-69, Low 0-39
+  const confidenceLevel = overallConfidence >= 70 ? 'high' : overallConfidence >= 40 ? 'medium' : 'low';
+  const confidenceColor = confidenceLevel === 'high' ? 'emerald' : confidenceLevel === 'medium' ? 'amber' : 'red';
+  const confidenceLabel =
+    confidenceLevel === 'high' ? 'High Confidence' : confidenceLevel === 'medium' ? 'Medium Confidence' : 'Low Confidence';
+
+  // Calculate overall trend and numeric delta from check-in history
+  const { overallTrend, overallTrendDelta } = useMemo(() => {
+    if (!hasOKRs) return { overallTrend: null as 'up' | 'down' | 'flat' | null, overallTrendDelta: null as number | null };
     const teamCheckIns = checkIns
       .filter(ci => allTeamOKRIds.includes(ci.okrId))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
-    if (teamCheckIns.length < 2) return null;
-    
-    // Get the two most recent dates with check-ins
-    const dates = [...new Set(teamCheckIns.map(ci => ci.date))].sort((a, b) => 
+    if (teamCheckIns.length < 2) return { overallTrend: null, overallTrendDelta: null };
+    const dates = [...new Set(teamCheckIns.map(ci => ci.date))].sort((a, b) =>
       new Date(b).getTime() - new Date(a).getTime()
     );
-    
-    if (dates.length < 2) return null;
-    
+    if (dates.length < 2) return { overallTrend: null, overallTrendDelta: null };
     const latestDate = dates[0];
     const previousDate = dates[1];
-    
     const latestAvg = teamCheckIns
       .filter(ci => ci.date === latestDate)
       .reduce((sum, ci, _, arr) => sum + ci.confidence / arr.length, 0);
-    
     const previousAvg = teamCheckIns
       .filter(ci => ci.date === previousDate)
       .reduce((sum, ci, _, arr) => sum + ci.confidence / arr.length, 0);
-    
-    if (latestAvg > previousAvg) return 'up';
-    if (latestAvg < previousAvg) return 'down';
-    return 'flat';
+    const delta = Math.round(latestAvg - previousAvg);
+    const trend = latestAvg > previousAvg ? 'up' : latestAvg < previousAvg ? 'down' : 'flat';
+    return { overallTrend: trend, overallTrendDelta: delta !== 0 ? delta : null };
   }, [checkIns, allTeamOKRIds, hasOKRs]);
 
   // Alignment summary (team mode, when OKRs exist)
@@ -135,25 +132,24 @@ export function HomePage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <p className="t2">{currentTeam?.name || 'Team'}</p>
-          <span className="t3">{formatQuarter(currentQuarter)}</span>
+          <p className="text-sm font-medium text-foreground">{currentTeam?.name || 'Team'}</p>
+          <span className="text-xs text-muted-foreground">{formatQuarter(currentQuarter)}</span>
         </div>
 
         <div className="flex items-center gap-2">
           {hasOKRs && (
-            <Button 
-              variant="outline" 
-              onClick={() => setShowWeeklyView(true)} 
-              size="sm" 
-              className="gap-2"
+            <button
+              type="button"
+              onClick={() => setShowWeeklyView(true)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
             >
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">Weekly View</span>
-            </Button>
+            </button>
           )}
           {canRunCheckIn && hasOKRs && (
             <Button onClick={() => navigate('/checkin')} size="sm" className="gap-2">
@@ -164,39 +160,69 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Signal summary: compact strip for 1 OKR, 4-card grid for 2+ OKRs */}
+      {/* Confidence banner — bold signal header (single-outcome teams) */}
       {hasOKRs && teamOKRs.length === 1 && (
-        <Card className="border-border/60">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <span className="t3 uppercase tracking-wider">Confidence</span>
-                  <span className="t3">{overallConfidence}</span>
-                  <ConfidenceBadge confidence={overallConfidence} showValue={false} />
-                  {overallTrend && <TrendIndicator trend={overallTrend} size="sm" />}
-                </div>
-                {latestCheckIn && (
-                  <div className="flex items-center gap-2">
-                    <span className="t3 uppercase tracking-wider">Last check-in</span>
-                    <span className="t3">{new Date(latestCheckIn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                  </div>
-                )}
-                {nextCheckInDate && (
-                  <div className="flex items-center gap-2">
-                    <span className="t3 uppercase tracking-wider">Next</span>
-                    <span className="t3">{nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                  </div>
-                )}
-              </div>
-              {hasOKRs && overallConfidence >= 60 && overallTrend !== 'down' && atRiskCount === 0 && (
-                <span className="t3 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                  No action needed
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div
+          className={`bg-white rounded-xl p-6 shadow-sm flex flex-wrap justify-between items-center gap-4 border-l-4 ${
+            confidenceColor === 'emerald'
+              ? 'border-emerald-500'
+              : confidenceColor === 'amber'
+                ? 'border-amber-500'
+                : 'border-red-500'
+          }`}
+        >
+          <div className="flex flex-col gap-0.5">
+            <span
+              className={`text-5xl font-bold tabular-nums ${
+                confidenceColor === 'emerald'
+                  ? 'text-emerald-600'
+                  : confidenceColor === 'amber'
+                    ? 'text-amber-500'
+                    : 'text-red-500'
+              }`}
+            >
+              {overallConfidence}
+            </span>
+            <span
+              className={`text-sm font-medium ${
+                confidenceColor === 'emerald'
+                  ? 'text-emerald-600'
+                  : confidenceColor === 'amber'
+                    ? 'text-amber-500'
+                    : 'text-red-500'
+              }`}
+            >
+              {confidenceLabel}
+            </span>
+            {overallTrend && overallTrendDelta !== null && (
+              <span className="text-xs text-muted-foreground">
+                {overallTrend === 'up' && '↑'}
+                {overallTrend === 'down' && '↓'}
+                {overallTrend === 'flat' && '→'}{' '}
+                {overallTrendDelta > 0 && '+'}
+                {overallTrendDelta} from last check-in
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            {latestCheckIn && (
+              <span className="text-xs text-muted-foreground">
+                Last check-in: {new Date(latestCheckIn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+            {nextCheckInDate && (
+              <span className="text-xs text-muted-foreground">
+                Next: {nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+            {canRunCheckIn && hasOKRs && (
+              <Button onClick={() => navigate('/checkin')} size="sm" className="gap-1.5 mt-2">
+                <PlayCircle className="w-3.5 h-3.5" />
+                Check-in
+              </Button>
+            )}
+          </div>
+        </div>
       )}
       {hasOKRs && teamOKRs.length > 1 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -204,19 +230,19 @@ export function HomePage() {
             title="Overall Confidence"
             value={
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                <span>{overallConfidence}</span>
+                <span className={confidenceColor === 'emerald' ? 'text-emerald-600' : confidenceColor === 'amber' ? 'text-amber-500' : 'text-red-500'}>{overallConfidence}</span>
                 <ConfidenceBadge confidence={overallConfidence} showValue={false} />
                 {overallTrend && (
-                  <TrendIcon 
+                  <TrendIcon
                     className={`w-4 h-4 ${
-                      overallTrend === 'up' ? 'text-confidence-high' : 
-                      overallTrend === 'down' ? 'text-confidence-low' : 
+                      overallTrend === 'up' ? 'text-emerald-600' :
+                      overallTrend === 'down' ? 'text-red-500' :
                       'text-muted-foreground'
-                    }`} 
+                    }`}
                   />
                 )}
                 {!overallTrend && hasOKRs && (
-                  <span className="t3">—</span>
+                  <span className="text-xs text-muted-foreground">—</span>
                 )}
               </div>
             }
@@ -242,7 +268,7 @@ export function HomePage() {
             value={
               nextCheckInDate
                 ? nextCheckInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                : <span className="t3 font-medium">Not scheduled</span>
+                : <span className="text-xs font-medium text-muted-foreground">Not scheduled</span>
             }
             subtitle={`${currentTeam?.cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} cadence`}
             icon={<Clock className="w-5 h-5" />}
@@ -251,34 +277,34 @@ export function HomePage() {
       )}
 
       {/* Team Outcomes */}
-      <Card className="border-border/60">
-        <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle className="t2">Your Team Outcomes</CardTitle>
+      <div className="bg-white rounded-xl shadow-sm py-2">
+        <div className="flex flex-row items-center justify-between px-4 pb-3">
+          <h2 className="text-xs uppercase tracking-wide font-medium text-muted-foreground">Your Team Outcomes</h2>
           {hasOKRs && (
-            <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-1 t3 h-8">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-1 text-xs text-muted-foreground h-8">
               View all <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           )}
-        </CardHeader>
-        <CardContent className="pt-0">
+        </div>
+        <div className="px-4 pb-4">
           {teamOKRs.length === 0 ? (
             <div className="empty-state py-16">
               <Target className="empty-state-icon" />
-              <p className="t1-medium mb-1">Get started with your first outcome</p>
-              <p className="t3 max-w-md mx-auto mt-2">
+              <p className="text-xl font-semibold text-foreground mb-1">Get started with your first outcome</p>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto mt-2">
                 TrueNorthOS helps teams align on outcomes and make confidence explicit.
                 Define your first outcome to establish your signal for the quarter.
               </p>
               {canCreateOKR && (
                 <>
-                  <Button 
-                    onClick={() => navigate('/okrs/create')} 
+                  <Button
+                    onClick={() => navigate('/okrs/create')}
                     className="mt-6 gap-2"
                   >
                     <Plus className="w-4 h-4" />
                     Create outcome
                   </Button>
-                  <p className="t3 mt-3">
+                  <p className="text-xs text-muted-foreground mt-3">
                     Start with an outcome your team owns this quarter.
                   </p>
                 </>
@@ -286,83 +312,113 @@ export function HomePage() {
             </div>
           ) : (
             <div className="space-y-0">
-              {teamOKRs.map((okr) => (
-                <div
-                  key={okr.id}
-                  className="py-4 px-2 cursor-pointer rounded-md -mx-2 hover:bg-muted/30 transition-colors"
-                  onClick={() => navigate(`/okrs/${okr.id}`)}
-                >
-                  <p className="t1-medium">{okr.objectiveText}</p>
+              {teamOKRs.map((okr) => {
+                const prevCheckIn = okr.checkIns.length >= 2
+                  ? [...okr.checkIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[1]
+                  : null;
+                const latest = okr.latestCheckIn;
+                const okrConfLevel = latest ? (latest.confidence >= 70 ? 'high' : latest.confidence >= 40 ? 'medium' : 'low') : null;
+                const okrConfColor = okrConfLevel === 'high' ? 'emerald' : okrConfLevel === 'medium' ? 'amber' : 'red';
+                const trendColor = okr.trend === 'up' ? 'text-emerald-600' : okr.trend === 'down' ? 'text-red-500' : 'text-muted-foreground';
+                return (
+                  <div
+                    key={okr.id}
+                    className="py-4 px-2 cursor-pointer rounded-md -mx-2 hover:bg-muted/30 transition-colors"
+                    onClick={() => navigate(`/okrs/${okr.id}`)}
+                  >
+                    <p className="text-xl font-semibold text-foreground">{okr.objectiveText}</p>
 
-                  {okr.latestCheckIn && (
-                    <p className="t1 mt-1 text-foreground/60">
-                      {okr.checkIns.length >= 2 && (() => {
-                        const sorted = [...okr.checkIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                        const latest = sorted[0];
-                        const prev = sorted[1];
-                        const delta = latest.confidence - prev.confidence;
-                        const arrow = delta > 0 ? '↑' : delta < 0 ? '↓' : '→';
-                        return `Confidence ${arrow} from ${prev.confidence} → ${latest.confidence} · `;
-                      })()}
-                      {`${okr.latestCheckIn.progress}% toward measures`}
-                      {okr.latestCheckIn.reasonForChange && ` · ${okr.latestCheckIn.reasonForChange}`}
-                      {okr.latestCheckIn.optionalNote && !okr.latestCheckIn.reasonForChange && ` · ${okr.latestCheckIn.optionalNote}`}
-                    </p>
-                  )}
+                    {latest && (
+                      <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 mt-2">
+                        <span className="text-xs text-muted-foreground font-medium">Confidence</span>
+                        <span className={`text-sm text-foreground ${trendColor}`}>
+                          {prevCheckIn
+                            ? `${okr.trend === 'up' ? '↑' : okr.trend === 'down' ? '↓' : '→'} ${prevCheckIn.confidence} → ${latest.confidence}`
+                            : `${latest.confidence}`}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-medium">Progress</span>
+                        <span className="text-sm text-foreground">{latest.progress}% toward measures</span>
+                        <span className="text-xs text-muted-foreground font-medium">Signal</span>
+                        <span className="text-sm text-foreground flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${okrConfColor === 'emerald' ? 'bg-emerald-500' : okrConfColor === 'amber' ? 'bg-amber-500' : 'bg-red-500'}`} />
+                          {latest.reasonForChange ? latest.reasonForChange.split(/[.!?]+/).filter(Boolean)[0]?.trim() || latest.reasonForChange : 'No signal yet'}
+                        </span>
+                      </div>
+                    )}
 
-                  <div className="flex items-center gap-4 mt-2">
-                    <span className="t3">
-                      {okr.latestCheckIn
-                        ? `${okr.latestCheckIn.confidence} ${okr.latestCheckIn.confidenceLabel}`
-                        : 'No signal yet'}
-                    </span>
-                    {okr.latestCheckIn && <TrendIndicator trend={okr.trend} size="sm" />}
-                    {okr.isOrphaned && <OrphanWarning />}
+                    {!latest && (
+                      <div className="flex items-center gap-4 mt-2">
+                        <span className="text-xs text-muted-foreground">No signal yet</span>
+                        {okr.isOrphaned && <OrphanWarning />}
+                      </div>
+                    )}
+                    {latest && okr.isOrphaned && (
+                      <div className="mt-2">
+                        <OrphanWarning />
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Confidence narrative - single-outcome teams */}
+      {/* Why confidence / What could change — structured (single-outcome teams) */}
       {teamOKRs.length === 1 && (
-        <Card className="border-border/60">
-          <CardContent className="py-5 space-y-4">
-            {teamOKRs[0].latestCheckIn?.reasonForChange && (
-              <div>
-                <h3 className="t3 uppercase tracking-wider mb-2">
-                  {teamOKRs[0].latestCheckIn.confidence >= 60 ? 'Why confidence is high' :
-                    teamOKRs[0].latestCheckIn.confidence >= 40 ? 'Current confidence context' :
-                    'Why confidence is low'}
-                </h3>
-                <p className="t1">
-                  {teamOKRs[0].latestCheckIn.reasonForChange}
-                </p>
-              </div>
-            )}
+        <div className="bg-muted/30 rounded-lg p-5">
+          {teamOKRs[0].latestCheckIn?.reasonForChange && (
             <div>
-              <h3 className="t3 uppercase tracking-wider mb-2">
-                What could change confidence
+              <h3 className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-3">
+                {teamOKRs[0].latestCheckIn.confidence >= 70 ? 'Why confidence is high' :
+                  teamOKRs[0].latestCheckIn.confidence >= 40 ? 'Current confidence context' :
+                  'Why confidence is low'}
               </h3>
-              {teamOKRs[0].latestCheckIn?.optionalNote ? (
-                <p className="t1">
-                  {teamOKRs[0].latestCheckIn.optionalNote}
-                </p>
-              ) : (
-                <p className="t1 text-muted-foreground">
-                  No check-ins yet. Your first check-in will capture what could change confidence.
-                </p>
-              )}
+              <ul className="space-y-2">
+                {teamOKRs[0].latestCheckIn.reasonForChange
+                  .split(/[.!?]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((point, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      {point}.
+                    </li>
+                  ))}
+              </ul>
             </div>
-          </CardContent>
-        </Card>
+          )}
+          <div className={teamOKRs[0].latestCheckIn?.reasonForChange ? 'border-t border-muted my-4 pt-4' : ''}>
+            <h3 className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-3">
+              What could change confidence
+            </h3>
+            <ul className="space-y-2">
+              {teamOKRs[0].latestCheckIn?.optionalNote ? (
+                teamOKRs[0].latestCheckIn.optionalNote
+                  .split(/[.!?]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((point, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Circle className="w-3 h-3 text-muted-foreground shrink-0 mt-1.5 fill-current" />
+                      {point}.
+                    </li>
+                  ))
+              ) : (
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Circle className="w-3 h-3 text-muted-foreground shrink-0 mt-1.5 fill-current" />
+                  No check-ins yet. Your first check-in will capture what could change confidence.
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
       )}
 
       {alignmentStats && (
         <div className="px-1">
-          <p className="t3">
+          <p className="text-xs text-muted-foreground">
             {alignmentStats.linked > 0
               ? `${alignmentStats.linked} of ${alignmentStats.total} outcome${alignmentStats.total !== 1 ? 's' : ''} linked to parent objectives`
               : `${alignmentStats.total} top-level outcome${alignmentStats.total !== 1 ? 's' : ''}`
@@ -371,53 +427,52 @@ export function HomePage() {
         </div>
       )}
 
-      {/* Peer Teams - only show if current team has OKRs OR any peer has OKRs */}
+      {/* Related teams */}
       {peerTeams.length > 0 && (hasOKRs || anyPeerHasOKRs) && (
-        <Card className="border-border/60">
-          <CardHeader className="pb-4">
-            <CardTitle className="t2">Related teams that influence this outcome</CardTitle>
-            <p className="t3 mt-1">Teams whose work may impact your outcomes.</p>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {peerTeams.map((team) => {
-                const teamOkrs = getTeamOKRs(team.id);
-                const okrIds = teamOkrs.map(o => o.id);
-                const confidence = getOverallConfidence(okrIds);
-                const atRisk = getAtRiskCount(okrIds);
-                const hasTeamOKRs = teamOkrs.length > 0;
-                
-                return (
-                  <div 
-                    key={team.id}
-                    className="border border-border/60 rounded-lg p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="t2">{team.name}</h4>
-                        <p className="t3 mt-0.5">PM: {team.pmName}</p>
-                      </div>
-                      <div className="text-right">
-                        {hasTeamOKRs ? (
-                          <>
-                            <ConfidenceBadge confidence={confidence} />
-                            {atRisk > 0 && (
-                              <p className="t3 text-confidence-low mt-1">
-                                {atRisk} at risk
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <span className="t3">No signal yet</span>
-                        )}
-                      </div>
+        <div className="bg-muted/20 rounded-lg p-5">
+          <h2 className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-1">Related teams that influence this outcome</h2>
+          <p className="text-xs text-muted-foreground/80 mb-4">Teams whose work may impact your outcomes.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {peerTeams.map((team) => {
+              const teamOkrs = getTeamOKRs(team.id);
+              const okrIds = teamOkrs.map(o => o.id);
+              const confidence = getOverallConfidence(okrIds);
+              const atRisk = getAtRiskCount(okrIds);
+              const hasTeamOKRs = teamOkrs.length > 0;
+              const teamConfLevel = confidence >= 70 ? 'high' : confidence >= 40 ? 'medium' : 'low';
+              const teamConfColor = teamConfLevel === 'high' ? 'emerald' : teamConfLevel === 'medium' ? 'amber' : 'red';
+              return (
+                <div
+                  key={team.id}
+                  className="border border-muted/40 rounded-lg p-4 bg-white"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground">{team.name}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">PM: {team.pmName}</p>
+                    </div>
+                    <div className="text-right">
+                      {hasTeamOKRs ? (
+                        <>
+                          <span className={`text-xs font-medium tabular-nums ${
+                            teamConfColor === 'emerald' ? 'text-emerald-600' : teamConfColor === 'amber' ? 'text-amber-500' : 'text-red-500'
+                          }`}>
+                            {confidence} {teamConfLevel === 'high' ? 'High' : teamConfLevel === 'medium' ? 'Medium' : 'Low'}
+                          </span>
+                          {atRisk > 0 && (
+                            <p className="text-xs text-red-500 mt-1">{atRisk} at risk</p>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No signal yet</span>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );
