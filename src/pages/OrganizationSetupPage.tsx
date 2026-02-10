@@ -393,20 +393,13 @@ export function OrganizationSetupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-2">How to think about this</p>
-                <p>
-                  Product Areas are broad outcome groups (e.g. &quot;Booking,&quot; &quot;Growth&quot;).
-                  Domains are major capability areas (e.g. &quot;Search,&quot; &quot;Checkout&quot;).
-                  Teams are the groups that own outcomes.
-                </p>
-              </div>
-
               <div className="space-y-4">
                 {structure.map((pa, paIndex) => (
-                  <div key={paIndex} className="border rounded-lg p-4 space-y-3">
+                  <div key={paIndex} className="bg-white dark:bg-card border border-border rounded-lg p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                      Product Area
+                    </p>
                     <div className="flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-muted-foreground" />
                       <Input
                         value={pa.name}
                         onChange={(e) => updateProductArea(paIndex, e.target.value)}
@@ -425,11 +418,14 @@ export function OrganizationSetupPage() {
                         </Button>
                       )}
                     </div>
-                    <div className="ml-6 space-y-3">
+
+                    <div className="ml-6 mt-4 border-l-2 border-muted pl-4 space-y-4">
                       {pa.domains.map((dom, domIndex) => (
-                        <div key={domIndex} className="border-l-2 border-border pl-4 space-y-2">
+                        <div key={domIndex} className="space-y-2">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            {pa.name.trim() ? `Domain in ${pa.name.trim()}` : 'Domain'}
+                          </p>
                           <div className="flex items-center gap-2">
-                            <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             <Input
                               value={dom.name}
                               onChange={(e) => updateDomain(paIndex, domIndex, e.target.value)}
@@ -448,87 +444,74 @@ export function OrganizationSetupPage() {
                               </Button>
                             )}
                           </div>
-                          <div className="ml-4 space-y-1.5">
+
+                          <div className="ml-6 mt-3 border-l-2 border-muted/50 pl-4 space-y-3">
                             {dom.teams.map((team, teamIndex) => (
-                              <div key={teamIndex} className="space-y-0.5">
+                              <div key={teamIndex} className="space-y-1">
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                  {dom.name.trim() ? `Team in ${dom.name.trim()}` : 'Team'}
+                                </p>
                                 <div className="flex items-center gap-2">
-                                  <Users className="w-3 h-3 text-muted-foreground shrink-0" />
                                   <Input
                                     value={team.name}
                                     onChange={(e) =>
                                       updateTeam(paIndex, domIndex, teamIndex, e.target.value)
                                     }
                                     placeholder="Team name"
-                                    className="h-6 text-xs flex-1"
+                                    className="h-7 text-sm flex-1"
                                   />
                                   {dom.teams.length > 1 && (
                                     <Button
                                       type="button"
                                       variant="ghost"
                                       size="icon"
-                                      className="h-5 w-5 shrink-0"
+                                      className="h-6 w-6 shrink-0"
                                       onClick={() => removeTeam(paIndex, domIndex, teamIndex)}
                                     >
-                                      <X className="w-2.5 h-2.5" />
+                                      <X className="w-3 h-3" />
                                     </Button>
                                   )}
                                 </div>
-                                {dom.teams.length === 1 && (
-                                  <p className="text-xs text-muted-foreground ml-5">
-                                    Rename this to match a real team (e.g. &quot;Search Team&quot;).
-                                  </p>
-                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  Rename to match a real team (e.g. &quot;Search Team&quot;).
+                                </p>
                               </div>
                             ))}
-                            <Button
+                            <button
                               type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs h-6"
                               onClick={() => addTeam(paIndex, domIndex)}
+                              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                             >
-                              <Plus className="w-3 h-3 mr-1" />
-                              Add team
-                            </Button>
+                              + Add team{dom.name.trim() ? ` to ${dom.name.trim()}` : ''}
+                            </button>
                           </div>
                         </div>
                       ))}
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs"
                         onClick={() => addDomain(paIndex)}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add domain
-                      </Button>
+                        + Add domain{pa.name.trim() ? ` to ${pa.name.trim()}` : ''}
+                      </button>
                     </div>
                   </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={addProductArea}>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="text-sm font-medium"
+                  onClick={addProductArea}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add product area
                 </Button>
               </div>
 
-              <div className="border border-dashed rounded-lg p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-2">Example</p>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-3.5 h-3.5 shrink-0" />
-                    <span>Product Area: Booking</span>
-                  </div>
-                  <div className="ml-5 flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>Domain: Search</span>
-                  </div>
-                  <div className="ml-9 flex items-center gap-2">
-                    <Users className="w-3 h-3 shrink-0" />
-                    <span>Team: Search Experience</span>
-                  </div>
-                </div>
-              </div>
+              <p className="text-xs text-muted-foreground/50 italic">
+                Product Areas are broad outcome groups. Domains are major capability areas. Teams are the groups that own outcomes.
+              </p>
 
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex justify-end">
