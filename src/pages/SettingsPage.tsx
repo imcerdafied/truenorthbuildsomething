@@ -140,7 +140,7 @@ export function SettingsPage() {
             Check-in Cadence
           </CardTitle>
           <CardDescription className="text-xs">
-            Set how often your team submits OKR check-ins
+            Set how often your team submits check-ins
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0 space-y-4">

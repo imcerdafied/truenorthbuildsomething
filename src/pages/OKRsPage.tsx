@@ -114,7 +114,7 @@ export function OKRsPage() {
       </div>
       <div className="col-span-2">
         <span className="text-xs text-muted-foreground">
-          {okr.latestCheckIn ? `${okr.latestCheckIn.progress}% toward KRs` : 'No signal yet'}
+          {okr.latestCheckIn ? `${okr.latestCheckIn.progress}% toward measures` : 'No signal yet'}
         </span>
       </div>
       <div className="col-span-2">

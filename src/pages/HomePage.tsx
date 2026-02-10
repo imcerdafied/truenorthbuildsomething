@@ -124,8 +124,8 @@ export function HomePage() {
 
   const TrendIcon = overallTrend === 'up' ? TrendingUp : overallTrend === 'down' ? TrendingDown : Minus;
 
-  // If in exec mode, show Product Area View
-  if (viewMode === 'exec') {
+  // If in exec mode, or "All teams" selected in team view, show Product Area View
+  if (viewMode === 'exec' || (viewMode === 'team' && !selectedTeamId)) {
     return <ProductAreaView />;
   }
 
@@ -304,7 +304,7 @@ export function HomePage() {
                         const arrow = delta > 0 ? '↑' : delta < 0 ? '↓' : '→';
                         return `Confidence ${arrow} from ${prev.confidence} → ${latest.confidence} · `;
                       })()}
-                      {`${okr.latestCheckIn.progress}% toward KRs`}
+                      {`${okr.latestCheckIn.progress}% toward measures`}
                       {okr.latestCheckIn.reasonForChange && ` · ${okr.latestCheckIn.reasonForChange}`}
                       {okr.latestCheckIn.optionalNote && !okr.latestCheckIn.reasonForChange && ` · ${okr.latestCheckIn.optionalNote}`}
                     </p>
@@ -326,11 +326,11 @@ export function HomePage() {
         </CardContent>
       </Card>
 
-      {/* Confidence narrative - single-OKR teams with check-in history */}
-      {teamOKRs.length === 1 && teamOKRs[0].latestCheckIn && (teamOKRs[0].latestCheckIn.reasonForChange || teamOKRs[0].latestCheckIn.optionalNote) && (
+      {/* Confidence narrative - single-outcome teams */}
+      {teamOKRs.length === 1 && (
         <Card className="border-border/60">
           <CardContent className="py-5 space-y-4">
-            {teamOKRs[0].latestCheckIn.reasonForChange && (
+            {teamOKRs[0].latestCheckIn?.reasonForChange && (
               <div>
                 <h3 className="t3 uppercase tracking-wider mb-2">
                   {teamOKRs[0].latestCheckIn.confidence >= 60 ? 'Why confidence is high' :
@@ -342,16 +342,20 @@ export function HomePage() {
                 </p>
               </div>
             )}
-            {teamOKRs[0].latestCheckIn.optionalNote && (
-              <div>
-                <h3 className="t3 uppercase tracking-wider mb-2">
-                  What could change confidence
-                </h3>
+            <div>
+              <h3 className="t3 uppercase tracking-wider mb-2">
+                What could change confidence
+              </h3>
+              {teamOKRs[0].latestCheckIn?.optionalNote ? (
                 <p className="t1">
                   {teamOKRs[0].latestCheckIn.optionalNote}
                 </p>
-              </div>
-            )}
+              ) : (
+                <p className="t1 text-muted-foreground">
+                  No check-ins yet. Your first check-in will capture what could change confidence.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -364,8 +368,8 @@ export function HomePage() {
               : `${alignmentStats.total} top-level outcome${alignmentStats.total !== 1 ? 's' : ''}`
             }
           </p>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/alignment')} className="t3 h-6 px-2">
-            View outcome model →
+          <Button variant="ghost" size="sm" onClick={() => navigate('/structure')} className="t3 h-6 px-2">
+            View structure →
           </Button>
         </div>
       )}

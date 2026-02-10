@@ -66,10 +66,10 @@ export function OrganizationSetupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // If user already has an org, skip to first-outcome
+  // If user already has an org, skip to home
   useEffect(() => {
     if (organization?.id) {
-      navigate('/first-outcome', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [organization?.id, navigate]);
 

@@ -422,7 +422,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         progress: 0,
         confidence: data.initialConfidence,
         confidenceLabel: getConfidenceLabel(data.initialConfidence),
-        optionalNote: 'Initial confidence established at OKR creation.'
+        optionalNote: 'Initial confidence established.'
       };
       setState(prev => ({
         ...prev,
@@ -495,7 +495,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         progress: 0,
         confidence: data.initialConfidence,
         confidence_label: getConfidenceLabel(data.initialConfidence),
-        optional_note: 'Initial confidence established at OKR creation.',
+        optional_note: 'Initial confidence established.',
         created_by: user?.id || null
       });
     if (ciError) console.error('Error creating initial check-in:', ciError);

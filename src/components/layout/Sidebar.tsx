@@ -19,7 +19,7 @@ const primaryNav = [
 ];
 
 const secondaryNavAdmin = [
-  { to: '/alignment', icon: GitBranch, label: 'Structure' },
+  { to: '/structure', icon: GitBranch, label: 'Structure' },
   { to: '/exports', icon: Download, label: 'Exports' },
   { to: '/settings', icon: Settings, label: 'Organization Setup' },
 ];
@@ -96,7 +96,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
         {secondaryNav.map((item) => {
           const isActive = location.pathname === item.to ||
             (item.to !== '/' && location.pathname.startsWith(item.to));
-          const isStructure = item.to === '/alignment';
+          const isStructure = item.to === '/structure';
           return (
             <NavLink key={item.to} to={item.to} onClick={handleNavClick}
               className={cn(

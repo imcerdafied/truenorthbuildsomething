@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
@@ -40,7 +41,14 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
     currentPM
   } = useApp();
 
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
+
+  // Teams the user can access: admins see all; PMs see only teams where they are the PM
+  const visibleTeams = useMemo(() => {
+    if (isAdmin) return teams;
+    const pmName = profile?.full_name ?? '';
+    return teams.filter(t => (t.pmName || '').trim() === (pmName || '').trim());
+  }, [teams, isAdmin, profile?.full_name]);
 
   // Get current team and domain for context
   const currentTeam = teams.find(t => t.id === selectedTeamId);
@@ -74,13 +82,21 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
         </Select>
 
         {/* Team Selector (visible in team view) */}
-        {viewMode === 'team' && teams.length > 0 && (
-          <Select value={selectedTeamId || teams[0]?.id} onValueChange={setSelectedTeamId}>
+        {viewMode === 'team' && (visibleTeams.length > 0 || (isAdmin && teams.length > 0)) && (
+          <Select
+            value={selectedTeamId ?? (isAdmin ? '' : visibleTeams[0]?.id) ?? ''}
+            onValueChange={setSelectedTeamId}
+          >
             <SelectTrigger className="w-44 bg-background h-8 text-sm">
               <SelectValue placeholder="Select team" />
             </SelectTrigger>
             <SelectContent className="bg-popover">
-              {teams.map(team => (
+              {isAdmin && (
+                <SelectItem value="">
+                  All teams
+                </SelectItem>
+              )}
+              {visibleTeams.map(team => (
                 <SelectItem key={team.id} value={team.id}>
                   {team.name}
                 </SelectItem>
