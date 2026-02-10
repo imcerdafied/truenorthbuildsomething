@@ -39,12 +39,9 @@ interface DraftProductArea {
 
 const INITIAL_STRUCTURE: DraftProductArea[] = [
   {
-    name: 'General',
+    name: '',
     domains: [
-      {
-        name: 'General',
-        teams: [{ name: 'Team 1' }],
-      },
+      { name: '', teams: [{ name: 'Team 1' }] },
     ],
   },
 ];
@@ -128,17 +125,10 @@ export function OrganizationSetupPage() {
     }
   };
 
-  // Step 2: validate min 1 PA with 1 domain with 1 team, then insert all
-  const isValidStructure = (): boolean => {
-    const hasValidPA = structure.some(
-      (pa) => pa.domains.length > 0 && pa.domains.some((d) => d.teams.length > 0)
-    );
-    return hasValidPA;
-  };
-
+  // Step 2: permissive — ensure at least one PA; auto-create default domain/team when blank
   const handleStep2Continue = async () => {
-    if (!orgId || !isValidStructure()) {
-      setError('Add at least one product area with one domain and one team.');
+    if (!orgId || structure.length === 0) {
+      setError('Add at least one product area.');
       return;
     }
     setError(null);
@@ -146,26 +136,36 @@ export function OrganizationSetupPage() {
     const teamIds: string[] = [];
     try {
       for (const pa of structure) {
+        const paName = pa.name.trim() || 'General';
         const { data: paData, error: paError } = await supabase
           .from('product_areas')
-          .insert({ name: pa.name.trim() || 'General', organization_id: orgId })
+          .insert({ name: paName, organization_id: orgId })
           .select('id')
           .single();
         if (paError || !paData) throw new Error(paError?.message || 'Failed to create product area');
 
-        for (const dom of pa.domains) {
+        const domainsToCreate =
+          pa.domains.length > 0
+            ? pa.domains
+            : [{ name: '', teams: [] as DraftTeam[] }];
+
+        for (const dom of domainsToCreate) {
+          const domName = dom.name.trim() || paName;
           const { data: domData, error: domError } = await supabase
             .from('domains')
-            .insert({ name: dom.name.trim() || 'General', product_area_id: paData.id })
+            .insert({ name: domName, product_area_id: paData.id })
             .select('id')
             .single();
           if (domError || !domData) throw new Error(domError?.message || 'Failed to create domain');
 
-          for (const team of dom.teams) {
+          const teamsToCreate =
+            dom.teams.length > 0 ? dom.teams : [{ name: 'Team 1' }];
+          for (const team of teamsToCreate) {
+            const teamName = team.name.trim() || 'Team 1';
             const { data: teamData, error: teamError } = await supabase
               .from('teams')
               .insert({
-                name: team.name.trim() || 'Team',
+                name: teamName,
                 domain_id: domData.id,
                 cadence: 'biweekly',
               })
@@ -228,7 +228,7 @@ export function OrganizationSetupPage() {
   const addProductArea = () => {
     setStructure((prev) => [
       ...prev,
-      { name: 'New Product Area', domains: [{ name: 'General', teams: [{ name: 'Team 1' }] }] },
+      { name: '', domains: [{ name: '', teams: [{ name: 'Team 1' }] }] },
     ]);
   };
   const updateProductArea = (paIndex: number, name: string) => {
@@ -244,7 +244,7 @@ export function OrganizationSetupPage() {
     setStructure((prev) =>
       prev.map((pa, i) =>
         i === paIndex
-          ? { ...pa, domains: [...pa.domains, { name: 'New Domain', teams: [{ name: 'New Team' }] }] }
+          ? { ...pa, domains: [...pa.domains, { name: '', teams: [{ name: 'Team 1' }] }] }
           : pa
       )
     );
@@ -277,7 +277,7 @@ export function OrganizationSetupPage() {
           ? {
               ...pa,
               domains: pa.domains.map((d, j) =>
-                j === domIndex ? { ...d, teams: [...d.teams, { name: 'New Team' }] } : d
+                j === domIndex ? { ...d, teams: [...d.teams, { name: 'Team 1' }] } : d
               ),
             }
           : pa
@@ -383,16 +383,25 @@ export function OrganizationSetupPage() {
           </Card>
         )}
 
-        {/* Step 2: Define your structure */}
+        {/* Step 2: Confirm your starting structure */}
         {step === 2 && (
           <Card>
             <CardHeader>
-              <CardTitle>Define your structure</CardTitle>
+              <CardTitle>Confirm your starting structure</CardTitle>
               <CardDescription>
-                You can add and refine this later. Start with what&apos;s true today.
+                This is a lightweight starting point so outcomes roll up correctly. You can refine this anytime.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground mb-2">How to think about this</p>
+                <p>
+                  Product Areas are broad outcome groups (e.g. &quot;Booking,&quot; &quot;Growth&quot;).
+                  Domains are major capability areas (e.g. &quot;Search,&quot; &quot;Checkout&quot;).
+                  Teams are the groups that own outcomes.
+                </p>
+              </div>
+
               <div className="space-y-4">
                 {structure.map((pa, paIndex) => (
                   <div key={paIndex} className="border rounded-lg p-4 space-y-3">
@@ -401,7 +410,7 @@ export function OrganizationSetupPage() {
                       <Input
                         value={pa.name}
                         onChange={(e) => updateProductArea(paIndex, e.target.value)}
-                        placeholder="Product area name"
+                        placeholder="e.g. Booking, Growth, Loyalty"
                         className="h-8 flex-1"
                       />
                       {structure.length > 1 && (
@@ -424,7 +433,7 @@ export function OrganizationSetupPage() {
                             <Input
                               value={dom.name}
                               onChange={(e) => updateDomain(paIndex, domIndex, e.target.value)}
-                              placeholder="Domain name"
+                              placeholder="e.g. Search, Checkout, Payments"
                               className="h-7 text-sm flex-1"
                             />
                             {pa.domains.length > 1 && (
@@ -441,26 +450,33 @@ export function OrganizationSetupPage() {
                           </div>
                           <div className="ml-4 space-y-1.5">
                             {dom.teams.map((team, teamIndex) => (
-                              <div key={teamIndex} className="flex items-center gap-2">
-                                <Users className="w-3 h-3 text-muted-foreground shrink-0" />
-                                <Input
-                                  value={team.name}
-                                  onChange={(e) =>
-                                    updateTeam(paIndex, domIndex, teamIndex, e.target.value)
-                                  }
-                                  placeholder="Team name"
-                                  className="h-6 text-xs flex-1"
-                                />
-                                {dom.teams.length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-5 w-5 shrink-0"
-                                    onClick={() => removeTeam(paIndex, domIndex, teamIndex)}
-                                  >
-                                    <X className="w-2.5 h-2.5" />
-                                  </Button>
+                              <div key={teamIndex} className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <Users className="w-3 h-3 text-muted-foreground shrink-0" />
+                                  <Input
+                                    value={team.name}
+                                    onChange={(e) =>
+                                      updateTeam(paIndex, domIndex, teamIndex, e.target.value)
+                                    }
+                                    placeholder="Team name"
+                                    className="h-6 text-xs flex-1"
+                                  />
+                                  {dom.teams.length > 1 && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-5 w-5 shrink-0"
+                                      onClick={() => removeTeam(paIndex, domIndex, teamIndex)}
+                                    >
+                                      <X className="w-2.5 h-2.5" />
+                                    </Button>
+                                  )}
+                                </div>
+                                {dom.teams.length === 1 && (
+                                  <p className="text-xs text-muted-foreground ml-5">
+                                    Rename this to match a real team (e.g. &quot;Search Team&quot;).
+                                  </p>
                                 )}
                               </div>
                             ))}
@@ -495,15 +511,36 @@ export function OrganizationSetupPage() {
                   Add product area
                 </Button>
               </div>
+
+              <div className="border border-dashed rounded-lg p-4 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground mb-2">Example</p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-3.5 h-3.5 shrink-0" />
+                    <span>Product Area: Booking</span>
+                  </div>
+                  <div className="ml-5 flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Domain: Search</span>
+                  </div>
+                  <div className="ml-9 flex items-center gap-2">
+                    <Users className="w-3 h-3 shrink-0" />
+                    <span>Team: Search Experience</span>
+                  </div>
+                </div>
+              </div>
+
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button
-                onClick={handleStep2Continue}
-                disabled={isSubmitting || !isValidStructure()}
-                className="gap-2"
-              >
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Continue
-              </Button>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleStep2Continue}
+                  disabled={isSubmitting}
+                  className="gap-2"
+                >
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Looks good — continue
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
