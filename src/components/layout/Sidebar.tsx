@@ -70,7 +70,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             (item.to !== '/' && location.pathname.startsWith(item.to));
           return (
             <NavLink key={item.to} to={item.to} onClick={handleNavClick}
-              className={cn("nav-item", isActive && "active")}>
+              className={cn("nav-item", isActive ? "active text-white" : "text-[hsl(0,0%,70%)]")}>
               <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </NavLink>
@@ -85,7 +85,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             (item.to !== '/' && location.pathname.startsWith(item.to));
           return (
             <NavLink key={item.to} to={item.to} onClick={handleNavClick}
-              className={cn("nav-item", isActive && "active")}>
+              className={cn("nav-item", isActive ? "active text-white" : "text-[hsl(0,0%,70%)]")}>
               <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </NavLink>
