@@ -66,6 +66,32 @@ export function OKRsPage() {
     });
   }, [allOKRs, levelFilter, ownerFilter, statusFilter]);
 
+  // Exec mode: sort by check-in first, then lowest confidence, then down trend first
+  const sortedOKRsForExec = useMemo(() => {
+    if (viewMode !== 'exec') return filteredOKRs;
+    return [...filteredOKRs].sort((a, b) => {
+      const aHas = a.latestCheckIn ? 1 : 0;
+      const bHas = b.latestCheckIn ? 1 : 0;
+      if (aHas !== bHas) return bHas - aHas; // with check-in first
+      const aConf = a.latestCheckIn?.confidence ?? 0;
+      const bConf = b.latestCheckIn?.confidence ?? 0;
+      if (aConf !== bConf) return aConf - bConf; // lowest first
+      const aDown = a.trend === 'down' ? 1 : 0;
+      const bDown = b.trend === 'down' ? 1 : 0;
+      return bDown - aDown; // down first
+    });
+  }, [filteredOKRs, viewMode]);
+
+  // Team mode: group into my team, parent objectives, other teams (other teams only if they have check-in)
+  const groupedOKRs = useMemo(() => {
+    const myTeam = filteredOKRs.filter(o => o.level === 'team' && o.ownerId === selectedTeamId);
+    const parentObjectives = filteredOKRs.filter(o => o.level === 'productArea' || o.level === 'domain');
+    const otherTeams = filteredOKRs.filter(o =>
+      o.level === 'team' && o.ownerId !== selectedTeamId && o.latestCheckIn
+    );
+    return { myTeam, parentObjectives, otherTeams };
+  }, [filteredOKRs, selectedTeamId]);
+
   const getLevelIcon = (level: OKRLevel) => {
     switch (level) {
       case 'productArea': return <Layers className="w-3.5 h-3.5" />;
@@ -73,6 +99,53 @@ export function OKRsPage() {
       case 'team': return <Users className="w-3.5 h-3.5" />;
     }
   };
+
+  const renderOKRRow = (okr: (typeof filteredOKRs)[number]) => (
+    <div
+      key={okr.id}
+      className="grid grid-cols-12 gap-4 px-2 py-3.5 data-row cursor-pointer items-center"
+      onClick={() => navigate(`/okrs/${okr.id}`)}
+    >
+      <div className="col-span-5">
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">{getLevelIcon(okr.level)}</span>
+          <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
+          {okr.isOrphaned && <OrphanWarning />}
+        </div>
+      </div>
+      <div className="col-span-2">
+        <span className="text-xs text-muted-foreground">{okr.ownerName}</span>
+      </div>
+      <div className="col-span-2">
+        {okr.latestCheckIn ? (
+          <ProgressBar
+            value={okr.latestCheckIn.progress || 0}
+            showLabel
+            size="sm"
+          />
+        ) : (
+          <span className="text-xs text-muted-foreground">No signal yet</span>
+        )}
+      </div>
+      <div className="col-span-2">
+        {okr.latestCheckIn ? (
+          <ConfidenceBadge
+            confidence={okr.latestCheckIn.confidence}
+            label={okr.latestCheckIn.confidenceLabel}
+          />
+        ) : (
+          <span className="text-xs text-muted-foreground">No signal yet</span>
+        )}
+      </div>
+      <div className="col-span-1">
+        {okr.latestCheckIn ? (
+          <TrendIndicator trend={okr.trend} size="sm" />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </div>
+    </div>
+  );
 
   // If viewing weekly tab in team mode, show TeamWeeklyView
   if (viewTab === 'weekly' && viewMode === 'team') {
@@ -216,58 +289,45 @@ export function OKRsPage() {
             </div>
           ) : (
             <div>
-              {/* Header */}
-              <div className="grid grid-cols-12 gap-4 px-2 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
-                <div className="col-span-5">Objective</div>
-                <div className="col-span-2">Owner</div>
-                <div className="col-span-2">Progress</div>
-                <div className="col-span-2">Confidence</div>
-                <div className="col-span-1">Trend</div>
-              </div>
-
-              {/* Rows */}
-              {filteredOKRs.map((okr) => (
-                <div
-                  key={okr.id}
-                  className="grid grid-cols-12 gap-4 px-2 py-3.5 data-row cursor-pointer items-center"
-                  onClick={() => navigate(`/okrs/${okr.id}`)}
-                >
-                  <div className="col-span-5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">{getLevelIcon(okr.level)}</span>
-                      <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
-                      {okr.isOrphaned && <OrphanWarning />}
-                    </div>
+              {viewMode === 'team' ? (
+                <>
+                  {groupedOKRs.myTeam.length > 0 && (
+                    <>
+                      <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b bg-muted/30">
+                        Your team
+                      </div>
+                      {groupedOKRs.myTeam.map((okr) => renderOKRRow(okr))}
+                    </>
+                  )}
+                  {groupedOKRs.parentObjectives.length > 0 && (
+                    <>
+                      <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b border-t bg-muted/30">
+                        Parent objectives
+                      </div>
+                      {groupedOKRs.parentObjectives.map((okr) => renderOKRRow(okr))}
+                    </>
+                  )}
+                  {groupedOKRs.otherTeams.length > 0 && (
+                    <>
+                      <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b border-t bg-muted/30">
+                        Other teams
+                      </div>
+                      {groupedOKRs.otherTeams.map((okr) => renderOKRRow(okr))}
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-12 gap-4 px-2 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
+                    <div className="col-span-5">Objective</div>
+                    <div className="col-span-2">Owner</div>
+                    <div className="col-span-2">Progress</div>
+                    <div className="col-span-2">Confidence</div>
+                    <div className="col-span-1">Trend</div>
                   </div>
-                  
-                  <div className="col-span-2">
-                    <span className="text-xs text-muted-foreground">{okr.ownerName}</span>
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <ProgressBar 
-                      value={okr.latestCheckIn?.progress || 0} 
-                      showLabel 
-                      size="sm" 
-                    />
-                  </div>
-                  
-                  <div className="col-span-2">
-                    {okr.latestCheckIn ? (
-                      <ConfidenceBadge 
-                        confidence={okr.latestCheckIn.confidence}
-                        label={okr.latestCheckIn.confidenceLabel}
-                      />
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    )}
-                  </div>
-                  
-                  <div className="col-span-1">
-                    <TrendIndicator trend={okr.trend} size="sm" />
-                  </div>
-                </div>
-              ))}
+                  {sortedOKRsForExec.map((okr) => renderOKRRow(okr))}
+                </>
+              )}
             </div>
           )}
         </CardContent>

@@ -1,4 +1,4 @@
-import { LinkIcon } from 'lucide-react';
+import { Target } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -12,12 +12,12 @@ export function OrphanWarning() {
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="orphan-warning cursor-help">
-            <LinkIcon className="w-3 h-3" />
-            <span>Not linked</span>
+            <Target className="w-3 h-3" />
+            <span>Top-level</span>
           </span>
         </TooltipTrigger>
         <TooltipContent className="bg-popover border">
-          <p className="text-sm">This OKR is not linked to a parent outcome</p>
+          <p className="text-sm">This is a top-level objective — it represents a primary business outcome.</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

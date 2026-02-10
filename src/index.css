@@ -234,8 +234,8 @@
   /* Orphan warning - soft, not blocking */
   .orphan-warning {
     @apply inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded;
-    background-color: hsl(var(--confidence-medium-bg));
-    color: hsl(var(--confidence-medium));
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
   }
   
   /* Sparkline container */
