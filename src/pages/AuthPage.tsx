@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
 const PENDING_ORG_JOIN_KEY = 'pending_org_join';
+const VALID_INVITE_CODE = 'truenorth2026';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -23,8 +24,9 @@ export function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string; inviteCode?: string }>({});
   const [joinOrgId, setJoinOrgId] = useState<string | null>(null);
   const [inviteLinkError, setInviteLinkError] = useState<string | null>(null);
   const [orgCheckDone, setOrgCheckDone] = useState(false);
@@ -66,8 +68,16 @@ export function AuthPage() {
     }
   }, [user, isLoading, navigate]);
 
+  const requireInviteCode = isSignUp && !joinOrgId;
+
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; fullName?: string } = {};
+    const newErrors: { email?: string; password?: string; fullName?: string; inviteCode?: string } = {};
+    
+    if (requireInviteCode) {
+      if (!inviteCode.trim()) {
+        newErrors.inviteCode = 'Please enter your invite code';
+      }
+    }
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -91,6 +101,16 @@ export function AuthPage() {
     e.preventDefault();
     
     if (!validateForm()) return;
+    
+    if (requireInviteCode && inviteCode.trim() !== VALID_INVITE_CODE) {
+      toast({
+        title: 'Invalid invite code',
+        description: 'Invalid invite code. Contact your admin for access.',
+        variant: 'destructive',
+      });
+      setErrors((prev) => ({ ...prev, inviteCode: 'Invalid invite code' }));
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -185,6 +205,26 @@ export function AuthPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignUp && requireInviteCode && (
+                <div className="space-y-2">
+                  <Label htmlFor="inviteCode">Invite code</Label>
+                  <Input
+                    id="inviteCode"
+                    type="text"
+                    placeholder="Enter your invite code"
+                    value={inviteCode}
+                    onChange={(e) => {
+                      setInviteCode(e.target.value);
+                      if (errors.inviteCode) setErrors((prev) => ({ ...prev, inviteCode: undefined }));
+                    }}
+                    className={errors.inviteCode ? 'border-destructive' : ''}
+                  />
+                  {errors.inviteCode && (
+                    <p className="text-xs text-destructive">{errors.inviteCode}</p>
+                  )}
+                </div>
+              )}
+
               {isSignUp && (
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full name</Label>
@@ -251,6 +291,7 @@ export function AuthPage() {
                   onClick={() => {
                     setIsSignUp(!isSignUp);
                     setErrors({});
+                    if (isSignUp) setInviteCode('');
                   }}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
