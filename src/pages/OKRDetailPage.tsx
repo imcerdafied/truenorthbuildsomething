@@ -37,7 +37,6 @@ import {
   Layers,
   Plus,
   Link2,
-  ExternalLink,
   RefreshCcw,
   Calendar,
   X,
@@ -53,15 +52,12 @@ export function OKRDetailPage() {
   const { 
     getOKRWithDetails, 
     canEditOKR, 
-    addJiraLink, 
-    removeJiraLink,
     rolloverOKR,
     addOKRLink,
     getOKRsByQuarter,
     currentQuarter
   } = useApp();
 
-  const [jiraInput, setJiraInput] = useState('');
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isRolloverDialogOpen, setIsRolloverDialogOpen] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string>('');
@@ -74,7 +70,7 @@ export function OKRDetailPage() {
         <Target className="empty-state-icon" />
         <p className="empty-state-title">OKR not found</p>
         <Button variant="ghost" onClick={() => navigate('/okrs')} className="mt-4">
-          Back to OKRs
+          ← Back to outcomes
         </Button>
       </div>
     );
@@ -98,13 +94,6 @@ export function OKRDetailPage() {
     }
   };
 
-  const handleAddJiraLink = () => {
-    if (jiraInput.trim()) {
-      addJiraLink(okr.id, jiraInput.trim());
-      setJiraInput('');
-    }
-  };
-
   const handleRollover = (option: 'continue' | 'revise' | 'retire', notes?: string) => {
     if (option === 'retire') {
       // In a real app, this would mark the OKR as retired
@@ -124,19 +113,23 @@ export function OKRDetailPage() {
   };
 
   const potentialParents = getOKRsByQuarter(currentQuarter).filter(o => {
+    if (o.id === okr.id) return false;
     if (okr.level === 'team') return o.level === 'domain' || o.level === 'productArea';
     if (okr.level === 'domain') return o.level === 'productArea';
     return false;
   });
 
   const parentOkr = okr.parentOkrId ? getOKRWithDetails(okr.parentOkrId) : null;
+  const allOKRsThisQuarter = getOKRsByQuarter(currentQuarter);
+  const hasValidParents = potentialParents.length > 0;
+  const showAlignmentCard = (parentOkr != null || okr.childOKRs.length > 0) || allOKRsThisQuarter.length >= 2;
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Back button */}
       <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
         <ArrowLeft className="w-4 h-4" />
-        Back to OKRs
+        Back to outcomes
       </Button>
 
       {/* Header */}
@@ -155,7 +148,7 @@ export function OKRDetailPage() {
           </div>
           <h1 className="text-xl font-semibold tracking-tight leading-tight">{okr.objectiveText}</h1>
           <p className="text-sm text-muted-foreground">Owner: {okr.ownerName}</p>
-          {okr.isOrphaned && (
+          {okr.isOrphaned && hasValidParents && (
             <div className="flex items-center gap-2 pt-1">
               <OrphanWarning />
               <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
@@ -175,7 +168,7 @@ export function OKRDetailPage() {
                         <SelectValue placeholder="Select a parent OKR" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover">
-                        {potentialParents.filter(p => p.id).map(p => (
+                        {potentialParents.filter(p => p.id && p.id !== okr.id).map(p => (
                           <SelectItem key={p.id} value={p.id}>
                             {p.objectiveText}
                           </SelectItem>
@@ -264,15 +257,23 @@ export function OKRDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Key Results */}
+          {/* Measures (Key Results) */}
           <Card className="border-border/60">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Key Results</CardTitle>
-              <p className="helper-text">Track progress and flag items needing attention</p>
+              <CardTitle className="text-base font-medium">Measures</CardTitle>
+              <p className="helper-text">Track progress toward this outcome</p>
             </CardHeader>
             <CardContent className="pt-0">
               {okr.keyResults.length === 0 ? (
-                <p className="text-muted-foreground text-sm py-4">No key results defined</p>
+                <div className="py-6 space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    No measures defined yet. Add a measure to track progress toward this outcome.
+                  </p>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate('/okrs')}>
+                    <Plus className="w-3.5 h-3.5" />
+                    Add measure
+                  </Button>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {okr.keyResults.map((kr, index) => {
@@ -294,15 +295,19 @@ export function OKRDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Confidence History */}
+          {/* Check-in History */}
           <Card className="border-border/60">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Check-in History</CardTitle>
-              <p className="helper-text">Recent confidence updates and context</p>
-            </CardHeader>
-            <CardContent className="pt-0">
+            {okr.checkIns.length > 0 && (
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium">Check-in History</CardTitle>
+                <p className="helper-text">Recent confidence updates and context</p>
+              </CardHeader>
+            )}
+            <CardContent className={okr.checkIns.length > 0 ? 'pt-0' : 'py-5'}>
               {okr.checkIns.length === 0 ? (
-                <p className="text-muted-foreground text-sm py-4">No check-ins yet</p>
+                <p className="text-muted-foreground text-sm">
+                  No check-ins yet. Check in to share what&apos;s changed and update confidence.
+                </p>
               ) : (
                 <div className="space-y-0">
                   {okr.checkIns.slice(0, 6).map((ci) => (
@@ -333,123 +338,73 @@ export function OKRDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Parent/Child Links */}
-          <Card className="border-border/60">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium flex items-center gap-2">
-                <GitBranch className="w-4 h-4 text-muted-foreground" />
-                Alignment
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-4">
-              {parentOkr && (
-                <div>
-                  <p className="section-header mb-2">Parent OKR</p>
-                  <div 
-                    className="border border-border/60 rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors"
-                    onClick={() => navigate(`/okrs/${parentOkr.id}`)}
-                  >
-                    <p className="text-sm font-medium truncate">{parentOkr.objectiveText}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs text-muted-foreground">{parentOkr.ownerName}</span>
-                      {parentOkr.latestCheckIn && (
-                        <ConfidenceBadge 
-                          confidence={parentOkr.latestCheckIn.confidence} 
-                          size="sm"
-                          showValue={false}
-                        />
-                      )}
+          {/* Alignment - only show when meaningful (has links or org has 2+ OKRs) */}
+          {showAlignmentCard && (
+            <Card className="border-border/60">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <GitBranch className="w-4 h-4 text-muted-foreground" />
+                  Alignment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                {parentOkr && (
+                  <div>
+                    <p className="section-header mb-2">Parent outcome</p>
+                    <div 
+                      className="border border-border/60 rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors"
+                      onClick={() => navigate(`/okrs/${parentOkr.id}`)}
+                    >
+                      <p className="text-sm font-medium truncate">{parentOkr.objectiveText}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs text-muted-foreground">{parentOkr.ownerName}</span>
+                        {parentOkr.latestCheckIn && (
+                          <ConfidenceBadge 
+                            confidence={parentOkr.latestCheckIn.confidence} 
+                            size="sm"
+                            showValue={false}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              
-              {okr.childOKRs.length > 0 && (
-                <div>
-                  <p className="section-header mb-2">Child OKRs</p>
-                  <div className="space-y-2">
-                    {okr.childOKRs.map(child => (
-                      <div 
-                        key={child.id}
-                        className="border border-border/60 rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors"
-                        onClick={() => navigate(`/okrs/${child.id}`)}
-                      >
-                        <p className="text-sm font-medium truncate">{child.objectiveText}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs text-muted-foreground">{child.ownerName}</span>
-                          {child.latestCheckIn && (
-                            <ConfidenceBadge 
-                              confidence={child.latestCheckIn.confidence} 
-                              size="sm"
-                              showValue={false}
-                            />
-                          )}
+                )}
+                
+                {okr.childOKRs.length > 0 && (
+                  <div>
+                    <p className="section-header mb-2">Child outcomes</p>
+                    <div className="space-y-2">
+                      {okr.childOKRs.map(child => (
+                        <div 
+                          key={child.id}
+                          className="border border-border/60 rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors"
+                          onClick={() => navigate(`/okrs/${child.id}`)}
+                        >
+                          <p className="text-sm font-medium truncate">{child.objectiveText}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-xs text-muted-foreground">{child.ownerName}</span>
+                            {child.latestCheckIn && (
+                              <ConfidenceBadge 
+                                confidence={child.latestCheckIn.confidence} 
+                                size="sm"
+                                showValue={false}
+                              />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {!parentOkr && okr.childOKRs.length === 0 && (
-                <p className="text-muted-foreground text-sm">
-                  No linked OKRs
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Jira Links */}
-          <Card className="border-border/60">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium flex items-center gap-2">
-                <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                Linked Work
-              </CardTitle>
-              <p className="helper-text">Jira epics linked to this OKR</p>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-2">
-              {okr.jiraLinks.map((link) => (
-                <div 
-                  key={link.id} 
-                  className="flex items-center justify-between border border-border/60 rounded-lg px-3 py-2"
-                >
-                  <span className="text-xs font-mono text-muted-foreground">{link.epicIdentifierOrUrl}</span>
-                  {canEdit && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 w-6 p-0"
-                      onClick={() => removeJiraLink(link.id)}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              
-              {canEdit && (
-                <div className="flex gap-2 pt-2">
-                  <Input
-                    placeholder="Epic ID or URL"
-                    value={jiraInput}
-                    onChange={(e) => setJiraInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddJiraLink()}
-                    className="bg-background h-8 text-sm"
-                  />
-                  <Button variant="outline" size="sm" className="h-8 px-3" onClick={handleAddJiraLink}>
-                    <Plus className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              )}
-
-              {okr.jiraLinks.length === 0 && !canEdit && (
-                <p className="text-muted-foreground text-sm">
-                  No linked work
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                {!parentOkr && okr.childOKRs.length === 0 && (
+                  <p className="text-muted-foreground text-sm">
+                    Link this outcome to a parent to see how it connects.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
@@ -499,7 +454,7 @@ function KeyResultCard({ kr, index, progress, canEdit }: KeyResultCardProps) {
             <AlertTriangle className="w-4 h-4 text-confidence-medium shrink-0 mt-0.5" />
           )}
           <p className="text-sm font-medium">
-            <span className="text-muted-foreground">KR{index + 1}:</span> {kr.text}
+            <span className="text-muted-foreground">M{index + 1}:</span> {kr.text}
           </p>
         </div>
         
