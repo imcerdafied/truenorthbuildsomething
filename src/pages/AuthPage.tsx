@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,20 +10,55 @@ import { Target, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
+const PENDING_ORG_JOIN_KEY = 'pending_org_join';
+
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
 export function AuthPage() {
+  const [searchParams] = useSearchParams();
+  const orgParam = searchParams.get('org');
+
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
-  
+  const [joinOrgId, setJoinOrgId] = useState<string | null>(null);
+  const [inviteLinkError, setInviteLinkError] = useState<string | null>(null);
+  const [orgCheckDone, setOrgCheckDone] = useState(false);
+
   const { signIn, signUp, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Validate org param and persist for post-signup join
+  useEffect(() => {
+    if (!orgParam) {
+      setOrgCheckDone(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('id', orgParam)
+        .maybeSingle();
+      if (cancelled) return;
+      setOrgCheckDone(true);
+      if (error || !data) {
+        setInviteLinkError('This invite link is invalid or expired.');
+        return;
+      }
+      setJoinOrgId(data.id);
+      try {
+        window.localStorage.setItem(PENDING_ORG_JOIN_KEY, data.id);
+      } catch (_) {}
+    })();
+    return () => { cancelled = true; };
+  }, [orgParam]);
 
   useEffect(() => {
     if (user && !isLoading) {
@@ -104,13 +140,15 @@ export function AuthPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (orgParam && !orgCheckDone)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
+
+  const isJoinFlow = isSignUp && !!joinOrgId && !inviteLinkError;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -123,15 +161,25 @@ export function AuthPage() {
           <span className="font-semibold text-xl tracking-tight">TrueNorthOS</span>
         </div>
 
+        {inviteLinkError && (
+          <Card className="bg-card border border-destructive/50 mb-4">
+            <CardContent className="pt-6">
+              <p className="text-sm text-destructive text-center">{inviteLinkError}</p>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="bg-card border">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-xl">
-              {isSignUp ? 'Set your TrueNorth' : 'Welcome back'}
+              {isJoinFlow ? 'Join your team on TrueNorth' : isSignUp ? 'Set your TrueNorth' : 'Welcome back'}
             </CardTitle>
             <CardDescription>
-              {isSignUp
-                ? 'Create a shared view of outcomes, OKRs, and confidence for your team.'
-                : 'Sign in to your TrueNorth'
+              {isJoinFlow
+                ? 'Your organization is already set up. Create your account to start tracking outcomes.'
+                : isSignUp
+                  ? 'Create a shared view of outcomes, OKRs, and confidence for your team.'
+                  : 'Sign in to your TrueNorth'
               }
             </CardDescription>
           </CardHeader>

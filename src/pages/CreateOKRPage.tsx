@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -56,6 +57,7 @@ const STEPS = [
 
 export function CreateOKRPage() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const {
     productAreas,
     domains,
@@ -82,6 +84,42 @@ export function CreateOKRPage() {
     keyResults: [{ id: '1', metricName: '', baseline: '', target: '' }],
     confidence: 50,
   });
+
+  // Soft gate: no structure yet
+  if (teams.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto space-y-6 animate-fade-in">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/okrs')}
+          className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Outcomes
+        </Button>
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle className="text-lg">Almost there</CardTitle>
+            <CardDescription>
+              Before teams start tracking outcomes, your admin needs to set up a basic structure so outcomes roll up correctly.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isAdmin ? (
+              <Button onClick={() => navigate('/setup')}>
+                Set up structure
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Ask your admin to complete organization setup.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const quarters = useMemo(() => {
     const current = getCurrentQuarter();

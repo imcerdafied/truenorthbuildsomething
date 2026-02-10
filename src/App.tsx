@@ -19,6 +19,7 @@ import { AuthPage } from "@/pages/AuthPage";
 import { OrganizationSetupPage } from "@/pages/OrganizationSetupPage";
 import { FirstOutcomePage } from "@/pages/FirstOutcomePage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AdminRoute } from "@/components/auth/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -57,10 +58,10 @@ const App = () => (
                 <Route path="okrs/create" element={<CreateOKRPage />} />
                 <Route path="okrs/:okrId" element={<OKRDetailPage />} />
                 <Route path="checkin" element={<CheckInPage />} />
-                <Route path="alignment" element={<AlignmentPage />} />
+                <Route path="alignment" element={<AdminRoute><AlignmentPage /></AdminRoute>} />
                 <Route path="qbr" element={<QBRPage />} />
                 <Route path="exports" element={<ExportsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
               </Route>
             </Routes>
           </BrowserRouter>

@@ -38,7 +38,7 @@ export function SettingsPage() {
     <div className="space-y-6 animate-fade-in max-w-2xl">
       {/* Header */}
       <div>
-        <h1 className="page-title">Settings</h1>
+        <h1 className="page-title">Organization Setup</h1>
         <p className="helper-text mt-1">
           Manage your account, team preferences, and organization structure
         </p>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,7 @@ type CadenceOption = 'weekly' | 'biweekly';
 
 export function OrganizationSetupPage() {
   const { user, organization, refreshProfile } = useAuth();
+  const { setViewMode } = useApp();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -207,7 +209,8 @@ export function OrganizationSetupPage() {
         .update({ setup_complete: true })
         .eq('id', orgId);
       await refreshProfile();
-      navigate('/first-outcome');
+      setViewMode('exec');
+      navigate('/');
     } catch (err) {
       console.error('Step 3 error:', err);
       setError(err instanceof Error ? err.message : 'Something went wrong.');

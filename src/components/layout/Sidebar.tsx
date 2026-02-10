@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { 
   Home, 
   Target, 
@@ -9,7 +10,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 
 const primaryNav = [
@@ -17,10 +18,14 @@ const primaryNav = [
   { to: '/okrs', icon: Target, label: 'Outcomes' },
 ];
 
-const secondaryNav = [
+const secondaryNavAdmin = [
   { to: '/alignment', icon: GitBranch, label: 'Structure' },
   { to: '/exports', icon: Download, label: 'Exports' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/settings', icon: Settings, label: 'Organization Setup' },
+];
+
+const secondaryNavMember = [
+  { to: '/exports', icon: Download, label: 'Exports' },
 ];
 
 interface SidebarProps {
@@ -28,8 +33,13 @@ interface SidebarProps {
 }
 
 export function Sidebar({ onNavigate }: SidebarProps) {
+  const { isAdmin } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const secondaryNav = useMemo(
+    () => (isAdmin ? secondaryNavAdmin : secondaryNavMember),
+    [isAdmin]
+  );
 
   const handleNavClick = () => {
     if (onNavigate) {
