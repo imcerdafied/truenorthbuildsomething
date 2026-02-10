@@ -27,18 +27,12 @@ export function ProductAreaView() {
 
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
-  // Get the first product area (for demo purposes)
-  const productArea = productAreas[0];
+  // Admin view: show ALL teams in the organization (no filter by product area or selected team)
+  const allTeams = teams;
 
-  // Get all teams in this product area
-  const productAreaDomains = domains.filter(d => d.productAreaId === productArea?.id);
-  const productAreaTeams = teams.filter(t => 
-    productAreaDomains.some(d => d.id === t.domainId)
-  );
-
-  // Calculate team metrics with proper typing
+  // Calculate team metrics with proper typing (for all teams)
   const teamsWithMetrics = useMemo(() => {
-    return productAreaTeams.map(team => {
+    return allTeams.map(team => {
       const teamOKRs = getTeamOKRs(team.id);
       const okrIds = teamOKRs.map(o => o.id);
       const confidence = getOverallConfidence(okrIds);
@@ -96,10 +90,25 @@ export function ProductAreaView() {
         hasOKRs: teamOKRs.length > 0
       };
     });
-  }, [productAreaTeams, getTeamOKRs, getOverallConfidence, getAtRiskCount, checkIns, keyResults]);
+  }, [allTeams, getTeamOKRs, getOverallConfidence, getAtRiskCount, checkIns, keyResults]);
+
+  // Resolve product area name for grouping/sorting
+  const getProductAreaName = (teamId: string) => {
+    const team = teams.find(t => t.id === teamId);
+    if (!team) return '';
+    const domain = domains.find(d => d.id === team.domainId);
+    if (!domain) return '';
+    const pa = productAreas.find(p => p.id === domain.productAreaId);
+    return pa?.name ?? '';
+  };
 
   const sortedTeams = useMemo(() => {
     return [...teamsWithMetrics].sort((a, b) => {
+      // Group by product area, then by priority
+      const paA = getProductAreaName(a.id);
+      const paB = getProductAreaName(b.id);
+      if (paA !== paB) return (paA || '').localeCompare(paB || '');
+
       // Priority 1: Has OKRs vs no OKRs
       if (a.hasOKRs !== b.hasOKRs) return b.hasOKRs ? 1 : -1;
 
@@ -119,9 +128,9 @@ export function ProductAreaView() {
       // Priority 5: Lower confidence first within same tier
       if (a.confidence !== b.confidence) return a.confidence - b.confidence;
 
-      return 0;
+      return a.name.localeCompare(b.name);
     });
-  }, [teamsWithMetrics]);
+  }, [teamsWithMetrics, teams, domains, productAreas]);
 
   const focusTeams = useMemo(() => {
     return sortedTeams
@@ -144,24 +153,12 @@ export function ProductAreaView() {
     );
   }
 
-  if (!productArea) {
-    return (
-      <div className="empty-state">
-        <Target className="empty-state-icon" />
-        <p className="empty-state-title">No product area found</p>
-        <p className="empty-state-description">
-          Configure your organization structure in Settings.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
         <h1 className="page-title text-xl sm:text-2xl">
-          {productArea.name} — {formatQuarter(currentQuarter)}
+          Teams Overview — {formatQuarter(currentQuarter)}
         </h1>
         <p className="helper-text mt-1 text-sm">
           Where outcomes stand, and where intervention may help.
@@ -220,7 +217,10 @@ export function ProductAreaView() {
           {sortedTeams.length === 0 ? (
             <div className="empty-state py-8">
               <Users className="empty-state-icon" />
-              <p className="empty-state-title">No teams in this product area</p>
+              <p className="empty-state-title">No teams yet</p>
+              <p className="empty-state-description text-sm mt-1">
+                Add teams in Organization Setup.
+              </p>
             </div>
           ) : (
             <div className="space-y-0">

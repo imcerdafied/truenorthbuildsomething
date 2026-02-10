@@ -551,10 +551,12 @@ export function OrganizationSetupPage() {
                 </Select>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button onClick={handleStep3Finish} disabled={isSubmitting} className="gap-2">
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Complete setup
-              </Button>
+              <div className="flex justify-end">
+                <Button onClick={handleStep3Finish} disabled={isSubmitting} className="gap-2">
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Complete setup
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}

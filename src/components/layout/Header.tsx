@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
@@ -41,7 +41,7 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
     currentPM
   } = useApp();
 
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, role } = useAuth();
 
   // Teams the user can access: admins see all; PMs see only teams where they are the PM
   const visibleTeams = useMemo(() => {
@@ -53,6 +53,13 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
   // Get current team and domain for context
   const currentTeam = teams.find(t => t.id === selectedTeamId);
   const currentDomain = domains.find(d => d.id === currentTeam?.domainId);
+
+  // Members only see Team view — ensure we never leave them in Admin (exec) view
+  useEffect(() => {
+    if (!isAdmin && viewMode === 'exec') {
+      setViewMode('team');
+    }
+  }, [isAdmin, viewMode, setViewMode]);
 
   return (
     <header className="h-14 border-b bg-card flex items-center justify-between px-3 sm:px-5">
@@ -107,43 +114,45 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* View Mode Toggle */}
-        <div className="flex items-center bg-muted rounded-md p-0.5">
-          <Button
-            variant={viewMode === 'team' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('team')}
-            className={cn(
-              "gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs",
-              viewMode === 'team' ? "text-foreground font-semibold" : "text-muted-foreground"
-            )}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Team</span>
-          </Button>
-          <Button
-            variant={viewMode === 'exec' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('exec')}
-            className={cn(
-              "gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs",
-              viewMode === 'exec' ? "text-foreground font-semibold" : "text-muted-foreground"
-            )}
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Exec</span>
-          </Button>
-        </div>
+        {/* View Mode Toggle - only for admins; members see Team view only */}
+        {isAdmin && (
+          <div className="flex items-center bg-muted rounded-md p-0.5">
+            <Button
+              variant={viewMode === 'team' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('team')}
+              className={cn(
+                "gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs",
+                viewMode === 'team' ? "text-foreground font-semibold" : "text-muted-foreground"
+              )}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Team</span>
+            </Button>
+            <Button
+              variant={viewMode === 'exec' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('exec')}
+              className={cn(
+                "gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs",
+                viewMode === 'exec' ? "text-foreground font-semibold" : "text-muted-foreground"
+              )}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Admin</span>
+            </Button>
+          </div>
+        )}
 
-        {/* Current User - hidden on small screens, clickable → Settings */}
+        {/* Current User - hidden on small screens, clickable → Settings (admins) or Home (members) */}
         <button
           type="button"
-          onClick={() => navigate('/settings')}
+          onClick={() => navigate(isAdmin ? '/settings' : '/')}
           className="hidden sm:flex items-center text-xs text-muted-foreground border-l pl-3 cursor-pointer hover:opacity-80 focus:outline-none focus:ring-0"
         >
           <span className="font-medium text-foreground">{profile?.full_name || currentPM}</span>
           <span className="mx-1.5 text-border">·</span>
-          <span>PM</span>
+          <span>{role === 'admin' ? 'Admin' : 'PM'}</span>
         </button>
       </div>
     </header>
