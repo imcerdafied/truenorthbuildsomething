@@ -5,24 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface TeamInput {
-  name: string;
-  pmName?: string;
-}
-
-interface DomainInput {
-  name: string;
-  teams: TeamInput[];
-}
-
-interface ProductAreaInput {
-  name: string;
-  domains: DomainInput[];
-}
-
 interface SetupRequest {
   orgName: string;
-  productAreas: ProductAreaInput[];
+  teamName: string;
+  pmName?: string;
 }
 
 Deno.serve(async (req) => {
@@ -33,7 +19,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
+
     // Get user from auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -73,11 +59,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { orgName, productAreas }: SetupRequest = await req.json();
+    const { orgName, teamName, pmName }: SetupRequest = await req.json();
 
     if (!orgName?.trim()) {
       return new Response(
         JSON.stringify({ error: "Organization name is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!teamName?.trim()) {
+      return new Response(
+        JSON.stringify({ error: "Team name is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -105,7 +98,6 @@ Deno.serve(async (req) => {
 
     if (profileError) {
       console.error("Error updating profile:", profileError);
-      // Rollback org creation
       await supabase.from("organizations").delete().eq("id", org.id);
       return new Response(
         JSON.stringify({ error: "Failed to update profile" }),
@@ -120,54 +112,53 @@ Deno.serve(async (req) => {
 
     if (roleError) {
       console.error("Error assigning role:", roleError);
-      // Continue anyway - role can be fixed later
     }
 
-    // 4. Create product areas, domains, and teams
-    for (const pa of productAreas) {
-      if (!pa.name?.trim()) continue;
+    // 4. Create default product area
+    const { data: pa, error: paError } = await supabase
+      .from("product_areas")
+      .insert({ name: "General", organization_id: org.id })
+      .select()
+      .single();
 
-      const { data: paData, error: paError } = await supabase
-        .from("product_areas")
-        .insert({ name: pa.name, organization_id: org.id })
-        .select()
-        .single();
+    if (paError) {
+      console.error("Error creating product area:", paError);
+      return new Response(
+        JSON.stringify({ error: "Failed to create product area" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-      if (paError) {
-        console.error("Error creating product area:", paError);
-        continue;
-      }
+    // 5. Create default domain
+    const { data: domain, error: domainError } = await supabase
+      .from("domains")
+      .insert({ name: "General", product_area_id: pa.id })
+      .select()
+      .single();
 
-      for (const domain of pa.domains || []) {
-        if (!domain.name?.trim()) continue;
+    if (domainError) {
+      console.error("Error creating domain:", domainError);
+      return new Response(
+        JSON.stringify({ error: "Failed to create domain" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-        const { data: domainData, error: domainError } = await supabase
-          .from("domains")
-          .insert({ name: domain.name, product_area_id: paData.id })
-          .select()
-          .single();
+    // 6. Create the user's team
+    const { error: teamError } = await supabase
+      .from("teams")
+      .insert({
+        name: teamName,
+        domain_id: domain.id,
+        pm_name: pmName || null,
+      });
 
-        if (domainError) {
-          console.error("Error creating domain:", domainError);
-          continue;
-        }
-
-        for (const team of domain.teams || []) {
-          if (!team.name?.trim()) continue;
-
-          const { error: teamError } = await supabase
-            .from("teams")
-            .insert({
-              name: team.name,
-              domain_id: domainData.id,
-              pm_name: team.pmName || null,
-            });
-
-          if (teamError) {
-            console.error("Error creating team:", teamError);
-          }
-        }
-      }
+    if (teamError) {
+      console.error("Error creating team:", teamError);
+      return new Response(
+        JSON.stringify({ error: "Failed to create team" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     return new Response(
