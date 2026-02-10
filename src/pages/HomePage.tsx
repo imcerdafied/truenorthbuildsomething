@@ -3,7 +3,6 @@ import { useApp } from '@/context/AppContext';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
-import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
 import { ConfidenceSparkline } from '@/components/shared/ConfidenceSparkline';
 import { TeamWeeklyView } from '@/components/views/TeamWeeklyView';
@@ -328,9 +327,12 @@ export function HomePage() {
                       </div>
 
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-24 sm:w-28">
-                          <ProgressBar value={okr.latestCheckIn?.progress || 0} showLabel size="sm" />
-                        </div>
+                        <span className="text-xs text-muted-foreground w-24 sm:w-28 text-right">
+                          {okr.latestCheckIn
+                            ? `${okr.latestCheckIn.progress}% toward KRs`
+                            : ''
+                          }
+                        </span>
 
                         <div className="w-16 sm:w-20 hidden sm:block">
                           <ConfidenceSparkline checkIns={okr.checkIns} />
@@ -348,7 +350,7 @@ export function HomePage() {
                       </div>
                     </div>
                     {changeSummary && (
-                      <p className="text-xs text-muted-foreground px-2 pb-2 -mt-1 truncate">
+                      <p className="text-sm text-muted-foreground/80 px-2 pb-2 -mt-1 truncate">
                         {changeSummary}
                       </p>
                     )}
