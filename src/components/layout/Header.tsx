@@ -91,7 +91,7 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
         {/* View Mode Toggle */}
         <div className="flex items-center bg-muted rounded-md p-0.5">
           <Button
-            variant={viewMode === 'team' ? 'default' : 'ghost'}
+            variant={viewMode === 'team' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('team')}
             className="gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs"
@@ -100,7 +100,7 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
             <span className="hidden sm:inline">Team</span>
           </Button>
           <Button
-            variant={viewMode === 'exec' ? 'default' : 'ghost'}
+            variant={viewMode === 'exec' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('exec')}
             className="gap-1 sm:gap-1.5 h-7 px-2 sm:px-3 text-xs"

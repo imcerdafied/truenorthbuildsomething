@@ -50,7 +50,7 @@
     
     /* Sidebar - sophisticated dark */
     --sidebar-background: 220 20% 10%;
-    --sidebar-foreground: 220 8% 60%;
+    --sidebar-foreground: 220 8% 75%;
     --sidebar-primary: 0 0% 96%;
     --sidebar-primary-foreground: 220 20% 10%;
     --sidebar-accent: 220 15% 16%;
@@ -114,7 +114,7 @@
     --input: 220 12% 20%;
     
     --sidebar-background: 220 18% 6%;
-    --sidebar-foreground: 220 8% 55%;
+    --sidebar-foreground: 220 8% 75%;
     --sidebar-primary: 215 50% 60%;
     --sidebar-primary-foreground: 220 18% 8%;
     --sidebar-accent: 220 15% 14%;
