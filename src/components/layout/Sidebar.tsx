@@ -18,7 +18,7 @@ const primaryNav = [
 ];
 
 const secondaryNav = [
-  { to: '/alignment', icon: GitBranch, label: 'Outcome Model' },
+  { to: '/alignment', icon: GitBranch, label: 'Structure' },
   { to: '/exports', icon: Download, label: 'Exports' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];

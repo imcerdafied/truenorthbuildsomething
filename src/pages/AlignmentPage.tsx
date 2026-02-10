@@ -126,7 +126,7 @@ export function AlignmentPage() {
       <div>
         <h1 className="page-title">Outcome Model</h1>
         <p className="helper-text mt-1">
-          How objectives connect from top-level outcomes to team execution · {formatQuarter(currentQuarter)}
+          {formatQuarter(currentQuarter)}
         </p>
       </div>
 

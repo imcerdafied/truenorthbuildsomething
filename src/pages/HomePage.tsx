@@ -143,9 +143,6 @@ export function HomePage() {
           <h1 className="page-title text-xl sm:text-2xl">
             {currentTeam?.name || 'Team'}
           </h1>
-          <p className="helper-text mt-1 text-sm">
-            What are we trying to achieve, and are we on track?
-          </p>
         </div>
         
         <div className="flex items-center gap-2">

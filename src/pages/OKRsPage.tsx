@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
-import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
 import { TeamWeeklyView } from '@/components/views/TeamWeeklyView';
 import { Card, CardContent } from '@/components/ui/card';
@@ -116,15 +115,9 @@ export function OKRsPage() {
         <span className="text-xs text-muted-foreground">{okr.ownerName}</span>
       </div>
       <div className="col-span-2">
-        {okr.latestCheckIn ? (
-          <ProgressBar
-            value={okr.latestCheckIn.progress || 0}
-            showLabel
-            size="sm"
-          />
-        ) : (
-          <span className="text-xs text-muted-foreground">No signal yet</span>
-        )}
+        <span className="text-xs text-muted-foreground">
+          {okr.latestCheckIn ? `${okr.latestCheckIn.progress}% toward KRs` : 'No signal yet'}
+        </span>
       </div>
       <div className="col-span-2">
         {okr.latestCheckIn ? (
@@ -158,7 +151,7 @@ export function OKRsPage() {
         <div>
           <h1 className="page-title">OKRs</h1>
           <p className="helper-text mt-1">
-            View and manage OKRs across all levels · {formatQuarter(currentQuarter)}
+            {formatQuarter(currentQuarter)}
           </p>
         </div>
         <div className="flex items-center gap-2">
