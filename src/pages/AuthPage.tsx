@@ -15,7 +15,7 @@ const passwordSchema = z.string().min(6, 'Password must be at least 6 characters
 const VALID_INVITE_CODE = 'TRUENORTH2026';
 
 export function AuthPage() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -133,11 +133,11 @@ export function AuthPage() {
         <Card className="bg-card border">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-xl">
-              {isSignUp ? 'Create your account' : 'Welcome back'}
+              {isSignUp ? 'Create your workspace' : 'Welcome back'}
             </CardTitle>
             <CardDescription>
-              {isSignUp 
-                ? 'Get started with outcome-driven planning'
+              {isSignUp
+                ? 'Set up a shared view of outcomes and confidence for your team.'
                 : 'Sign in to continue to TrueNorthOS'
               }
             </CardDescription>
@@ -176,7 +176,7 @@ export function AuthPage() {
                   )}
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -191,7 +191,7 @@ export function AuthPage() {
                   <p className="text-xs text-destructive">{errors.email}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -206,37 +206,39 @@ export function AuthPage() {
                   <p className="text-xs text-destructive">{errors.password}</p>
                 )}
               </div>
-              
+
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                {isSignUp ? 'Create account' : 'Sign in'}
+                {isSignUp ? 'Create workspace' : 'Sign in'}
               </Button>
+
+              {isSignUp && (
+                <p className="text-sm text-muted-foreground text-center">
+                  Make outcomes visible. Make confidence explicit.
+                </p>
+              )}
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setErrors({});
+                    setInviteCode('');
+                  }}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {isSignUp
+                    ? 'Already have a workspace? Sign in'
+                    : 'Need a workspace? Create one'
+                  }
+                </button>
+              </div>
             </form>
-            
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setErrors({});
-                  setInviteCode('');
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {isSignUp 
-                  ? 'Already have an account? Sign in'
-                  : "Don't have an account? Sign up"
-                }
-              </button>
-            </div>
           </CardContent>
         </Card>
-        
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Make outcomes visible. Make confidence explicit.
-        </p>
       </div>
     </div>
   );

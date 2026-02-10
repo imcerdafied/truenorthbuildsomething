@@ -125,7 +125,7 @@ export function OrganizationSetupPage() {
         description: 'Your organization structure is ready. You can now create OKRs.',
       });
 
-      navigate('/');
+      navigate('/first-outcome');
     } catch (error) {
       console.error('Error creating organization:', error);
       toast({

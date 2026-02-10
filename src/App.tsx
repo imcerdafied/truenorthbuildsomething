@@ -17,6 +17,7 @@ import { ExportsPage } from "@/pages/ExportsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { AuthPage } from "@/pages/AuthPage";
 import { OrganizationSetupPage } from "@/pages/OrganizationSetupPage";
+import { FirstOutcomePage } from "@/pages/FirstOutcomePage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,12 @@ const App = () => (
               <Route path="/setup" element={
                 <ProtectedRoute requireSetup={false}>
                   <OrganizationSetupPage />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/first-outcome" element={
+                <ProtectedRoute>
+                  <FirstOutcomePage />
                 </ProtectedRoute>
               } />
               
