@@ -188,7 +188,7 @@ export function AuthPage() {
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                {isSignUp ? 'Set TrueNorth' : 'Sign in'}
+                {isSignUp ? 'Continue' : 'Sign in'}
               </Button>
 
               {isSignUp && (
