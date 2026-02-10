@@ -12,13 +12,16 @@ import { z } from 'zod';
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
+const VALID_INVITE_CODE = 'TRUENORTH2026';
+
 export function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string; inviteCode?: string }>({});
   
   const { signIn, signUp, user, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -31,7 +34,7 @@ export function AuthPage() {
   }, [user, isLoading, navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; fullName?: string } = {};
+    const newErrors: { email?: string; password?: string; fullName?: string; inviteCode?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -41,6 +44,10 @@ export function AuthPage() {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
+    }
+    
+    if (isSignUp && inviteCode.trim().toUpperCase() !== VALID_INVITE_CODE) {
+      newErrors.inviteCode = 'Invalid invite code';
     }
     
     if (isSignUp && !fullName.trim()) {
@@ -139,6 +146,22 @@ export function AuthPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
                 <div className="space-y-2">
+                  <Label htmlFor="inviteCode">Invite code</Label>
+                  <Input
+                    id="inviteCode"
+                    type="text"
+                    placeholder="Enter your invite code"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    className={errors.inviteCode ? 'border-destructive' : ''}
+                  />
+                  {errors.inviteCode && (
+                    <p className="text-xs text-destructive">{errors.inviteCode}</p>
+                  )}
+                </div>
+              )}
+              {isSignUp && (
+                <div className="space-y-2">
                   <Label htmlFor="fullName">Full name</Label>
                   <Input
                     id="fullName"
@@ -198,6 +221,7 @@ export function AuthPage() {
                 onClick={() => {
                   setIsSignUp(!isSignUp);
                   setErrors({});
+                  setInviteCode('');
                 }}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
