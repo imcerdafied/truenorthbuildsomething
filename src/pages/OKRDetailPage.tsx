@@ -175,7 +175,7 @@ export function OKRDetailPage() {
                         <SelectValue placeholder="Select a parent OKR" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover">
-                        {potentialParents.map(p => (
+                        {potentialParents.filter(p => p.id).map(p => (
                           <SelectItem key={p.id} value={p.id}>
                             {p.objectiveText}
                           </SelectItem>

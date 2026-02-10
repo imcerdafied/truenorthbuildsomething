@@ -537,7 +537,7 @@ export function CreateOKRPage() {
                     <SelectValue placeholder="Select owner..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {owners.map(o => (
+                    {owners.filter(o => o.id).map(o => (
                       <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
                     ))}
                   </SelectContent>

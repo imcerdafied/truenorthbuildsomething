@@ -198,7 +198,7 @@ export function OKRsPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
                   <SelectItem value="all">All Owners</SelectItem>
-                  {teams.map(t => (
+                  {teams.filter(t => t.id).map(t => (
                     <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                   ))}
                 </SelectContent>

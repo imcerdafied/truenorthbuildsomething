@@ -88,22 +88,22 @@ export function Header({ mobileMenuOpen, onToggleMobileMenu }: HeaderProps) {
           </SelectContent>
         </Select>
 
-        {/* Team Selector (visible in team view) */}
+        {/* Team Selector (visible in team view only; never render with empty value) */}
         {viewMode === 'team' && (visibleTeams.length > 0 || (isAdmin && teams.length > 0)) && (
           <Select
-            value={selectedTeamId ?? (isAdmin ? '' : visibleTeams[0]?.id) ?? ''}
-            onValueChange={setSelectedTeamId}
+            value={selectedTeamId || 'all'}
+            onValueChange={(v) => setSelectedTeamId(v === 'all' ? '' : v)}
           >
             <SelectTrigger className="w-44 bg-background h-8 text-sm">
               <SelectValue placeholder="Select team" />
             </SelectTrigger>
             <SelectContent className="bg-popover">
               {isAdmin && (
-                <SelectItem value="">
+                <SelectItem value="all">
                   All teams
                 </SelectItem>
               )}
-              {visibleTeams.map(team => (
+              {visibleTeams.filter(t => t.id).map(team => (
                 <SelectItem key={team.id} value={team.id}>
                   {team.name}
                 </SelectItem>
