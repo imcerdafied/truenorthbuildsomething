@@ -1,15 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { TeamWeeklyView } from './TeamWeeklyView';
+import { InviteSlideOver, setOnrampDismissed, isOnrampDismissed } from '@/components/shared/InviteSlideOver';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { formatQuarter, TrendDirection } from '@/types';
 import { 
   Users, 
   Target,
   AlertTriangle,
-  TrendingDown
+  TrendingDown,
+  X,
+  UserPlus
 } from 'lucide-react';
 
 export function ProductAreaView() {
@@ -24,8 +30,30 @@ export function ProductAreaView() {
     checkIns,
     keyResults
   } = useApp();
+  const { isAdmin, organization } = useAuth();
 
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteInitialTeamId, setInviteInitialTeamId] = useState<string | null>(null);
+  const [onrampDismissed, setOnrampDismissedState] = useState(false);
+  const [memberCount, setMemberCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!organization?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', organization.id);
+      if (!cancelled && count != null) setMemberCount(count);
+    })();
+    return () => { cancelled = true; };
+  }, [organization?.id]);
+
+  useEffect(() => {
+    setOnrampDismissedState(isOnrampDismissed());
+  }, []);
 
   // Admin view: show ALL teams in the organization (no filter by product area or selected team)
   const allTeams = teams;
@@ -153,8 +181,30 @@ export function ProductAreaView() {
     );
   }
 
+  const showOnrampBanner =
+    isAdmin &&
+    teams.length > 0 &&
+    memberCount === 1 &&
+    !onrampDismissed;
+
+  const handleDismissOnramp = () => {
+    setOnrampDismissed();
+    setOnrampDismissedState(true);
+  };
+
+  const openInvite = (teamId?: string | null) => {
+    setInviteInitialTeamId(teamId ?? null);
+    setInviteOpen(true);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
+      <InviteSlideOver
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        initialTeamId={inviteInitialTeamId}
+      />
+
       {/* Header */}
       <div>
         <h1 className="page-title text-xl sm:text-2xl">
@@ -164,6 +214,42 @@ export function ProductAreaView() {
           Where outcomes stand, and where intervention may help.
         </p>
       </div>
+
+      {/* Next step onramp banner (admin, single member, not dismissed) */}
+      {showOnrampBanner && (
+        <Card className="bg-foreground text-background rounded-lg p-6 border-0 relative">
+          <button
+            type="button"
+            onClick={handleDismissOnramp}
+            className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity p-1"
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="pr-8">
+            <h2 className="text-lg font-semibold mb-1">Activate teams to unlock confidence signals</h2>
+            <p className="text-sm text-background/80 mb-4">
+              Invite team members so TrueNorthOS can begin measuring progress and risk.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                onClick={() => openInvite()}
+                className="bg-white text-foreground hover:bg-white/90 gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Invite team members
+              </Button>
+              <button
+                type="button"
+                onClick={handleDismissOnramp}
+                className="text-sm text-background/70 hover:text-background/90 underline-offset-4 hover:underline"
+              >
+                Skip for now
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Focus this week */}
       {focusTeams.length > 0 && (
@@ -229,7 +315,7 @@ export function ProductAreaView() {
                 <div className="col-span-4">Team</div>
                 <div className="col-span-2">Confidence</div>
                 <div className="col-span-2">Trend</div>
-                <div className="col-span-2">OKRs</div>
+                <div className="col-span-2">Outcomes</div>
                 <div className="col-span-2">Help needed</div>
               </div>
 
@@ -250,9 +336,17 @@ export function ProductAreaView() {
                     </p>
                   </div>
                   
-                  <div className="col-span-2">
+                  <div className="col-span-2" onClick={(e) => e.stopPropagation()}>
                     {team.hasOKRs ? (
                       <ConfidenceBadge confidence={team.confidence} />
+                    ) : isAdmin ? (
+                      <button
+                        type="button"
+                        onClick={() => openInvite(team.id)}
+                        className="text-xs text-muted-foreground hover:text-foreground cursor-pointer underline-offset-4 hover:underline text-left"
+                      >
+                        No signal — invite members
+                      </button>
                     ) : (
                       <span className="text-xs text-muted-foreground">No signal</span>
                     )}
