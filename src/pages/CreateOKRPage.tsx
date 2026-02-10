@@ -406,13 +406,13 @@ export function CreateOKRPage() {
         className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to OKRs
+        Back to Outcomes
       </Button>
 
       <div>
         <h1 className="page-title flex items-center gap-2">
           <Target className="w-6 h-6" />
-          Create OKR
+          Create outcome
         </h1>
         <p className="helper-text mt-1">
           Define an outcome, how you&apos;ll measure it, and your current confidence.
@@ -572,7 +572,7 @@ export function CreateOKRPage() {
         ) : (
           <Button onClick={handleCreate} disabled={isSubmitting} className="gap-2">
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            Create OKR
+            Create outcome
           </Button>
         )}
       </div>

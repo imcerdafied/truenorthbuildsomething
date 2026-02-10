@@ -149,7 +149,7 @@ export function OKRsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="page-title">OKRs</h1>
+          <h1 className="page-title">Outcomes</h1>
           <p className="helper-text mt-1">
             {formatQuarter(currentQuarter)}
           </p>
@@ -181,7 +181,7 @@ export function OKRsPage() {
           {canCreateOKR && (
             <Button onClick={() => navigate('/okrs/create')} className="gap-2">
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Create OKR</span>
+              <span className="hidden sm:inline">Create outcome</span>
             </Button>
           )}
         </div>
@@ -231,25 +231,25 @@ export function OKRsPage() {
             {/* Results count */}
             <div className="ml-auto">
               <span className="text-xs text-muted-foreground">
-                {filteredOKRs.length} OKR{filteredOKRs.length !== 1 ? 's' : ''}
+                {filteredOKRs.length} outcome{filteredOKRs.length !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* OKR List */}
+      {/* Outcome list */}
       <Card className="border-border/60">
         <CardContent className="py-0">
           {filteredOKRs.length === 0 ? (
             <div className="empty-state">
               <Target className="empty-state-icon" />
               <p className="empty-state-title">
-                {allOKRs.length === 0 ? "No OKRs for this quarter" : "No OKRs match your filters"}
+                {allOKRs.length === 0 ? "No outcomes for this quarter" : "No outcomes match your filters"}
               </p>
               <p className="empty-state-description max-w-md mx-auto">
                 {allOKRs.length === 0 
-                  ? "TrueNorthOS helps teams align on outcomes and make confidence explicit. Create your first OKR to establish your signal for the quarter."
+                  ? "TrueNorthOS helps teams align on outcomes and make confidence explicit. Create your first outcome to establish your signal for the quarter."
                   : "Try adjusting your filters to see more results."
                 }
               </p>
@@ -259,7 +259,7 @@ export function OKRsPage() {
                   className="mt-6 gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  Create your first OKR
+                  Create your first outcome
                 </Button>
               )}
             </div>

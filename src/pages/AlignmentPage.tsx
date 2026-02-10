@@ -125,8 +125,14 @@ export function AlignmentPage() {
       {/* Header */}
       <div>
         <h1 className="page-title">Organization Structure</h1>
-        <p className="helper-text mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
+          How outcomes connect across teams
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
           {formatQuarter(currentQuarter)}
+        </p>
+        <p className="text-xs text-muted-foreground/60 italic mt-2">
+          This is a reference view. Most teams won&apos;t need this day to day.
         </p>
       </div>
 
@@ -166,9 +172,9 @@ export function AlignmentPage() {
           {productAreaOKRs.length === 0 && domainOKRs.length === 0 && teamOKRs.length === 0 ? (
             <div className="empty-state">
               <Target className="empty-state-icon" />
-              <p className="empty-state-title">No OKRs for this quarter</p>
+              <p className="empty-state-title">No outcomes for this quarter</p>
               <p className="empty-state-description">
-                Create OKRs at different levels to see how they align.
+                Create outcomes at different levels to see how they align.
               </p>
             </div>
           ) : (
@@ -182,7 +188,7 @@ export function AlignmentPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <OrphanWarning />
                     <span className="text-xs text-muted-foreground">
-                      OKRs not linked to parent outcomes
+                      Outcomes not linked to parent outcomes
                     </span>
                   </div>
                   {orphanedOKRs.map(okr => (

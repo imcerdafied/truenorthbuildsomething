@@ -220,20 +220,20 @@ export function HomePage() {
                 )}
               </div>
             }
-            subtitle="Aggregate across all OKRs"
+            subtitle="Aggregate across all outcomes"
             icon={<Target className="w-5 h-5" />}
           />
           <SignalCard
             title="On Track"
             value={onTrackCount}
-            subtitle={`of ${teamOKRs.length} OKRs with confidence ≥40`}
+            subtitle={`of ${teamOKRs.length} outcomes with confidence ≥40`}
             icon={<CheckCircle2 className="w-5 h-5" />}
             variant={onTrackCount > 0 ? "success" : "default"}
           />
           <SignalCard
             title="At Risk"
             value={atRiskCount}
-            subtitle="OKRs with confidence <40"
+            subtitle="Outcomes with confidence <40"
             icon={<AlertTriangle className="w-5 h-5" />}
             variant={atRiskCount > 0 ? 'danger' : 'default'}
           />
@@ -250,10 +250,10 @@ export function HomePage() {
         </div>
       )}
 
-      {/* Team OKRs */}
+      {/* Team Outcomes */}
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle className="t2">Your Team OKRs</CardTitle>
+          <CardTitle className="t2">Your Team Outcomes</CardTitle>
           {hasOKRs && (
             <Button variant="ghost" size="sm" onClick={() => navigate('/okrs')} className="gap-1 t3 h-8">
               View all <ArrowRight className="w-3.5 h-3.5" />
@@ -264,10 +264,10 @@ export function HomePage() {
           {teamOKRs.length === 0 ? (
             <div className="empty-state py-16">
               <Target className="empty-state-icon" />
-              <p className="t1-medium mb-1">Get started with your first OKR</p>
+              <p className="t1-medium mb-1">Get started with your first outcome</p>
               <p className="t3 max-w-md mx-auto mt-2">
                 TrueNorthOS helps teams align on outcomes and make confidence explicit.
-                Define your first OKR to establish your signal for the quarter.
+                Define your first outcome to establish your signal for the quarter.
               </p>
               {canCreateOKR && (
                 <>
@@ -276,7 +276,7 @@ export function HomePage() {
                     className="mt-6 gap-2"
                   >
                     <Plus className="w-4 h-4" />
-                    Create OKR
+                    Create outcome
                   </Button>
                   <p className="t3 mt-3">
                     Start with an outcome your team owns this quarter.
@@ -360,8 +360,8 @@ export function HomePage() {
         <div className="flex items-center justify-between px-1">
           <p className="t3">
             {alignmentStats.linked > 0
-              ? `${alignmentStats.linked} of ${alignmentStats.total} OKR${alignmentStats.total !== 1 ? 's' : ''} linked to parent objectives`
-              : `${alignmentStats.total} top-level OKR${alignmentStats.total !== 1 ? 's' : ''}`
+              ? `${alignmentStats.linked} of ${alignmentStats.total} outcome${alignmentStats.total !== 1 ? 's' : ''} linked to parent objectives`
+              : `${alignmentStats.total} top-level outcome${alignmentStats.total !== 1 ? 's' : ''}`
             }
           </p>
           <Button variant="ghost" size="sm" onClick={() => navigate('/alignment')} className="t3 h-6 px-2">

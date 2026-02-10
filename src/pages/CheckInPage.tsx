@@ -126,9 +126,9 @@ export function CheckInPage() {
     return (
       <div className="empty-state">
         <AlertCircle className="empty-state-icon" />
-        <p className="empty-state-title">No OKRs to check in on</p>
+        <p className="empty-state-title">No outcomes to check in on</p>
         <p className="empty-state-description">
-          Create OKRs for your team to start tracking confidence.
+          Create outcomes for your team to start tracking confidence.
         </p>
         <Button variant="ghost" onClick={() => navigate('/')} className="mt-4">
           Back to Home

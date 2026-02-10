@@ -117,15 +117,15 @@ export function TeamWeeklyView({ teamId, onBack }: TeamWeeklyViewProps) {
           <CardContent className="py-12">
             <div className="empty-state">
               <Target className="empty-state-icon" />
-              <p className="empty-state-title">No OKRs for this quarter</p>
+              <p className="empty-state-title">No outcomes for this quarter</p>
               <p className="empty-state-description">
-                Create OKRs to start tracking outcomes and confidence.
+                Create outcomes to start tracking outcomes and confidence.
               </p>
               <Button 
                 onClick={() => navigate('/okrs/create')} 
                 className="mt-4"
               >
-                Create OKR
+                Create outcome
               </Button>
             </div>
           </CardContent>
