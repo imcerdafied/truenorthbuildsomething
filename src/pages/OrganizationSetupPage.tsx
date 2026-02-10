@@ -26,24 +26,111 @@ export function OrganizationSetupPage() {
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('setup-organization', {
-        body: { orgName, teamName },
-      });
+      // 1. Create organization
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .insert({ name: orgName, setup_complete: true })
+        .select('id')
+        .single();
 
-      if (error) throw error;
+      if (orgError || !org) {
+        throw new Error(orgError?.message || 'Failed to create organization');
+      }
 
-      toast({
-        title: 'You\'re in!',
-        description: `${orgName} is ready. Create your first OKR.`,
-      });
+      // 2. Link user profile to organization
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ organization_id: org.id })
+        .eq('id', user.id);
+
+      if (profileError) {
+        // Rollback: delete the org we just created
+        await supabase.from('organizations').delete().eq('id', org.id);
+        throw new Error(profileError.message || 'Failed to update profile');
+      }
+
+      // 3. Assign admin role to user
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: user.id, role: 'admin' });
+
+      if (roleError) {
+        console.error('Error assigning admin role:', roleError);
+        // Continue — role can be fixed later, org is already created
+      }
+
+      // 4. Create product areas, domains, and teams (single PA/domain/team from form)
+      const productAreas = [
+        {
+          name: 'Main',
+          domains: [
+            {
+              name: 'Default',
+              teams: [{ name: teamName.trim(), pmName: null as string | null }],
+            },
+          ],
+        },
+      ];
+
+      for (const pa of productAreas) {
+        if (!pa.name?.trim()) continue;
+
+        const { data: paData, error: paError } = await supabase
+          .from('product_areas')
+          .insert({ name: pa.name, organization_id: org.id })
+          .select('id')
+          .single();
+
+        if (paError || !paData) {
+          console.error('Error creating product area:', paError);
+          continue;
+        }
+
+        for (const domain of pa.domains || []) {
+          if (!domain.name?.trim()) continue;
+
+          const { data: domainData, error: domainError } = await supabase
+            .from('domains')
+            .insert({ name: domain.name, product_area_id: paData.id })
+            .select('id')
+            .single();
+
+          if (domainError || !domainData) {
+            console.error('Error creating domain:', domainError);
+            continue;
+          }
+
+          for (const team of domain.teams || []) {
+            if (!team.name?.trim()) continue;
+
+            const { error: teamError } = await supabase
+              .from('teams')
+              .insert({
+                name: team.name,
+                domain_id: domainData.id,
+                pm_name: team.pmName || null,
+              });
+
+            if (teamError) {
+              console.error('Error creating team:', teamError);
+            }
+          }
+        }
+      }
 
       await refreshProfile();
-      navigate('/', { replace: true });
-    } catch (error: any) {
-      console.error('Setup error:', error);
+
       toast({
-        title: 'Setup failed',
-        description: error.message || 'Something went wrong. Please try again.',
+        title: 'Organization created',
+        description: 'Your organization structure is ready. You can now create OKRs.',
+      });
+
+      navigate('/');
+    } catch (error) {
+      console.error('Error creating organization:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create organization. Please try again.',
         variant: 'destructive',
       });
     } finally {
