@@ -321,7 +321,7 @@ export function HomePage() {
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
+                          <span className="decision-text truncate">{okr.objectiveText}</span>
                           {okr.isOrphaned && <OrphanWarning />}
                         </div>
                       </div>
@@ -350,7 +350,7 @@ export function HomePage() {
                       </div>
                     </div>
                     {changeSummary && (
-                      <p className="text-sm text-muted-foreground/80 px-2 pb-2 -mt-1 truncate">
+                      <p className="narrative-text px-2 pb-2 -mt-1 truncate">
                         {changeSummary}
                       </p>
                     )}
@@ -368,22 +368,22 @@ export function HomePage() {
           <CardContent className="py-5 space-y-4">
             {teamOKRs[0].latestCheckIn.reasonForChange && (
               <div>
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                <h3 className="section-header mb-2">
                   {teamOKRs[0].latestCheckIn.confidence >= 60 ? 'Why confidence is high' :
                     teamOKRs[0].latestCheckIn.confidence >= 40 ? 'Current confidence context' :
                     'Why confidence is low'}
                 </h3>
-                <p className="text-sm text-foreground/80">
+                <p className="narrative-text">
                   {teamOKRs[0].latestCheckIn.reasonForChange}
                 </p>
               </div>
             )}
             {teamOKRs[0].latestCheckIn.optionalNote && (
               <div>
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                <h3 className="section-header mb-2">
                   What could change confidence
                 </h3>
-                <p className="text-sm text-foreground/80">
+                <p className="narrative-text">
                   {teamOKRs[0].latestCheckIn.optionalNote}
                 </p>
               </div>

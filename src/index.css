@@ -155,38 +155,68 @@
     font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-size: 16px;
+    line-height: 1.5;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight text-foreground;
+    @apply font-semibold text-foreground;
     letter-spacing: -0.02em;
   }
   
   h1 {
-    @apply text-2xl;
+    font-size: 1.5rem;
     letter-spacing: -0.025em;
   }
   
   h2 {
-    @apply text-xl;
+    font-size: 1.25rem;
   }
   
   h3 {
-    @apply text-lg;
+    font-size: 1.125rem;
   }
 }
 
 @layer components {
-  /* Page title */
+  /* === TIER 1: Decision text — what you read and act on === */
+
   .page-title {
-    @apply text-2xl font-semibold tracking-tight;
+    font-size: 1.5rem;
+    font-weight: 600;
     letter-spacing: -0.025em;
+    line-height: 1.3;
   }
-  
-  /* Section header - subtle, grounded */
+
+  .decision-text {
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: hsl(var(--foreground));
+  }
+
+  .narrative-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: hsl(var(--foreground) / 0.8);
+  }
+
+  /* === TIER 2: Supporting signals — glanceable data === */
+
+  .helper-text {
+    font-size: 0.9375rem;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.5;
+  }
+
+  /* === TIER 3: Chrome — labels, filters, metadata === */
+
   .section-header {
-    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
     letter-spacing: 0.05em;
+    color: hsl(var(--muted-foreground));
   }
   
   /* Confidence indicators - subtle, not loud */
@@ -206,9 +236,10 @@
     background-color: hsl(var(--confidence-low));
   }
   
-  /* Confidence label - understated */
+  /* Confidence label - Tier 2 */
   .confidence-label {
-    @apply inline-flex items-center gap-1.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 font-medium;
+    font-size: 0.875rem;
   }
   
   .confidence-label-high {
@@ -266,9 +297,10 @@
     @apply h-6 w-20;
   }
   
-  /* Nav item - grounded active state */
+  /* Nav item - Tier 2 */
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors;
+    @apply flex items-center gap-3 px-3 py-2 rounded-md transition-colors;
+    font-size: 0.875rem;
     color: hsl(var(--sidebar-foreground));
   }
   
@@ -281,11 +313,6 @@
     background-color: hsl(var(--sidebar-accent));
     color: hsl(var(--sidebar-accent-foreground));
     font-weight: 500;
-  }
-  
-  /* Helper text - calm, informative */
-  .helper-text {
-    @apply text-sm text-muted-foreground leading-relaxed;
   }
   
   /* Data table row - light, scannable */
@@ -329,10 +356,28 @@
   
   .empty-state-title {
     @apply font-medium text-foreground/80 mb-1;
+    font-size: 1rem;
   }
   
   .empty-state-description {
-    @apply text-sm;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  /* Stat label - Tier 3 */
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Stat value - Tier 1 */
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
 }
 

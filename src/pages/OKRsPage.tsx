@@ -108,7 +108,7 @@ export function OKRsPage() {
       <div className="col-span-5">
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">{getLevelIcon(okr.level)}</span>
-          <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
+          <span className="decision-text truncate">{okr.objectiveText}</span>
           {okr.isOrphaned && <OrphanWarning />}
         </div>
       </div>
@@ -276,7 +276,7 @@ export function OKRsPage() {
                 <>
                   {groupedOKRs.myTeam.length > 0 && (
                     <>
-                      <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b bg-muted/30">
+                      <div className="section-header px-2 py-2.5 border-b bg-muted/30">
                         Your team
                       </div>
                       {groupedOKRs.myTeam.map((okr) => renderOKRRow(okr))}
@@ -294,7 +294,7 @@ export function OKRsPage() {
                     const moreParents = directParents.length > 0 ? otherParents : groupedOKRs.parentObjectives.slice(2);
                     return (
                       <>
-                        <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b border-t bg-muted/30">
+                        <div className="section-header px-2 py-2.5 border-b border-t bg-muted/30">
                           Business outcomes this team contributes to
                         </div>
                         {visibleByDefault.map((okr) => renderOKRRow(okr))}
@@ -314,7 +314,7 @@ export function OKRsPage() {
                   })()}
                   {groupedOKRs.otherTeams.length > 0 && (
                     <>
-                      <div className="px-2 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b border-t bg-muted/30">
+                      <div className="section-header px-2 py-2.5 border-b border-t bg-muted/30">
                         Related teams
                       </div>
                       {groupedOKRs.otherTeams.map((okr) => renderOKRRow(okr))}
