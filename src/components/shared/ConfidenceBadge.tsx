@@ -50,13 +50,12 @@ export function ConfidenceBadge({
       className={cn(
         'confidence-label',
         getLabelClass(),
-        size === 'sm' && 'text-[11px]',
         className
       )}
     >
       {showDot && <span className={cn('confidence-dot', getDotClass())} />}
-      {showValue && <span className="font-semibold tabular-nums">{confidence}</span>}
-      <span className="font-medium">{getLabel()}</span>
+      {showValue && <span className="tabular-nums">{confidence}</span>}
+      <span>{getLabel()}</span>
     </span>
   );
 }

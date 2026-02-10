@@ -172,7 +172,7 @@ export function HomePage() {
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                   <span className="t3 uppercase tracking-wider">Confidence</span>
-                  <span className="t3 font-semibold">{overallConfidence}</span>
+                  <span className="t3">{overallConfidence}</span>
                   <ConfidenceBadge confidence={overallConfidence} showValue={false} />
                   {overallTrend && <TrendIndicator trend={overallTrend} size="sm" />}
                 </div>
