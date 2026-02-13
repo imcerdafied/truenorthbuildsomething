@@ -131,11 +131,6 @@ export function AuthPage() {
               variant: 'destructive',
             });
           }
-        } else {
-          toast({
-            title: 'Check your email',
-            description: 'We sent you a confirmation link to complete your sign up.',
-          });
         }
       } else {
         const { error } = await signIn(email, password);
