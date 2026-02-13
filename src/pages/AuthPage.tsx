@@ -102,7 +102,7 @@ export function AuthPage() {
     
     if (!validateForm()) return;
     
-    if (requireInviteCode && inviteCode.trim() !== VALID_INVITE_CODE) {
+    if (requireInviteCode && inviteCode.trim().toLowerCase() !== VALID_INVITE_CODE.toLowerCase()) {
       toast({
         title: 'Invalid invite code',
         description: 'Invalid invite code. Contact your admin for access.',

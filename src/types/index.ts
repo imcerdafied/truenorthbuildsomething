@@ -1,6 +1,40 @@
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
 export type OKRLevel = 'productArea' | 'domain' | 'team';
 export type ConfidenceLabel = 'High' | 'Medium' | 'Low';
+export type AchievementStatus = 'achieved' | 'missed' | 'partially_achieved';
+export type OKRStatus = 'active' | 'closed';
+
+export interface QuarterClose {
+  id: string;
+  okrId: string;
+  finalValue: number;
+  achievement: AchievementStatus;
+  summary: string;
+  closedBy: string | null;
+  closedAt: string;
+  reopenedAt: string | null;
+}
+export type RootCauseCategory =
+  | 'capacity'
+  | 'dependency'
+  | 'vendor'
+  | 'compliance'
+  | 'strategy_shift'
+  | 'technical_debt'
+  | 'data_quality'
+  | 'scope_change';
+
+export const ROOT_CAUSE_LABELS: Record<RootCauseCategory, string> = {
+  capacity: 'Capacity',
+  dependency: 'Dependency',
+  vendor: 'Vendor',
+  compliance: 'Compliance',
+  strategy_shift: 'Strategy Shift',
+  technical_debt: 'Technical Debt',
+  data_quality: 'Data Quality',
+  scope_change: 'Scope Change',
+};
+
 export type Cadence = 'weekly' | 'biweekly';
 export type TrendDirection = 'up' | 'down' | 'flat';
 export type ViewMode = 'team' | 'exec';
@@ -44,6 +78,9 @@ export interface CheckIn {
   confidenceLabel: ConfidenceLabel;
   reasonForChange?: string;
   optionalNote?: string;
+  rootCause?: RootCauseCategory | null;
+  rootCauseNote?: string | null;
+  recoveryLikelihood?: string | null;
 }
 
 export interface OKR {
@@ -57,6 +94,7 @@ export interface OKR {
   parentOkrId?: string;
   isRolledOver?: boolean;
   rolledOverFrom?: string;
+  status: OKRStatus;
 }
 
 export interface OKRLink {
@@ -82,6 +120,7 @@ export interface OKRWithDetails extends OKR {
   trend: TrendDirection;
   isOrphaned: boolean;
   childOKRs: OKRWithDetails[];
+  quarterClose?: QuarterClose;
 }
 
 export interface TeamWithOKRs extends Team {

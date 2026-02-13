@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ interface TeamWeeklyViewProps {
 
 export function TeamWeeklyView({ teamId, onBack }: TeamWeeklyViewProps) {
   const navigate = useNavigate();
-  const { 
+  const {
     teams,
     currentQuarter,
     selectedTeamId,
@@ -29,11 +30,12 @@ export function TeamWeeklyView({ teamId, onBack }: TeamWeeklyViewProps) {
     isCurrentUserPM,
     keyResults
   } = useApp();
+  const { isAdmin } = useAuth();
 
   const effectiveTeamId = teamId || selectedTeamId;
   const team = teams.find(t => t.id === effectiveTeamId);
   const teamOKRs = getTeamOKRs(effectiveTeamId);
-  const canRunCheckIn = isCurrentUserPM(effectiveTeamId);
+  const canRunCheckIn = isCurrentUserPM(effectiveTeamId) || isAdmin;
 
   // Sort OKRs by attention priority: declining confidence, low confidence, flagged KRs
   const sortedOKRs = useMemo(() => {

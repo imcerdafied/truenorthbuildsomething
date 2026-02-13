@@ -23,6 +23,9 @@ export type Database = {
           confidence_label: Database["public"]["Enums"]["confidence_label"]
           reason_for_change: string | null
           optional_note: string | null
+          root_cause: Database["public"]["Enums"]["root_cause_category"] | null
+          root_cause_note: string | null
+          recovery_likelihood: string | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -37,6 +40,9 @@ export type Database = {
           confidence_label?: Database["public"]["Enums"]["confidence_label"]
           reason_for_change?: string | null
           optional_note?: string | null
+          root_cause?: Database["public"]["Enums"]["root_cause_category"] | null
+          root_cause_note?: string | null
+          recovery_likelihood?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -51,6 +57,9 @@ export type Database = {
           confidence_label?: Database["public"]["Enums"]["confidence_label"]
           reason_for_change?: string | null
           optional_note?: string | null
+          root_cause?: Database["public"]["Enums"]["root_cause_category"] | null
+          root_cause_note?: string | null
+          recovery_likelihood?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -170,6 +179,53 @@ export type Database = {
           },
         ]
       }
+      quarter_closes: {
+        Row: {
+          id: string
+          okr_id: string
+          final_value: number
+          achievement: Database["public"]["Enums"]["achievement_status"]
+          summary: string
+          closed_by: string | null
+          closed_at: string
+          reopened_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          okr_id: string
+          final_value: number
+          achievement: Database["public"]["Enums"]["achievement_status"]
+          summary: string
+          closed_by?: string | null
+          closed_at?: string
+          reopened_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          okr_id?: string
+          final_value?: number
+          achievement?: Database["public"]["Enums"]["achievement_status"]
+          summary?: string
+          closed_by?: string | null
+          closed_at?: string
+          reopened_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quarter_closes_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: true
+            referencedRelation: "okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       okr_links: {
         Row: {
           id: string
@@ -219,6 +275,7 @@ export type Database = {
           parent_okr_id: string | null
           is_rolled_over: boolean
           rolled_over_from: string | null
+          status: Database["public"]["Enums"]["okr_status"]
           created_by: string | null
           created_at: string
           updated_at: string
@@ -235,6 +292,7 @@ export type Database = {
           parent_okr_id?: string | null
           is_rolled_over?: boolean
           rolled_over_from?: string | null
+          status?: Database["public"]["Enums"]["okr_status"]
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -251,6 +309,7 @@ export type Database = {
           parent_okr_id?: string | null
           is_rolled_over?: boolean
           rolled_over_from?: string | null
+          status?: Database["public"]["Enums"]["okr_status"]
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -443,10 +502,13 @@ export type Database = {
       is_org_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      achievement_status: "achieved" | "missed" | "partially_achieved"
       app_role: "admin" | "member"
       cadence_type: "weekly" | "biweekly"
       confidence_label: "High" | "Medium" | "Low"
+      root_cause_category: "capacity" | "dependency" | "vendor" | "compliance" | "strategy_shift" | "technical_debt" | "data_quality" | "scope_change"
       okr_level: "productArea" | "domain" | "team"
+      okr_status: "active" | "closed"
       quarter_label: "Q1" | "Q2" | "Q3" | "Q4"
     }
     CompositeTypes: {
@@ -575,10 +637,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      achievement_status: ["achieved", "missed", "partially_achieved"],
       app_role: ["admin", "member"],
       cadence_type: ["weekly", "biweekly"],
       confidence_label: ["High", "Medium", "Low"],
+      root_cause_category: ["capacity", "dependency", "vendor", "compliance", "strategy_shift", "technical_debt", "data_quality", "scope_change"],
       okr_level: ["productArea", "domain", "team"],
+      okr_status: ["active", "closed"],
       quarter_label: ["Q1", "Q2", "Q3", "Q4"],
     },
   },

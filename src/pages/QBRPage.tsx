@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatQuarter } from '@/types';
+import { formatQuarter, type RootCauseCategory } from '@/types';
+import { RootCauseBadge } from '@/components/shared/RootCauseBadge';
 import { Target, TrendingUp, TrendingDown, RefreshCcw } from 'lucide-react';
 
 export function QBRPage() {
@@ -71,13 +72,39 @@ export function QBRPage() {
       okrs.find(orig => orig.id === o.rolledOverFrom)?.quarter === selectedQuarter
     );
 
+    const closedCount = quarterOKRs.filter(o => (o.status ?? 'active') === 'closed').length;
+
+    const okrIdsInQuarter = new Set(quarterOKRs.map(o => o.id));
+    const quarterCheckInsWithRootCause = checkIns.filter(
+      ci => okrIdsInQuarter.has(ci.okrId) && ci.rootCause
+    );
+    const systemicRisksByCategory: Record<string, { count: number; okrNames: Set<string> }> = {};
+    quarterCheckInsWithRootCause.forEach(ci => {
+      if (!ci.rootCause) return;
+      const okr = quarterOKRs.find(o => o.id === ci.okrId);
+      if (!systemicRisksByCategory[ci.rootCause]) {
+        systemicRisksByCategory[ci.rootCause] = { count: 0, okrNames: new Set() };
+      }
+      systemicRisksByCategory[ci.rootCause].count++;
+      if (okr) systemicRisksByCategory[ci.rootCause].okrNames.add(okr.objectiveText);
+    });
+    const systemicRisks = Object.entries(systemicRisksByCategory)
+      .map(([category, { count, okrNames }]) => ({
+        category,
+        count,
+        okrNames: Array.from(okrNames).slice(0, 3)
+      }))
+      .sort((a, b) => b.count - a.count);
+
     return {
       totalOKRs: quarterOKRs.length,
+      closedCount,
       avgStartConfidence,
       avgEndConfidence,
       confidenceDelta: avgEndConfidence - avgStartConfidence,
       significantChanges,
       rolledOver,
+      systemicRisks,
       atRiskCount: quarterOKRs.filter(o => (o.latestCheckIn?.confidence || 0) < 40).length,
       onTrackCount: quarterOKRs.filter(o => (o.latestCheckIn?.confidence || 0) >= 40).length
     };
@@ -115,7 +142,7 @@ export function QBRPage() {
         <SignalCard
           title="Total OKRs"
           value={hasOKRs ? stats.totalOKRs : <span className="text-lg font-medium text-muted-foreground">—</span>}
-          subtitle={hasOKRs ? `${stats.onTrackCount} on track, ${stats.atRiskCount} at risk` : "No OKRs defined for this quarter"}
+          subtitle={hasOKRs ? `${stats.closedCount} of ${stats.totalOKRs} closed · ${stats.onTrackCount} on track, ${stats.atRiskCount} at risk` : "No OKRs defined for this quarter"}
           icon={<Target className="w-5 h-5" />}
         />
         
@@ -188,10 +215,11 @@ export function QBRPage() {
           ) : (
             <div>
               <div className="grid grid-cols-12 gap-4 px-2 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
-                <div className="col-span-5">Objective</div>
+                <div className="col-span-4">Objective</div>
                 <div className="col-span-2">Owner</div>
                 <div className="col-span-2">Progress</div>
                 <div className="col-span-2">Confidence</div>
+                <div className="col-span-1">Achievement</div>
                 <div className="col-span-1">Trend</div>
               </div>
               
@@ -200,7 +228,7 @@ export function QBRPage() {
                   key={okr.id}
                   className="grid grid-cols-12 gap-4 px-2 py-3 data-row items-center"
                 >
-                  <div className="col-span-5">
+                  <div className="col-span-4">
                     <span className="font-medium text-sm truncate">{okr.objectiveText}</span>
                   </div>
                   <div className="col-span-2">
@@ -222,6 +250,28 @@ export function QBRPage() {
                       />
                     ) : (
                       <span className="text-xs text-muted-foreground">No check-in</span>
+                    )}
+                  </div>
+                  <div className="col-span-1">
+                    {okr.quarterClose ? (
+                      <Badge
+                        variant={
+                          okr.quarterClose.achievement === 'achieved'
+                            ? 'confidenceHigh'
+                            : okr.quarterClose.achievement === 'partially_achieved'
+                              ? 'confidenceMedium'
+                              : 'confidenceLow'
+                        }
+                        className="text-xs"
+                      >
+                        {okr.quarterClose.achievement === 'achieved'
+                          ? 'Achieved'
+                          : okr.quarterClose.achievement === 'partially_achieved'
+                            ? 'Partial'
+                            : 'Missed'}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Active</span>
                     )}
                   </div>
                   <div className="col-span-1">
@@ -274,6 +324,41 @@ export function QBRPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Systemic Risks */}
+      <Card className="border-border/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium">Systemic Risk Patterns</CardTitle>
+          <p className="helper-text">
+            Root causes flagged across all outcomes this quarter
+          </p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {stats.systemicRisks.length === 0 ? (
+            <p className="text-muted-foreground text-sm py-6 text-center">
+              No risk patterns flagged yet. Root causes are tagged during check-ins when confidence drops.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {stats.systemicRisks.map(({ category, count, okrNames }) => (
+                <div key={category} className="border border-border/60 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <RootCauseBadge rootCause={category as RootCauseCategory} size="md" />
+                    <span className="text-sm font-medium">{count} occurrence{count !== 1 ? 's' : ''}</span>
+                  </div>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    {okrNames.map((name) => (
+                      <li key={name} className="truncate">
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

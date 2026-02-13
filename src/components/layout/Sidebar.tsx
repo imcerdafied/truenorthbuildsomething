@@ -6,6 +6,7 @@ import {
   Download,
   Settings,
   Info,
+  Users,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -19,12 +20,14 @@ const primaryNav = [
 ];
 
 const secondaryNavAdmin = [
+  { to: '/team-review', icon: Users, label: 'Team Review' },
   { to: '/exports', icon: Download, label: 'Exports' },
   { to: '/about', icon: Info, label: 'About TrueNorthOS' },
   { to: '/settings', icon: Settings, label: 'Organization Setup' },
 ];
 
 const secondaryNavMember = [
+  { to: '/team-review', icon: Users, label: 'Team Review' },
   { to: '/exports', icon: Download, label: 'Exports' },
   { to: '/about', icon: Info, label: 'About TrueNorthOS' },
 ];

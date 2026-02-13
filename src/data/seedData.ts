@@ -6,7 +6,8 @@ import {
   KeyResult, 
   CheckIn, 
   JiraLink,
-  getConfidenceLabel 
+  getConfidenceLabel,
+  type RootCauseCategory
 } from '@/types';
 
 // ============================================================================
@@ -113,107 +114,107 @@ export const teams: Team[] = [
 
 export const okrs: OKR[] = [
   // Domain-level OKRs (one per domain)
-  { id: 'okr-d-shop', level: 'domain', ownerId: 'd-shop', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Make it effortless to find and compare the right property' },
-  { id: 'okr-d-booking', level: 'domain', ownerId: 'd-booking', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase direct booking conversion across all channels' },
-  { id: 'okr-d-content', level: 'domain', ownerId: 'd-content', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Deliver personalized, high-performing content at scale' },
-  { id: 'okr-d-core-app', level: 'domain', ownerId: 'd-core-app', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Build a best-in-class app foundation for Bonvoy members' },
-  { id: 'okr-d-mobile-book', level: 'domain', ownerId: 'd-mobile-book', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Close the mobile booking conversion gap with desktop' },
-  { id: 'okr-d-pre-stay', level: 'domain', ownerId: 'd-pre-stay', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Elevate the pre-arrival experience to drive loyalty' },
-  { id: 'okr-d-on-prop', level: 'domain', ownerId: 'd-on-prop', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Digitize on-property services to improve guest satisfaction' },
-  { id: 'okr-d-bonvoy', level: 'domain', ownerId: 'd-bonvoy', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase member engagement with points and rewards' },
-  { id: 'okr-d-engage', level: 'domain', ownerId: 'd-engage', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Drive incremental bookings through targeted engagement' },
-  { id: 'okr-d-pay', level: 'domain', ownerId: 'd-pay', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Reduce payment friction and protect revenue' },
-  { id: 'okr-d-rev', level: 'domain', ownerId: 'd-rev', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Maximize direct channel revenue contribution' },
+  { id: 'okr-d-shop', level: 'domain', ownerId: 'd-shop', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Make it effortless to find and compare the right property' },
+  { id: 'okr-d-booking', level: 'domain', ownerId: 'd-booking', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase direct booking conversion across all channels' },
+  { id: 'okr-d-content', level: 'domain', ownerId: 'd-content', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Deliver personalized, high-performing content at scale' },
+  { id: 'okr-d-core-app', level: 'domain', ownerId: 'd-core-app', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Build a best-in-class app foundation for Bonvoy members' },
+  { id: 'okr-d-mobile-book', level: 'domain', ownerId: 'd-mobile-book', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Close the mobile booking conversion gap with desktop' },
+  { id: 'okr-d-pre-stay', level: 'domain', ownerId: 'd-pre-stay', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Elevate the pre-arrival experience to drive loyalty' },
+  { id: 'okr-d-on-prop', level: 'domain', ownerId: 'd-on-prop', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Digitize on-property services to improve guest satisfaction' },
+  { id: 'okr-d-bonvoy', level: 'domain', ownerId: 'd-bonvoy', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase member engagement with points and rewards' },
+  { id: 'okr-d-engage', level: 'domain', ownerId: 'd-engage', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Drive incremental bookings through targeted engagement' },
+  { id: 'okr-d-pay', level: 'domain', ownerId: 'd-pay', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Reduce payment friction and protect revenue' },
+  { id: 'okr-d-rev', level: 'domain', ownerId: 'd-rev', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Maximize direct channel revenue contribution' },
 
   // ======================== TEAM OKRs (30 teams × 1-2 each) ========================
 
   // --- Shopping & Browse ---
   // Search — ON TRACK
-  { id: 'okr-search', level: 'team', ownerId: 't-search', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Improve search relevance and speed', parentOkrId: 'okr-d-shop' },
+  { id: 'okr-search', level: 'team', ownerId: 't-search', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Improve search relevance and speed', parentOkrId: 'okr-d-shop' },
   // Property Detail — RECOVERING
-  { id: 'okr-property', level: 'team', ownerId: 't-property', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase property page engagement and click-through to booking', parentOkrId: 'okr-d-shop' },
+  { id: 'okr-property', level: 'team', ownerId: 't-property', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase property page engagement and click-through to booking', parentOkrId: 'okr-d-shop' },
   // Rates & Availability — ON TRACK
-  { id: 'okr-rates', level: 'team', ownerId: 't-rates', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Ensure real-time rate accuracy across all inventory sources', parentOkrId: 'okr-d-shop' },
+  { id: 'okr-rates', level: 'team', ownerId: 't-rates', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Ensure real-time rate accuracy across all inventory sources', parentOkrId: 'okr-d-shop' },
 
   // --- Booking Funnel ---
   // Booking Experience — RECOVERING
-  { id: 'okr-book-exp', level: 'team', ownerId: 't-book-exp', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Improve booking conversion rate', parentOkrId: 'okr-d-booking' },
+  { id: 'okr-book-exp', level: 'team', ownerId: 't-book-exp', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Improve booking conversion rate', parentOkrId: 'okr-d-booking' },
   // Checkout — AT RISK
-  { id: 'okr-checkout', level: 'team', ownerId: 't-checkout', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Reduce checkout abandonment rate', parentOkrId: 'okr-d-booking' },
+  { id: 'okr-checkout', level: 'team', ownerId: 't-checkout', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Reduce checkout abandonment rate', parentOkrId: 'okr-d-booking' },
   // Guest Info — ON TRACK
-  { id: 'okr-guest-info', level: 'team', ownerId: 't-guest-info', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Streamline guest information capture to reduce form friction', parentOkrId: 'okr-d-booking' },
+  { id: 'okr-guest-info', level: 'team', ownerId: 't-guest-info', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Streamline guest information capture to reduce form friction', parentOkrId: 'okr-d-booking' },
 
   // --- Content & CMS ---
   // Content Platform — ON TRACK
-  { id: 'okr-content-plat', level: 'team', ownerId: 't-content-plat', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Migrate 80% of static pages to headless CMS', parentOkrId: 'okr-d-content' },
+  { id: 'okr-content-plat', level: 'team', ownerId: 't-content-plat', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Migrate 80% of static pages to headless CMS', parentOkrId: 'okr-d-content' },
   // Personalization — RECOVERING
-  { id: 'okr-personalize', level: 'team', ownerId: 't-personalize', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase personalized content engagement by 25%', parentOkrId: 'okr-d-content' },
+  { id: 'okr-personalize', level: 'team', ownerId: 't-personalize', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase personalized content engagement by 25%', parentOkrId: 'okr-d-content' },
   // SEO — ON TRACK
-  { id: 'okr-seo', level: 'team', ownerId: 't-seo', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Grow organic traffic to destination pages by 15%', parentOkrId: 'okr-d-content' },
+  { id: 'okr-seo', level: 'team', ownerId: 't-seo', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Grow organic traffic to destination pages by 15%', parentOkrId: 'okr-d-content' },
 
   // --- Core App ---
   // Home & Navigation — ON TRACK
-  { id: 'okr-home-nav', level: 'team', ownerId: 't-home-nav', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Redesign app home to increase feature discovery', parentOkrId: 'okr-d-core-app' },
+  { id: 'okr-home-nav', level: 'team', ownerId: 't-home-nav', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Redesign app home to increase feature discovery', parentOkrId: 'okr-d-core-app' },
   // Notifications — AT RISK
-  { id: 'okr-notifs', level: 'team', ownerId: 't-notifs', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase push notification opt-in and engagement', parentOkrId: 'okr-d-core-app' },
+  { id: 'okr-notifs', level: 'team', ownerId: 't-notifs', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase push notification opt-in and engagement', parentOkrId: 'okr-d-core-app' },
   // App Performance — ON TRACK
-  { id: 'okr-app-perf', level: 'team', ownerId: 't-app-perf', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Reduce app crash rate and improve cold start time', parentOkrId: 'okr-d-core-app' },
+  { id: 'okr-app-perf', level: 'team', ownerId: 't-app-perf', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Reduce app crash rate and improve cold start time', parentOkrId: 'okr-d-core-app' },
 
   // --- Mobile Booking ---
   // Mobile Search — ON TRACK
-  { id: 'okr-mob-search', level: 'team', ownerId: 't-mob-search', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Optimize mobile search UX for thumb-friendly interaction', parentOkrId: 'okr-d-mobile-book' },
+  { id: 'okr-mob-search', level: 'team', ownerId: 't-mob-search', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Optimize mobile search UX for thumb-friendly interaction', parentOkrId: 'okr-d-mobile-book' },
   // Mobile Checkout — AT RISK
-  { id: 'okr-mob-checkout', level: 'team', ownerId: 't-mob-checkout', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Reduce mobile checkout drop-off by 30%', parentOkrId: 'okr-d-mobile-book' },
+  { id: 'okr-mob-checkout', level: 'team', ownerId: 't-mob-checkout', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Reduce mobile checkout drop-off by 30%', parentOkrId: 'okr-d-mobile-book' },
   // Mobile Payments — DECLINING
-  { id: 'okr-mob-pay', level: 'team', ownerId: 't-mob-pay', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Launch Apple Pay and Google Pay for mobile bookings', parentOkrId: 'okr-d-mobile-book' },
+  { id: 'okr-mob-pay', level: 'team', ownerId: 't-mob-pay', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Launch Apple Pay and Google Pay for mobile bookings', parentOkrId: 'okr-d-mobile-book' },
 
   // --- Pre-Stay ---
   // Trip Planning — ON TRACK
-  { id: 'okr-trip-plan', level: 'team', ownerId: 't-trip-plan', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Launch trip itinerary feature with 20% adoption', parentOkrId: 'okr-d-pre-stay' },
+  { id: 'okr-trip-plan', level: 'team', ownerId: 't-trip-plan', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Launch trip itinerary feature with 20% adoption', parentOkrId: 'okr-d-pre-stay' },
   // Room Selection — RECOVERING
-  { id: 'okr-room-select', level: 'team', ownerId: 't-room-select', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase room upgrade upsell conversion by 40%', parentOkrId: 'okr-d-pre-stay' },
+  { id: 'okr-room-select', level: 'team', ownerId: 't-room-select', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase room upgrade upsell conversion by 40%', parentOkrId: 'okr-d-pre-stay' },
   // Digital Key — ON TRACK
-  { id: 'okr-digital-key', level: 'team', ownerId: 't-digital-key', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Expand digital key to 2,000 additional properties', parentOkrId: 'okr-d-pre-stay' },
+  { id: 'okr-digital-key', level: 'team', ownerId: 't-digital-key', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Expand digital key to 2,000 additional properties', parentOkrId: 'okr-d-pre-stay' },
 
   // --- On-Property ---
   // Chat & Requests — RECOVERING
-  { id: 'okr-chat', level: 'team', ownerId: 't-chat', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase in-app service request adoption by 50%', parentOkrId: 'okr-d-on-prop' },
+  { id: 'okr-chat', level: 'team', ownerId: 't-chat', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase in-app service request adoption by 50%', parentOkrId: 'okr-d-on-prop' },
   // F&B Ordering — AT RISK
-  { id: 'okr-fnb', level: 'team', ownerId: 't-fnb', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Launch mobile F&B ordering at 500 properties', parentOkrId: 'okr-d-on-prop' },
+  { id: 'okr-fnb', level: 'team', ownerId: 't-fnb', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Launch mobile F&B ordering at 500 properties', parentOkrId: 'okr-d-on-prop' },
   // Room Controls — ON TRACK
-  { id: 'okr-room-ctrl', level: 'team', ownerId: 't-room-ctrl', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Integrate smart room controls in 300 premium properties', parentOkrId: 'okr-d-on-prop' },
+  { id: 'okr-room-ctrl', level: 'team', ownerId: 't-room-ctrl', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Integrate smart room controls in 300 premium properties', parentOkrId: 'okr-d-on-prop' },
 
   // --- Bonvoy Program ---
   // Points & Earn — ON TRACK
-  { id: 'okr-points', level: 'team', ownerId: 't-points', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase points earning transparency and member satisfaction', parentOkrId: 'okr-d-bonvoy' },
+  { id: 'okr-points', level: 'team', ownerId: 't-points', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase points earning transparency and member satisfaction', parentOkrId: 'okr-d-bonvoy' },
   // Redemption — DECLINING
-  { id: 'okr-redeem', level: 'team', ownerId: 't-redeem', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Simplify redemption flow and reduce points breakage', parentOkrId: 'okr-d-bonvoy' },
+  { id: 'okr-redeem', level: 'team', ownerId: 't-redeem', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Simplify redemption flow and reduce points breakage', parentOkrId: 'okr-d-bonvoy' },
   // Elite Status — ON TRACK
-  { id: 'okr-elite', level: 'team', ownerId: 't-elite', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Launch dynamic elite benefits dashboard', parentOkrId: 'okr-d-bonvoy' },
+  { id: 'okr-elite', level: 'team', ownerId: 't-elite', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Launch dynamic elite benefits dashboard', parentOkrId: 'okr-d-bonvoy' },
 
   // --- Engagement ---
   // Offers & Promotions — ON TRACK
-  { id: 'okr-offers', level: 'team', ownerId: 't-offers', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase offer redemption rate by 20%', parentOkrId: 'okr-d-engage' },
+  { id: 'okr-offers', level: 'team', ownerId: 't-offers', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase offer redemption rate by 20%', parentOkrId: 'okr-d-engage' },
   // Partnerships — RECOVERING
-  { id: 'okr-partners', level: 'team', ownerId: 't-partners', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Launch 5 new earn/burn partnerships', parentOkrId: 'okr-d-engage' },
+  { id: 'okr-partners', level: 'team', ownerId: 't-partners', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Launch 5 new earn/burn partnerships', parentOkrId: 'okr-d-engage' },
   // Member Comms — ON TRACK
-  { id: 'okr-member-comms', level: 'team', ownerId: 't-member-comms', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Improve email engagement through segmentation', parentOkrId: 'okr-d-engage' },
+  { id: 'okr-member-comms', level: 'team', ownerId: 't-member-comms', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Improve email engagement through segmentation', parentOkrId: 'okr-d-engage' },
 
   // --- Payments ---
   // Payment Processing — AT RISK
-  { id: 'okr-pay-proc', level: 'team', ownerId: 't-pay-proc', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Reduce payment failure rate from 4.5% to 2.5%', parentOkrId: 'okr-d-pay' },
+  { id: 'okr-pay-proc', level: 'team', ownerId: 't-pay-proc', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Reduce payment failure rate from 4.5% to 2.5%', parentOkrId: 'okr-d-pay' },
   // Fraud & Risk — ON TRACK
-  { id: 'okr-fraud', level: 'team', ownerId: 't-fraud', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Reduce false-positive fraud declines by 30%', parentOkrId: 'okr-d-pay' },
+  { id: 'okr-fraud', level: 'team', ownerId: 't-fraud', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Reduce false-positive fraud declines by 30%', parentOkrId: 'okr-d-pay' },
   // Billing — ON TRACK
-  { id: 'okr-billing', level: 'team', ownerId: 't-billing', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Automate 90% of billing dispute resolution', parentOkrId: 'okr-d-pay' },
+  { id: 'okr-billing', level: 'team', ownerId: 't-billing', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Automate 90% of billing dispute resolution', parentOkrId: 'okr-d-pay' },
 
   // --- Revenue Optimization ---
   // Rate Strategy — RECOVERING
-  { id: 'okr-rate-strat', level: 'team', ownerId: 't-rate-strat', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Improve dynamic pricing accuracy by 15%', parentOkrId: 'okr-d-rev' },
+  { id: 'okr-rate-strat', level: 'team', ownerId: 't-rate-strat', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Improve dynamic pricing accuracy by 15%', parentOkrId: 'okr-d-rev' },
   // Distribution — ON TRACK
-  { id: 'okr-distrib', level: 'team', ownerId: 't-distrib', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Increase direct channel share from 32% to 38%', parentOkrId: 'okr-d-rev' },
+  { id: 'okr-distrib', level: 'team', ownerId: 't-distrib', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Increase direct channel share from 32% to 38%', parentOkrId: 'okr-d-rev' },
   // Direct Channel — AT RISK
-  { id: 'okr-direct', level: 'team', ownerId: 't-direct', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', objectiveText: 'Grow Best Rate Guarantee conversions by 25%', parentOkrId: 'okr-d-rev' },
+  { id: 'okr-direct', level: 'team', ownerId: 't-direct', quarter: currentQuarter, year: 2026, quarterNum: 'Q1', status: 'active', objectiveText: 'Grow Best Rate Guarantee conversions by 25%', parentOkrId: 'okr-d-rev' },
 ];
 
 // ======================== KEY RESULTS ========================
@@ -369,12 +370,24 @@ export const keyResults: KeyResult[] = [
 // 4 check-in cycles: Jan 13, Jan 27, Feb 10, Feb 24
 // Each team has varied confidence trajectories
 
-function ci(id: string, okrId: string, date: string, progress: number, confidence: number, reason: string, note?: string): CheckIn {
+function ci(
+  id: string,
+  okrId: string,
+  date: string,
+  progress: number,
+  confidence: number,
+  reason: string,
+  note?: string,
+  rootCause?: { category: RootCauseCategory; note: string; likelihood: string }
+): CheckIn {
   return {
     id, okrId, date, cadence: 'biweekly', progress, confidence,
     confidenceLabel: getConfidenceLabel(confidence),
     reasonForChange: reason,
     optionalNote: note,
+    rootCause: rootCause?.category ?? null,
+    rootCauseNote: rootCause?.note ?? null,
+    recoveryLikelihood: rootCause?.likelihood ?? null,
   };
 }
 
@@ -387,7 +400,7 @@ export const checkIns: CheckIn[] = [
 
   // ========== PROPERTY DETAIL (RECOVERING: 70→58→62→68) ==========
   ci('ci-property-1', 'okr-property', '2026-01-13', 10, 70, 'Photo gallery redesign kicked off; baseline metrics captured.'),
-  ci('ci-property-2', 'okr-property', '2026-01-27', 22, 58, 'Map integration vendor issues; gallery A/B test inconclusive.', 'Map vendor SDK breaking on iOS. Evaluating alternatives.'),
+  ci('ci-property-2', 'okr-property', '2026-01-27', 22, 58, 'Map integration vendor issues; gallery A/B test inconclusive.', 'Map vendor SDK breaking on iOS. Evaluating alternatives.', { category: 'vendor', note: 'Map vendor SDK breaking on iOS. Evaluating alternatives.', likelihood: 'Likely to recover' }),
   ci('ci-property-3', 'okr-property', '2026-02-10', 38, 62, 'Switched map provider. Gallery v2 showing 18% engagement lift.'),
   ci('ci-property-4', 'okr-property', '2026-02-24', 52, 68, 'Recovery on track. CTR improving but below target pace.'),
 
@@ -405,9 +418,9 @@ export const checkIns: CheckIn[] = [
 
   // ========== CHECKOUT (AT RISK: 60→50→42→38) ==========
   ci('ci-checkout-1', 'okr-checkout', '2026-01-13', 8, 60, 'One-page checkout prototype in dev. PCI review started.'),
-  ci('ci-checkout-2', 'okr-checkout', '2026-01-27', 18, 50, 'PCI compliance requires additional fields. Redesigning.', 'Compliance team mandating 3DS2 inline, adding steps.'),
+  ci('ci-checkout-2', 'okr-checkout', '2026-01-27', 18, 50, 'PCI compliance requires additional fields. Redesigning.', 'Compliance team mandating 3DS2 inline, adding steps.', { category: 'compliance', note: 'Compliance team mandating 3DS2 inline, adding steps.', likelihood: 'Uncertain' }),
   ci('ci-checkout-3', 'okr-checkout', '2026-02-10', 28, 42, 'Accessibility audit flagged 12 issues. Fixing before launch.'),
-  ci('ci-checkout-4', 'okr-checkout', '2026-02-24', 35, 38, 'Adoption stuck at 35%. Need exec decision on compliance tradeoffs.'),
+  ci('ci-checkout-4', 'okr-checkout', '2026-02-24', 35, 38, 'Adoption stuck at 35%. Need exec decision on compliance tradeoffs.', undefined, { category: 'compliance', note: 'PCI 3DS2 requirements adding friction. Need exec decision.', likelihood: 'Unlikely without intervention' }),
 
   // ========== GUEST INFO (ON TRACK: 72→75→78→80) ==========
   ci('ci-guest-info-1', 'okr-guest-info', '2026-01-13', 15, 72, 'Field reduction analysis complete. Autofill API integrated.'),
@@ -423,7 +436,7 @@ export const checkIns: CheckIn[] = [
 
   // ========== PERSONALIZATION (RECOVERING: 72→55→60→65) ==========
   ci('ci-personalize-1', 'okr-personalize', '2026-01-13', 10, 72, 'ML model initial training complete. A/B framework set up.'),
-  ci('ci-personalize-2', 'okr-personalize', '2026-01-27', 22, 55, 'Data pipeline broke. Model accuracy dropped. Retraining needed.', 'ETL job failure corrupted 2 weeks of behavioral data.'),
+  ci('ci-personalize-2', 'okr-personalize', '2026-01-27', 22, 55, 'Data pipeline broke. Model accuracy dropped. Retraining needed.', 'ETL job failure corrupted 2 weeks of behavioral data.', { category: 'data_quality', note: 'ETL job failure corrupted 2 weeks of behavioral data. Retraining needed.', likelihood: 'Likely to recover' }),
   ci('ci-personalize-3', 'okr-personalize', '2026-02-10', 38, 60, 'Pipeline fixed. Model v2 in training. Manual segments filling gap.'),
   ci('ci-personalize-4', 'okr-personalize', '2026-02-24', 50, 65, 'Model v2 deployed to 72% of users. CTR up 16% vs 25% target.'),
 
@@ -441,7 +454,7 @@ export const checkIns: CheckIn[] = [
 
   // ========== NOTIFICATIONS (AT RISK: 55→48→42→35) ==========
   ci('ci-notifs-1', 'okr-notifs', '2026-01-13', 8, 55, 'Push strategy defined. iOS 19 permission changes complicating.'),
-  ci('ci-notifs-2', 'okr-notifs', '2026-01-27', 18, 48, 'iOS opt-in rate dropped 5pp after OS update. Adjusting copy.', 'Apple changed permission prompt UX; our pre-prompt flow needs rework.'),
+  ci('ci-notifs-2', 'okr-notifs', '2026-01-27', 18, 48, 'iOS opt-in rate dropped 5pp after OS update. Adjusting copy.', 'Apple changed permission prompt UX; our pre-prompt flow needs rework.', { category: 'dependency', note: 'Waiting on Platform team for payment API v2', likelihood: 'Likely to recover' }),
   ci('ci-notifs-3', 'okr-notifs', '2026-02-10', 28, 42, 'New pre-prompt flow deployed. Marginal improvement.'),
   ci('ci-notifs-4', 'okr-notifs', '2026-02-24', 35, 35, 'Opt-in at 41%. Booking-driven push still disconnected from personalization.'),
 
@@ -458,7 +471,7 @@ export const checkIns: CheckIn[] = [
   ci('ci-mob-search-4', 'okr-mob-search', '2026-02-24', 68, 80, 'Search completion at 73%. Voice at 7.2%. On track.'),
 
   // ========== MOBILE CHECKOUT (AT RISK: 58→50→45→40) ==========
-  ci('ci-mob-checkout-1', 'okr-mob-checkout', '2026-01-13', 8, 58, 'Mobile checkout audit done. Payment tokenization identified as bottleneck.'),
+  ci('ci-mob-checkout-1', 'okr-mob-checkout', '2026-01-13', 8, 58, 'Mobile checkout audit done. Payment tokenization identified as bottleneck.', undefined, { category: 'vendor', note: 'Payment processor experiencing intermittent failures', likelihood: 'Unlikely without intervention' }),
   ci('ci-mob-checkout-2', 'okr-mob-checkout', '2026-01-27', 18, 50, 'Tokenization timeouts on Android 12. Investigating SDK.', 'Payment SDK vendor says fix coming in March. Looking at alternatives.'),
   ci('ci-mob-checkout-3', 'okr-mob-checkout', '2026-02-10', 28, 45, 'Partial workaround deployed. Drop-off still at 42%.'),
   ci('ci-mob-checkout-4', 'okr-mob-checkout', '2026-02-24', 35, 40, 'Drop-off at 40%. 3-tap goal unlikely without SDK fix.'),

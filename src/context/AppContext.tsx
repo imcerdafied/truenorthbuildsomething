@@ -11,12 +11,16 @@ import {
   KeyResult,
   CheckIn,
   JiraLink,
+  QuarterClose,
   ViewMode,
   OKRWithDetails,
   OKRLevel,
+  OKRStatus,
   Quarter,
   Cadence,
   ConfidenceLabel,
+  AchievementStatus,
+  RootCauseCategory,
   getConfidenceLabel,
   getTrend,
   getCurrentQuarter
@@ -41,6 +45,7 @@ interface AppState {
   keyResults: KeyResult[];
   checkIns: CheckIn[];
   jiraLinks: JiraLink[];
+  quarterCloses: QuarterClose[];
   viewMode: ViewMode;
   currentQuarter: string;
   selectedTeamId: string;
@@ -77,6 +82,10 @@ interface AppContextType extends AppState {
   // Rollover operations
   rolloverOKR: (okrId: string) => Promise<void>;
   
+  // Quarter close operations
+  closeQuarter: (okrId: string, data: { finalValue: number; achievement: AchievementStatus; summary: string }) => Promise<void>;
+  reopenQuarter: (okrId: string) => Promise<void>;
+  
   // Aggregations
   getOverallConfidence: (okrIds: string[]) => number;
   getAtRiskCount: (okrIds: string[]) => number;
@@ -104,6 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         keyResults: seedData.keyResults,
         checkIns: seedData.checkIns,
         jiraLinks: seedData.jiraLinks,
+        quarterCloses: [],
         viewMode: 'team',
         currentQuarter: '2026-Q1',
         selectedTeamId: seedData.teams[0]?.id || '',
@@ -121,6 +131,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       keyResults: [],
       checkIns: [],
       jiraLinks: [],
+      quarterCloses: [],
       viewMode: 'team',
       currentQuarter: getCurrentQuarter(),
       selectedTeamId: '',
@@ -197,7 +208,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         objectiveText: o.objective_text,
         parentOkrId: o.parent_okr_id || undefined,
         isRolledOver: o.is_rolled_over,
-        rolledOverFrom: o.rolled_over_from || undefined
+        rolledOverFrom: o.rolled_over_from || undefined,
+        status: (o as { status?: string }).status as OKRStatus || 'active'
       }));
 
       const okrIds = okrs.map(o => o.id);
@@ -206,6 +218,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       let keyResults: KeyResult[] = [];
       let checkIns: CheckIn[] = [];
       let jiraLinks: JiraLink[] = [];
+      let quarterCloses: QuarterClose[] = [];
 
       if (okrIds.length > 0) {
         const { data: krData, error: krError } = await supabase
@@ -233,7 +246,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         if (ciError) console.error('Error fetching check-ins:', ciError);
 
-        checkIns = (ciData || []).map(ci => ({
+        checkIns = (ciData || []).map((ci: { id: string; okr_id: string; date: string; cadence: string; progress: number; confidence: number; confidence_label: string; reason_for_change: string | null; optional_note: string | null; root_cause?: string | null; root_cause_note?: string | null; recovery_likelihood?: string | null }) => ({
           id: ci.id,
           okrId: ci.okr_id,
           date: ci.date,
@@ -242,7 +255,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           confidence: ci.confidence,
           confidenceLabel: ci.confidence_label as CheckIn['confidenceLabel'],
           reasonForChange: ci.reason_for_change || undefined,
-          optionalNote: ci.optional_note || undefined
+          optionalNote: ci.optional_note || undefined,
+          rootCause: (ci.root_cause as RootCauseCategory) || null,
+          rootCauseNote: ci.root_cause_note || null,
+          recoveryLikelihood: ci.recovery_likelihood || null
         }));
 
         const { data: jlData, error: jiraError } = await supabase
@@ -257,6 +273,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
           okrId: jl.okr_id,
           epicIdentifierOrUrl: jl.epic_identifier_or_url
         }));
+
+        const { data: quarterCloseData, error: qcError } = await supabase
+          .from('quarter_closes')
+          .select('*')
+          .in('okr_id', okrIds);
+
+        if (qcError) console.error('Error fetching quarter closes:', qcError);
+
+        quarterCloses = (quarterCloseData || []).map((qc: { id: string; okr_id: string; final_value: number; achievement: string; summary: string; closed_by: string | null; closed_at: string; reopened_at: string | null }) => ({
+          id: qc.id,
+          okrId: qc.okr_id,
+          finalValue: qc.final_value,
+          achievement: qc.achievement as AchievementStatus,
+          summary: qc.summary,
+          closedBy: qc.closed_by,
+          closedAt: qc.closed_at,
+          reopenedAt: qc.reopened_at
+        }));
       }
 
       const firstTeamId = teams.length > 0 ? teams[0].id : '';
@@ -270,6 +304,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         keyResults,
         checkIns,
         jiraLinks,
+        quarterCloses,
         selectedTeamId: prev.selectedTeamId || firstTeamId,
         currentPM: profile?.full_name || '',
         isLoading: false,
@@ -353,6 +388,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .map(childOkr => getOKRWithDetails(childOkr.id))
       .filter(Boolean) as OKRWithDetails[];
 
+    const quarterClose = state.quarterCloses.find(qc => qc.okrId === okrId);
+
     return {
       ...okr,
       ownerName,
@@ -363,7 +400,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       previousCheckIn,
       trend: getTrend(latestCheckIn, previousCheckIn),
       isOrphaned,
-      childOKRs
+      childOKRs,
+      quarterClose
     };
   }, [state]);
 
@@ -403,7 +441,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         year: parseInt(year),
         quarterNum: q as Quarter,
         objectiveText: data.objectiveText,
-        parentOkrId: data.parentOkrId || undefined
+        parentOkrId: data.parentOkrId || undefined,
+        status: 'active'
       };
       const newKRs: KeyResult[] = data.keyResults
         .filter(kr => kr.metricName.trim())
@@ -533,6 +572,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         confidence_label: confidenceLabel,
         reason_for_change: checkIn.reasonForChange || null,
         optional_note: checkIn.optionalNote || null,
+        root_cause: checkIn.rootCause || null,
+        root_cause_note: checkIn.rootCauseNote || null,
+        recovery_likelihood: checkIn.recoveryLikelihood || null,
         created_by: user?.id || null,
       });
 
@@ -711,7 +753,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         year: nextYear,
         quarterNum: nextQ,
         isRolledOver: true,
-        rolledOverFrom: okr.id
+        rolledOverFrom: okr.id,
+        status: 'active'
       };
       const newKRs = state.keyResults
         .filter(kr => kr.okrId === okrId)
@@ -778,6 +821,76 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toast({ title: 'OKR rolled over' });
   }, [state.okrs, state.keyResults, isDemoMode, organization, user, refreshData]);
 
+  const closeQuarter = useCallback(async (okrId: string, data: { finalValue: number; achievement: AchievementStatus; summary: string }) => {
+    if (isDemoMode) {
+      setState(prev => ({
+        ...prev,
+        okrs: prev.okrs.map(o => o.id === okrId ? { ...o, status: 'closed' as OKRStatus } : o),
+        quarterCloses: [...prev.quarterCloses, {
+          id: crypto.randomUUID(),
+          okrId,
+          finalValue: data.finalValue,
+          achievement: data.achievement,
+          summary: data.summary,
+          closedBy: null,
+          closedAt: new Date().toISOString(),
+          reopenedAt: null,
+        }],
+      }));
+      toast({ title: 'Quarter closed', description: 'OKR has been marked as closed.' });
+      return;
+    }
+
+    const { error: okrError } = await supabase
+      .from('okrs')
+      .update({ status: 'closed' })
+      .eq('id', okrId);
+
+    if (okrError) {
+      console.error('Error closing OKR:', okrError);
+      toast({ title: 'Failed to close quarter', description: okrError.message, variant: 'destructive' });
+      return;
+    }
+
+    const { error: qcError } = await supabase
+      .from('quarter_closes')
+      .insert({
+        okr_id: okrId,
+        final_value: data.finalValue,
+        achievement: data.achievement,
+        summary: data.summary,
+        closed_by: user?.id || null,
+      });
+
+    if (qcError) {
+      console.error('Error creating quarter close:', qcError);
+      toast({ title: 'Failed to save close data', description: qcError.message, variant: 'destructive' });
+      return;
+    }
+
+    toast({ title: 'Quarter closed', description: 'OKR has been finalized.' });
+    await refreshData();
+  }, [isDemoMode, user?.id, refreshData]);
+
+  const reopenQuarter = useCallback(async (okrId: string) => {
+    if (isDemoMode) {
+      setState(prev => ({
+        ...prev,
+        okrs: prev.okrs.map(o => o.id === okrId ? { ...o, status: 'active' as OKRStatus } : o),
+        quarterCloses: prev.quarterCloses.map(qc =>
+          qc.okrId === okrId ? { ...qc, reopenedAt: new Date().toISOString() } : qc
+        ),
+      }));
+      toast({ title: 'Quarter reopened' });
+      return;
+    }
+
+    await supabase.from('okrs').update({ status: 'active' }).eq('id', okrId);
+    await supabase.from('quarter_closes').update({ reopened_at: new Date().toISOString() }).eq('okr_id', okrId);
+    toast({ title: 'Quarter reopened' });
+    await refreshData();
+  }, [isDemoMode, refreshData]);
+
   // ── Aggregations (pure computation from state) ────────────────────────
 
   const getOverallConfidence = useCallback((okrIds: string[]) => {
@@ -833,6 +946,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addJiraLink,
     removeJiraLink,
     rolloverOKR,
+    closeQuarter,
+    reopenQuarter,
     getOverallConfidence,
     getAtRiskCount,
     getOnTrackCount,

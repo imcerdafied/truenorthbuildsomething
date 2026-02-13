@@ -12,6 +12,7 @@ import { OKRDetailPage } from "@/pages/OKRDetailPage";
 import { CreateOKRPage } from "@/pages/CreateOKRPage";
 import { CheckInPage } from "@/pages/CheckInPage";
 import { QBRPage } from "@/pages/QBRPage";
+import { TeamReviewPage } from "@/pages/TeamReviewPage";
 import { ExportsPage } from "@/pages/ExportsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { AboutPage } from "@/pages/AboutPage";
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="structure" element={<Navigate to="/" replace />} />
                 <Route path="alignment" element={<Navigate to="/" replace />} />
                 <Route path="qbr" element={<QBRPage />} />
+                <Route path="team-review" element={<TeamReviewPage />} />
                 <Route path="exports" element={<ExportsPage />} />
                 <Route path="about" element={<AboutPage />} />
                 <Route path="settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />

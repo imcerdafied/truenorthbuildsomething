@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { Button } from '@/components/ui/button';
@@ -8,9 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { getConfidenceLabel } from '@/types';
+import { getConfidenceLabel, ROOT_CAUSE_LABELS, type RootCauseCategory } from '@/types';
 import { ArrowLeft, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+
+const RECOVERY_LIKELIHOOD_OPTIONS = [
+  'Likely to recover',
+  'Uncertain',
+  'Unlikely without intervention',
+] as const;
 
 interface CheckInFormData {
   okrId: string;
@@ -19,6 +26,9 @@ interface CheckInFormData {
   previousConfidence: number;
   reasonForChange: string;
   optionalNote: string;
+  rootCause: RootCauseCategory | null;
+  rootCauseNote: string;
+  recoveryLikelihood: string | null;
 }
 
 export function CheckInPage() {
@@ -28,17 +38,21 @@ export function CheckInPage() {
   
   const { 
     getTeamOKRs, 
+    getOKRsByQuarter,
+    currentQuarter,
     selectedTeamId, 
     addCheckIn,
     getTeam,
     isCurrentUserPM
   } = useApp();
+  const { isAdmin } = useAuth();
 
+  const allOKRs = getOKRsByQuarter(currentQuarter);
   const team = getTeam(selectedTeamId);
   const teamOKRs = getTeamOKRs(selectedTeamId);
-  
+
   const editableOKRs = preselectedOkrId 
-    ? teamOKRs.filter(o => o.id === preselectedOkrId)
+    ? allOKRs.filter(o => o.id === preselectedOkrId)
     : teamOKRs;
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -51,7 +65,10 @@ export function CheckInPage() {
         confidence: okr.latestCheckIn?.confidence || 50,
         previousConfidence: okr.latestCheckIn?.confidence || 50,
         reasonForChange: '',
-        optionalNote: ''
+        optionalNote: '',
+        rootCause: null,
+        rootCauseNote: '',
+        recoveryLikelihood: null
       };
     });
     return initial;
@@ -62,6 +79,10 @@ export function CheckInPage() {
 
   const isConfidenceChanged = currentData 
     ? currentData.confidence !== currentData.previousConfidence 
+    : false;
+
+  const showRootCauseSection = currentData
+    ? currentData.confidence < 70 || currentData.confidence < currentData.previousConfidence
     : false;
 
   const canProceed = !isConfidenceChanged || (currentData?.reasonForChange?.trim().length || 0) > 0;
@@ -99,7 +120,10 @@ export function CheckInPage() {
           progress: data.progress,
           confidence: data.confidence,
           reasonForChange: data.reasonForChange || undefined,
-          optionalNote: data.optionalNote || undefined
+          optionalNote: data.optionalNote || undefined,
+          rootCause: data.rootCause || null,
+          rootCauseNote: data.rootCauseNote || null,
+          recoveryLikelihood: data.recoveryLikelihood || null
         });
       }
       toast.success('Check-in saved.');
@@ -110,7 +134,7 @@ export function CheckInPage() {
     }
   };
 
-  if (!isCurrentUserPM(selectedTeamId)) {
+  if (!isCurrentUserPM(selectedTeamId) && !isAdmin) {
     return (
       <div className="empty-state">
         <AlertCircle className="empty-state-icon" />
@@ -238,6 +262,77 @@ export function CheckInPage() {
               </div>
             )}
 
+            {/* Root cause section - only when confidence < 70 or dropped */}
+            {showRootCauseSection && (
+              <div className="space-y-3 pt-2 border-t border-border/40 animate-in fade-in duration-200">
+                <div>
+                  <Label className="text-sm font-medium">What&apos;s driving this?</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Optional — helps surface systemic patterns across teams
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(ROOT_CAUSE_LABELS) as RootCauseCategory[]).map((rc) => (
+                    <button
+                      key={rc}
+                      type="button"
+                      onClick={() =>
+                        updateField(
+                          'rootCause',
+                          currentData.rootCause === rc ? null : rc
+                        )
+                      }
+                      className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                        currentData.rootCause === rc
+                          ? 'border-foreground text-foreground bg-muted font-medium'
+                          : 'border-border text-muted-foreground bg-background hover:bg-muted'
+                      }`}
+                    >
+                      {ROOT_CAUSE_LABELS[rc]}
+                    </button>
+                  ))}
+                </div>
+                {currentData.rootCause && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Brief context (optional)</Label>
+                      <Textarea
+                        placeholder="Brief context (e.g., 'Waiting on Platform team for API access')"
+                        value={currentData.rootCauseNote}
+                        onChange={(e) => updateField('rootCauseNote', e.target.value)}
+                        className="bg-background resize-none text-sm"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Recovery likelihood</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {RECOVERY_LIKELIHOOD_OPTIONS.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() =>
+                              updateField(
+                                'recoveryLikelihood',
+                                currentData.recoveryLikelihood === opt ? null : opt
+                              )
+                            }
+                            className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                              currentData.recoveryLikelihood === opt
+                                ? 'border-foreground text-foreground bg-muted font-medium'
+                                : 'border-border text-muted-foreground bg-background hover:bg-muted'
+                            }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Optional note */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-muted-foreground">Note (optional)</Label>
@@ -273,13 +368,13 @@ export function CheckInPage() {
             <Button variant="ghost" onClick={() => navigate(-1)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={!canProceed} className="gap-2">
+            <Button variant="default" onClick={handleSubmit} disabled={!canProceed} className="gap-2 bg-foreground text-background hover:bg-foreground/90">
               <Check className="w-4 h-4" />
               Save
             </Button>
           </div>
         ) : (
-          <Button onClick={handleNext} disabled={!canProceed} className="gap-2">
+          <Button variant="default" onClick={handleNext} disabled={!canProceed} className="gap-2 bg-foreground text-background hover:bg-foreground/90">
             Next
             <ArrowRight className="w-4 h-4" />
           </Button>

@@ -60,8 +60,10 @@ export function ProtectedRoute({ children, requireSetup = true }: ProtectedRoute
     return () => { cancelled = true; };
   }, [user?.id, organization, requireSetup, refreshProfile, navigate]);
 
-  // Demo mode bypasses all auth checks
-  if (isDemoMode) {
+  // Demo mode only applies when no real user session exists
+  // Logged-in users can still toggle demo mode via AppContext, but
+  // ProtectedRoute should enforce auth flow for real sessions
+  if (isDemoMode && !user && !isLoading) {
     return <>{children}</>;
   }
 

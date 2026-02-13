@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
@@ -41,6 +42,7 @@ export function HomePage() {
     isCurrentUserPM,
     checkIns
   } = useApp();
+  const { isAdmin } = useAuth();
 
   // Get the current team
   const currentTeam = teams.find(t => t.id === selectedTeamId);
@@ -115,7 +117,7 @@ export function HomePage() {
     ? getNextCheckInDate(new Date(latestCheckIn.date), currentTeam?.cadence || 'biweekly')
     : null;
 
-  const canRunCheckIn = isCurrentUserPM(selectedTeamId);
+  const canRunCheckIn = isCurrentUserPM(selectedTeamId) || isAdmin;
   const canCreateOKR = true; // Simplified for prototype
 
   const TrendIcon = overallTrend === 'up' ? TrendingUp : overallTrend === 'down' ? TrendingDown : Minus;

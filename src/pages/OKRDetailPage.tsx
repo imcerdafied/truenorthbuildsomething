@@ -1,11 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
+import { RootCauseBadge } from '@/components/shared/RootCauseBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { OrphanWarning } from '@/components/shared/OrphanWarning';
 import { ConfidenceSparkline } from '@/components/shared/ConfidenceSparkline';
 import { RolloverDialog } from '@/components/okr/RolloverDialog';
+import { CloseQuarterModal } from '@/components/shared/CloseQuarterModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatQuarter, OKRLevel, KeyResult } from '@/types';
+import { formatQuarter, OKRLevel, KeyResult, AchievementStatus } from '@/types';
 import { 
   ArrowLeft, 
   Target, 
@@ -36,6 +39,7 @@ import {
   Users, 
   Layers,
   Plus,
+  PlayCircle,
   Link2,
   RefreshCcw,
   Calendar,
@@ -55,11 +59,15 @@ export function OKRDetailPage() {
     rolloverOKR,
     addOKRLink,
     getOKRsByQuarter,
-    currentQuarter
+    currentQuarter,
+    closeQuarter,
+    reopenQuarter,
   } = useApp();
+  const { isAdmin } = useAuth();
 
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isRolloverDialogOpen, setIsRolloverDialogOpen] = useState(false);
+  const [isCloseQuarterOpen, setIsCloseQuarterOpen] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string>('');
 
   const okr = okrId ? getOKRWithDetails(okrId) : null;
@@ -123,6 +131,24 @@ export function OKRDetailPage() {
   const allOKRsThisQuarter = getOKRsByQuarter(currentQuarter);
   const hasValidParents = potentialParents.length > 0;
   const showAlignmentCard = (parentOkr != null || okr.childOKRs.length > 0) || allOKRsThisQuarter.length >= 2;
+  const isClosed = (okr.status ?? 'active') === 'closed';
+  const quarterClose = okr.quarterClose;
+
+  const getAchievementLabel = (a: AchievementStatus) => {
+    switch (a) {
+      case 'achieved': return 'Achieved';
+      case 'partially_achieved': return 'Partially Achieved';
+      case 'missed': return 'Missed';
+    }
+  };
+
+  const getAchievementVariant = (a: AchievementStatus) => {
+    switch (a) {
+      case 'achieved': return 'confidenceHigh';
+      case 'partially_achieved': return 'confidenceMedium';
+      case 'missed': return 'confidenceLow';
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -186,18 +212,47 @@ export function OKRDetailPage() {
           )}
         </div>
 
-        {canEdit && (
-          <div className="flex gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" onClick={() => navigate(`/checkin?okrId=${okr.id}`)} className="gap-2">
-              <Plus className="w-3.5 h-3.5" />
-              Add Check-in
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setIsRolloverDialogOpen(true)} className="gap-2">
-              <RefreshCcw className="w-3.5 h-3.5" />
-              Roll over
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2 flex-shrink-0">
+          {isClosed ? (
+            isAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => reopenQuarter(okr.id)}
+              >
+                Reopen
+              </Button>
+            )
+          ) : (
+            <>
+              {(canEdit || isAdmin) && (
+                <Button variant="default" size="sm" onClick={() => navigate(`/checkin?okrId=${okr.id}`)} className="gap-1.5 bg-foreground text-background hover:bg-foreground/90">
+                  <PlayCircle className="w-3.5 h-3.5" />
+                  Check-in
+                </Button>
+              )}
+              {canEdit && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => setIsCloseQuarterOpen(true)} className="gap-2">
+                    Close Quarter
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setIsRolloverDialogOpen(true)} className="gap-2">
+                    <RefreshCcw className="w-3.5 h-3.5" />
+                    Roll over
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        <CloseQuarterModal
+          open={isCloseQuarterOpen}
+          onOpenChange={setIsCloseQuarterOpen}
+          okrId={okr.id}
+          objectiveText={okr.objectiveText}
+        />
 
         {/* Rollover Dialog */}
         <RolloverDialog
@@ -211,48 +266,69 @@ export function OKRDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Status Card */}
+          {/* Status Card / Results Banner */}
           <Card className="border-border/60">
             <CardContent className="py-5">
-              <div className="grid grid-cols-2 gap-8">
-                <div>
-                  <p className="section-header mb-3">Progress</p>
-                  <div className="flex items-center gap-4">
+              {isClosed && quarterClose ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <Badge variant={getAchievementVariant(quarterClose.achievement)} className="text-xs">
+                      {getAchievementLabel(quarterClose.achievement)}
+                    </Badge>
                     <span className="text-2xl font-semibold tabular-nums">
-                      {okr.latestCheckIn?.progress || 0}%
+                      Final: {quarterClose.finalValue}
                     </span>
-                    <ProgressBar 
-                      value={okr.latestCheckIn?.progress || 0} 
-                      className="flex-1" 
-                    />
                   </div>
+                  <p className="text-sm text-muted-foreground">
+                    {quarterClose.summary}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Closed on {new Date(quarterClose.closedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
                 </div>
-                <div>
-                  <p className="section-header mb-3">Confidence</p>
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-semibold tabular-nums">
-                      {okr.latestCheckIn?.confidence || 0}
-                    </span>
-                    {okr.latestCheckIn && (
-                      <ConfidenceBadge 
-                        confidence={okr.latestCheckIn.confidence}
-                        label={okr.latestCheckIn.confidenceLabel}
-                        showValue={false}
-                      />
-                    )}
-                    <TrendIndicator trend={okr.trend} />
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div>
+                      <p className="section-header mb-3">Progress</p>
+                      <div className="flex items-center gap-4">
+                        <span className="text-2xl font-semibold tabular-nums">
+                          {okr.latestCheckIn?.progress || 0}%
+                        </span>
+                        <ProgressBar 
+                          value={okr.latestCheckIn?.progress || 0} 
+                          className="flex-1" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="section-header mb-3">Confidence</p>
+                      <div className="flex items-center gap-4">
+                        <span className="text-2xl font-semibold tabular-nums">
+                          {okr.latestCheckIn?.confidence || 0}
+                        </span>
+                        {okr.latestCheckIn && (
+                          <ConfidenceBadge 
+                            confidence={okr.latestCheckIn.confidence}
+                            label={okr.latestCheckIn.confidenceLabel}
+                            showValue={false}
+                          />
+                        )}
+                        <TrendIndicator trend={okr.trend} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              {/* Inline sparkline */}
-              {okr.checkIns.length > 1 && (
-                <div className="mt-6 pt-5 border-t">
-                  <p className="section-header mb-3">Confidence Trend</p>
-                  <div className="h-16">
-                    <ConfidenceSparkline checkIns={okr.checkIns} className="h-full w-full" />
-                  </div>
-                </div>
+                  
+                  {/* Inline sparkline */}
+                  {okr.checkIns.length > 1 && (
+                    <div className="mt-6 pt-5 border-t">
+                      <p className="section-header mb-3">Confidence Trend</p>
+                      <div className="h-16">
+                        <ConfidenceSparkline checkIns={okr.checkIns} className="h-full w-full" />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -286,7 +362,7 @@ export function OKRDetailPage() {
                         kr={kr}
                         index={index}
                         progress={progress}
-                        canEdit={canEdit}
+                        canEdit={canEdit && !isClosed}
                       />
                     );
                   })}
@@ -311,21 +387,36 @@ export function OKRDetailPage() {
               ) : (
                 <div className="space-y-0">
                   {okr.checkIns.slice(0, 6).map((ci) => (
-                    <div key={ci.id} className="flex items-start gap-4 py-3 border-b border-border/40 last:border-0">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-[80px]">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(ci.date).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric' 
-                        })}
+                    <div key={ci.id} className="py-3 border-b border-border/40 last:border-0 space-y-2">
+                      <div className="flex items-start gap-4">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-[80px]">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(ci.date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </div>
+                        <ConfidenceBadge confidence={ci.confidence} label={ci.confidenceLabel} size="sm" />
+                        {ci.rootCause && (
+                          <RootCauseBadge rootCause={ci.rootCause} size="sm" />
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {ci.progress}%
+                        </span>
+                        {ci.reasonForChange && (
+                          <p className="text-xs text-muted-foreground flex-1 truncate">
+                            {ci.reasonForChange}
+                          </p>
+                        )}
                       </div>
-                      <ConfidenceBadge confidence={ci.confidence} label={ci.confidenceLabel} size="sm" />
-                      <span className="text-xs text-muted-foreground">
-                        {ci.progress}%
-                      </span>
-                      {ci.reasonForChange && (
-                        <p className="text-xs text-muted-foreground flex-1 truncate">
-                          {ci.reasonForChange}
+                      {ci.rootCauseNote && (
+                        <p className="text-xs text-muted-foreground italic pl-[88px]">
+                          {ci.rootCauseNote}
+                        </p>
+                      )}
+                      {ci.recoveryLikelihood && (
+                        <p className="text-xs text-muted-foreground pl-[88px]">
+                          Recovery: {ci.recoveryLikelihood}
                         </p>
                       )}
                     </div>
