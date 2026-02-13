@@ -464,7 +464,7 @@ export function OrganizationSetupPage() {
                                     onChange={(e) =>
                                       updateTeam(paIndex, domIndex, teamIndex, e.target.value)
                                     }
-                                    placeholder="Team name"
+                                    placeholder="e.g. The Butlers, The Maids, The Belldesk"
                                     className="h-7 text-sm flex-1"
                                   />
                                   {dom.teams.length > 1 && (
