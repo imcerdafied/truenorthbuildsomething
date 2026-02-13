@@ -41,7 +41,7 @@ const INITIAL_STRUCTURE: DraftProductArea[] = [
   {
     name: '',
     domains: [
-      { name: '', teams: [{ name: 'Team 1' }] },
+      { name: '', teams: [{ name: '' }] },
     ],
   },
 ];
@@ -235,7 +235,7 @@ export function OrganizationSetupPage() {
   const addProductArea = () => {
     setStructure((prev) => [
       ...prev,
-      { name: '', domains: [{ name: '', teams: [{ name: 'Team 1' }] }] },
+      { name: '', domains: [{ name: '', teams: [{ name: '' }] }] },
     ]);
   };
   const updateProductArea = (paIndex: number, name: string) => {
@@ -251,7 +251,7 @@ export function OrganizationSetupPage() {
     setStructure((prev) =>
       prev.map((pa, i) =>
         i === paIndex
-          ? { ...pa, domains: [...pa.domains, { name: '', teams: [{ name: 'Team 1' }] }] }
+          ? { ...pa, domains: [...pa.domains, { name: '', teams: [{ name: '' }] }] }
           : pa
       )
     );
@@ -284,7 +284,7 @@ export function OrganizationSetupPage() {
           ? {
               ...pa,
               domains: pa.domains.map((d, j) =>
-                j === domIndex ? { ...d, teams: [...d.teams, { name: 'Team 1' }] } : d
+                j === domIndex ? { ...d, teams: [...d.teams, { name: '' }] } : d
               ),
             }
           : pa
