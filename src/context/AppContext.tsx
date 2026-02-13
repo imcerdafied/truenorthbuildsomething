@@ -100,7 +100,7 @@ interface AppContextType extends AppState {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { organization, profile, user } = useAuth();
+  const { organization, profile, user, isAdmin } = useAuth();
   const isDemoMode = checkDemoMode();
   
   const [state, setState] = useState<AppState>(() => {
@@ -294,6 +294,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       const firstTeamId = teams.length > 0 ? teams[0].id : '';
+      const userTeam = teams.find(t => (t.pmName || '').trim() === (profile?.full_name || '').trim());
+      const memberTeamId = userTeam?.id || firstTeamId;
+      const defaultTeamId = isAdmin ? '' : memberTeamId;
 
       setState(prev => ({
         ...prev,
@@ -305,7 +308,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         checkIns,
         jiraLinks,
         quarterCloses,
-        selectedTeamId: prev.selectedTeamId || firstTeamId,
+        selectedTeamId: prev.selectedTeamId || defaultTeamId,
         currentPM: profile?.full_name || '',
         isLoading: false,
         isDemoMode: false
@@ -319,7 +322,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         variant: 'destructive',
       });
     }
-  }, [organization?.id, profile?.full_name, isDemoMode]);
+  }, [organization?.id, profile?.full_name, isAdmin, isDemoMode]);
 
   useEffect(() => {
     refreshData();
