@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useApp } from '@/context/AppContext';
 import {
   Sheet,
   SheetContent,
@@ -12,13 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Copy, Check } from 'lucide-react';
 
 const ONRAMP_DISMISSED_KEY = 'truenorth_onramp_dismissed';
@@ -26,29 +18,17 @@ const ONRAMP_DISMISSED_KEY = 'truenorth_onramp_dismissed';
 export interface InviteSlideOverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** When opened from a "No signal — invite members" row, pre-select this team */
+  /** Reserved for future invite assignment support */
   initialTeamId?: string | null;
 }
 
-export function InviteSlideOver({ open, onOpenChange, initialTeamId }: InviteSlideOverProps) {
+export function InviteSlideOver({ open, onOpenChange }: InviteSlideOverProps) {
   const { organization } = useAuth();
-  const { teams } = useApp();
   const [copied, setCopied] = useState(false);
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(initialTeamId ?? '');
-  const [selectedRole, setSelectedRole] = useState<'member' | 'admin'>('member');
 
   const inviteUrl = organization?.id
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/auth?org=${organization.id}`
     : '';
-
-  useEffect(() => {
-    if (!open) return;
-    if (initialTeamId) {
-      setSelectedTeamId(initialTeamId);
-    } else if (teams.length > 0) {
-      setSelectedTeamId(teams[0].id);
-    }
-  }, [open, initialTeamId, teams]);
 
   const handleCopy = async () => {
     if (!inviteUrl) return;
@@ -56,7 +36,9 @@ export function InviteSlideOver({ open, onOpenChange, initialTeamId }: InviteSli
       await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (_) {}
+    } catch (_) {
+      // Clipboard access can fail in restricted browser contexts.
+    }
   };
 
   return (
@@ -94,7 +76,7 @@ export function InviteSlideOver({ open, onOpenChange, initialTeamId }: InviteSli
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Anyone with this link can join your organization.
+              Anyone with this link can join your organization as a member.
             </p>
           </div>
 
@@ -107,48 +89,6 @@ export function InviteSlideOver({ open, onOpenChange, initialTeamId }: InviteSli
               className="min-h-[80px] resize-none bg-muted opacity-70"
             />
             <p className="text-xs text-muted-foreground">Email invites coming soon.</p>
-          </div>
-
-          {/* Team assignment */}
-          {teams.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Team assignment</Label>
-              <Select
-                value={selectedTeamId || teams[0]?.id || undefined}
-                onValueChange={setSelectedTeamId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.filter(t => t.id).map(t => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                New members will be assigned to this team.
-              </p>
-            </div>
-          )}
-
-          {/* Role */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Role</Label>
-            <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'member' | 'admin')}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Members track outcomes. Admins manage structure.
-            </p>
           </div>
         </div>
 
@@ -168,7 +108,9 @@ export function InviteSlideOver({ open, onOpenChange, initialTeamId }: InviteSli
 export function setOnrampDismissed() {
   try {
     window.localStorage.setItem(ONRAMP_DISMISSED_KEY, 'true');
-  } catch (_) {}
+  } catch (_) {
+    // Ignore localStorage failures (private mode / blocked storage).
+  }
 }
 
 export function isOnrampDismissed(): boolean {

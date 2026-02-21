@@ -57,7 +57,9 @@ export function AuthPage() {
       setJoinOrgId(data.id);
       try {
         window.localStorage.setItem(PENDING_ORG_JOIN_KEY, data.id);
-      } catch (_) {}
+      } catch (_) {
+        // Ignore localStorage failures (private mode / blocked storage).
+      }
     })();
     return () => { cancelled = true; };
   }, [orgParam]);

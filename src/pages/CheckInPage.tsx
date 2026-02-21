@@ -50,10 +50,13 @@ export function CheckInPage() {
   const allOKRs = getOKRsByQuarter(currentQuarter);
   const team = getTeam(selectedTeamId);
   const teamOKRs = getTeamOKRs(selectedTeamId);
+  const allowedOKRs = isAdmin ? allOKRs : teamOKRs;
+  const requestedOkrExists = preselectedOkrId ? allOKRs.some(o => o.id === preselectedOkrId) : false;
+  const requestedOkrAllowed = preselectedOkrId ? allowedOKRs.some(o => o.id === preselectedOkrId) : false;
 
   const editableOKRs = preselectedOkrId 
-    ? allOKRs.filter(o => o.id === preselectedOkrId)
-    : teamOKRs;
+    ? allowedOKRs.filter(o => o.id === preselectedOkrId)
+    : allowedOKRs;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, CheckInFormData>>(() => {
@@ -87,7 +90,7 @@ export function CheckInPage() {
 
   const canProceed = !isConfidenceChanged || (currentData?.reasonForChange?.trim().length || 0) > 0;
 
-  const updateField = (field: keyof CheckInFormData, value: any) => {
+  const updateField = <K extends keyof CheckInFormData>(field: K, value: CheckInFormData[K]) => {
     if (!currentOKR) return;
     setFormData(prev => ({
       ...prev,
@@ -139,6 +142,18 @@ export function CheckInPage() {
       <div className="empty-state">
         <AlertCircle className="empty-state-icon" />
         <p className="empty-state-title">Only the PM can submit check-ins</p>
+        <Button variant="ghost" onClick={() => navigate('/')} className="mt-4">
+          Back to Home
+        </Button>
+      </div>
+    );
+  }
+
+  if (preselectedOkrId && requestedOkrExists && !requestedOkrAllowed) {
+    return (
+      <div className="empty-state">
+        <AlertCircle className="empty-state-icon" />
+        <p className="empty-state-title">You don't have access to check in on this outcome</p>
         <Button variant="ghost" onClick={() => navigate('/')} className="mt-4">
           Back to Home
         </Button>

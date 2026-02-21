@@ -48,7 +48,9 @@ export function ProtectedRoute({ children, requireSetup = true }: ProtectedRoute
         if (cancelled) return;
         try {
           window.localStorage.removeItem(PENDING_ORG_JOIN_KEY);
-        } catch (_) {}
+        } catch (_) {
+          // Ignore localStorage failures (private mode / blocked storage).
+        }
         await refreshProfile();
         setJoinDone(true);
         navigate('/first-outcome', { replace: true });
@@ -58,7 +60,7 @@ export function ProtectedRoute({ children, requireSetup = true }: ProtectedRoute
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.id, organization, requireSetup, refreshProfile, navigate]);
+  }, [user, organization, requireSetup, refreshProfile, navigate]);
 
   // Demo mode only applies when no real user session exists
   // Logged-in users can still toggle demo mode via AppContext, but

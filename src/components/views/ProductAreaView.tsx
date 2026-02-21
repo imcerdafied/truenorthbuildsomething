@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,7 +71,7 @@ export function ProductAreaView() {
         teamOKRs.some(o => o.id === kr.okrId)
       );
       const krsNeedingAttention = teamKRs.filter(kr => 
-        (kr as any).needsAttention
+        kr.needsAttention
       ).length;
 
       // Calculate trend
@@ -121,14 +121,14 @@ export function ProductAreaView() {
   }, [allTeams, getTeamOKRs, getOverallConfidence, getAtRiskCount, checkIns, keyResults]);
 
   // Resolve product area name for grouping/sorting
-  const getProductAreaName = (teamId: string) => {
+  const getProductAreaName = useCallback((teamId: string) => {
     const team = teams.find(t => t.id === teamId);
     if (!team) return '';
     const domain = domains.find(d => d.id === team.domainId);
     if (!domain) return '';
     const pa = productAreas.find(p => p.id === domain.productAreaId);
     return pa?.name ?? '';
-  };
+  }, [teams, domains, productAreas]);
 
   const sortedTeams = useMemo(() => {
     return [...teamsWithMetrics].sort((a, b) => {
@@ -158,7 +158,7 @@ export function ProductAreaView() {
 
       return a.name.localeCompare(b.name);
     });
-  }, [teamsWithMetrics, teams, domains, productAreas]);
+  }, [teamsWithMetrics, getProductAreaName]);
 
   const focusTeams = useMemo(() => {
     return sortedTeams

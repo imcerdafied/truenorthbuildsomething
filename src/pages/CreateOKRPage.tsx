@@ -85,42 +85,6 @@ export function CreateOKRPage() {
     confidence: 50,
   });
 
-  // Soft gate: no structure yet
-  if (teams.length === 0) {
-    return (
-      <div className="max-w-xl mx-auto space-y-6 animate-fade-in">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/okrs')}
-          className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Outcomes
-        </Button>
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle className="text-lg">Almost there</CardTitle>
-            <CardDescription>
-              Before teams start tracking outcomes, your admin needs to set up a basic structure so outcomes roll up correctly.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isAdmin ? (
-              <Button onClick={() => navigate('/setup')}>
-                Set up structure
-              </Button>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Ask your admin to complete organization setup.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const quarters = useMemo(() => {
     const current = getCurrentQuarter();
     const next = getNextQuarter(current);
@@ -177,7 +141,7 @@ export function CreateOKRPage() {
     }
   }, [currentStep, draft]);
 
-  const updateDraft = (field: keyof OKRDraft, value: any) => {
+  const updateDraft = <K extends keyof OKRDraft>(field: K, value: OKRDraft[K]) => {
     setDraft(prev => ({ ...prev, [field]: value }));
   };
 
@@ -247,6 +211,42 @@ export function CreateOKRPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Soft gate: no structure yet
+  if (teams.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto space-y-6 animate-fade-in">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/okrs')}
+          className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Outcomes
+        </Button>
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle className="text-lg">Almost there</CardTitle>
+            <CardDescription>
+              Before teams start tracking outcomes, your admin needs to set up a basic structure so outcomes roll up correctly.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isAdmin ? (
+              <Button onClick={() => navigate('/setup')}>
+                Set up structure
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Ask your admin to complete organization setup.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     switch (currentStep) {

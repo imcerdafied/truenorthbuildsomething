@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ export function OrganizationStructure() {
   const [editingItem, setEditingItem] = useState<{ type: string; id: string } | null>(null);
   const [editValue, setEditValue] = useState('');
 
-  const fetchStructure = async () => {
+  const fetchStructure = useCallback(async () => {
     if (!organization?.id) return;
 
     try {
@@ -83,11 +83,11 @@ export function OrganizationStructure() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [organization?.id]);
 
   useEffect(() => {
     fetchStructure();
-  }, [organization?.id]);
+  }, [fetchStructure]);
 
   const startEdit = (type: string, id: string, currentValue: string) => {
     setEditingItem({ type, id });
