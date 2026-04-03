@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Sheet,
   SheetContent,
@@ -11,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Loader2 } from 'lucide-react';
 
 const ONRAMP_DISMISSED_KEY = 'truenorth_onramp_dismissed';
 
@@ -23,12 +24,30 @@ export interface InviteSlideOverProps {
 }
 
 export function InviteSlideOver({ open, onOpenChange }: InviteSlideOverProps) {
-  const { organization } = useAuth();
+  const { organization, user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState('');
+  const [generating, setGenerating] = useState(false);
 
-  const inviteUrl = organization?.id
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/auth?org=${organization.id}`
-    : '';
+  useEffect(() => {
+    if (!open || !organization?.id || !user) return;
+    let cancelled = false;
+    setGenerating(true);
+    (async () => {
+      const { data, error } = await supabase
+        .from('invite_tokens')
+        .insert({ organization_id: organization.id, created_by: user.id })
+        .select('id')
+        .single();
+      if (cancelled) return;
+      setGenerating(false);
+      if (!error && data) {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        setInviteUrl(`${origin}/auth?invite=${data.id}`);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, organization?.id, user]);
 
   const handleCopy = async () => {
     if (!inviteUrl) return;

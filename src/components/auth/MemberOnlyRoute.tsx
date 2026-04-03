@@ -8,10 +8,11 @@ interface MemberOnlyRouteProps {
 }
 
 export function MemberOnlyRoute({ children }: MemberOnlyRouteProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const isDemoMode = checkDemoMode();
 
-  if (isDemoMode) {
+  // Demo mode only bypasses auth for unauthenticated visitors (read-only sandbox)
+  if (isDemoMode && !user) {
     return <>{children}</>;
   }
 

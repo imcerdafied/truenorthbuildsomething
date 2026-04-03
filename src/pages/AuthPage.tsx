@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
 const PENDING_ORG_JOIN_KEY = 'pending_org_join';
-const VALID_INVITE_CODE = 'truenorth2026';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -19,6 +18,7 @@ const passwordSchema = z.string().min(6, 'Password must be at least 6 characters
 export function AuthPage() {
   const [searchParams] = useSearchParams();
   const orgParam = searchParams.get('org');
+  const inviteParam = searchParams.get('invite');
 
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState('');
@@ -35,34 +35,46 @@ export function AuthPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Validate org param and persist for post-signup join
+  // Validate invite token or legacy org param and persist for post-signup join
   useEffect(() => {
-    if (!orgParam) {
+    const param = inviteParam || orgParam;
+    if (!param) {
       setOrgCheckDone(true);
       return;
     }
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('id', orgParam)
-        .maybeSingle();
+      let resolvedOrgId: string | null = null;
+
+      if (inviteParam) {
+        // New flow: validate invite token via RPC
+        const { data: orgId } = await supabase.rpc('validate_invite_token', { token_id: inviteParam });
+        resolvedOrgId = orgId || null;
+      } else if (orgParam) {
+        // Legacy flow: direct org ID (kept for backwards compatibility)
+        const { data } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('id', orgParam)
+          .maybeSingle();
+        resolvedOrgId = data?.id || null;
+      }
+
       if (cancelled) return;
       setOrgCheckDone(true);
-      if (error || !data) {
+      if (!resolvedOrgId) {
         setInviteLinkError('This invite link is invalid or expired.');
         return;
       }
-      setJoinOrgId(data.id);
+      setJoinOrgId(resolvedOrgId);
       try {
-        window.localStorage.setItem(PENDING_ORG_JOIN_KEY, data.id);
+        window.localStorage.setItem(PENDING_ORG_JOIN_KEY, resolvedOrgId);
       } catch (_) {
         // Ignore localStorage failures (private mode / blocked storage).
       }
     })();
     return () => { cancelled = true; };
-  }, [orgParam]);
+  }, [orgParam, inviteParam]);
 
   useEffect(() => {
     if (user && !isLoading) {
@@ -103,18 +115,22 @@ export function AuthPage() {
     e.preventDefault();
     
     if (!validateForm()) return;
-    
-    if (requireInviteCode && inviteCode.trim().toLowerCase() !== VALID_INVITE_CODE.toLowerCase()) {
-      toast({
-        title: 'Invalid invite code',
-        description: 'Invalid invite code. Contact your admin for access.',
-        variant: 'destructive',
-      });
-      setErrors((prev) => ({ ...prev, inviteCode: 'Invalid invite code' }));
-      return;
-    }
-    
+
     setIsSubmitting(true);
+
+    if (requireInviteCode) {
+      const { data: isValid } = await supabase.rpc('validate_invite_code', { code: inviteCode.trim() });
+      if (!isValid) {
+        toast({
+          title: 'Invalid invite code',
+          description: 'Invalid invite code. Contact your admin for access.',
+          variant: 'destructive',
+        });
+        setErrors((prev) => ({ ...prev, inviteCode: 'Invalid invite code' }));
+        setIsSubmitting(false);
+        return;
+      }
+    }
     
     try {
       if (isSignUp) {

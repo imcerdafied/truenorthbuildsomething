@@ -8,10 +8,11 @@ interface AdminRouteProps {
 }
 
 export function AdminRoute({ children }: AdminRouteProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const isDemoMode = checkDemoMode();
 
-  if (isDemoMode) return <>{children}</>;
+  // Demo mode only bypasses auth for unauthenticated visitors (read-only sandbox)
+  if (isDemoMode && !user) return <>{children}</>;
   if (isAdmin) return <>{children}</>;
   return <Navigate to="/" replace />;
 }
