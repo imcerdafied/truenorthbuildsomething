@@ -59,8 +59,8 @@ export function HomePage() {
   const atRiskCount = getAtRiskCount(allTeamOKRIds);
   const onTrackCount = getOnTrackCount(allTeamOKRIds);
 
-  // Confidence color system: High 70+, Medium 40-69, Low 0-39
-  const confidenceLevel = overallConfidence >= 70 ? 'high' : overallConfidence >= 40 ? 'medium' : 'low';
+  // Confidence color system: High 75+, Medium 40-74, Low 0-39
+  const confidenceLevel = overallConfidence >= 75 ? 'high' : overallConfidence >= 40 ? 'medium' : 'low';
   const confidenceColor = confidenceLevel === 'high' ? 'emerald' : confidenceLevel === 'medium' ? 'amber' : 'red';
   const confidenceLabel =
     confidenceLevel === 'high' ? 'High Confidence' : confidenceLevel === 'medium' ? 'Medium Confidence' : 'Low Confidence';
@@ -351,7 +351,7 @@ export function HomePage() {
           {teamOKRs[0].latestCheckIn?.reasonForChange && (
             <div>
               <h3 className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-3">
-                {teamOKRs[0].latestCheckIn.confidence >= 70 ? 'Why confidence is high' :
+                {teamOKRs[0].latestCheckIn.confidence >= 75 ? 'Why confidence is high' :
                   teamOKRs[0].latestCheckIn.confidence >= 40 ? 'Current confidence context' :
                   'Why confidence is low'}
               </h3>
@@ -419,7 +419,7 @@ export function HomePage() {
               const confidence = getOverallConfidence(okrIds);
               const atRisk = getAtRiskCount(okrIds);
               const hasTeamOKRs = teamOkrs.length > 0;
-              const teamConfLevel = confidence >= 70 ? 'high' : confidence >= 40 ? 'medium' : 'low';
+              const teamConfLevel = confidence >= 75 ? 'high' : confidence >= 40 ? 'medium' : 'low';
               const teamConfColor = teamConfLevel === 'high' ? 'emerald' : teamConfLevel === 'medium' ? 'amber' : 'red';
               return (
                 <div

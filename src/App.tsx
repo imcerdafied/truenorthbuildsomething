@@ -1,8 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { AppProvider } from "@/context/AppContext";
 import { Layout } from "@/components/layout/Layout";
@@ -22,12 +21,11 @@ import { FirstOutcomePage } from "@/pages/FirstOutcomePage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { MemberOnlyRoute } from "@/components/auth/MemberOnlyRoute";
-
-const queryClient = new QueryClient();
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <ErrorBoundary>
       <AuthProvider>
         <AppProvider>
           <Toaster />
@@ -62,8 +60,6 @@ const App = () => (
                 <Route path="okrs/create" element={<CreateOKRPage />} />
                 <Route path="okrs/:okrId" element={<OKRDetailPage />} />
                 <Route path="checkin" element={<CheckInPage />} />
-                <Route path="structure" element={<Navigate to="/" replace />} />
-                <Route path="alignment" element={<Navigate to="/" replace />} />
                 <Route path="qbr" element={<QBRPage />} />
                 <Route path="team-review" element={<TeamReviewPage />} />
                 <Route path="exports" element={<ExportsPage />} />
@@ -74,8 +70,8 @@ const App = () => (
           </BrowserRouter>
         </AppProvider>
       </AuthProvider>
+      </ErrorBoundary>
     </TooltipProvider>
-  </QueryClientProvider>
 );
 
 export default App;

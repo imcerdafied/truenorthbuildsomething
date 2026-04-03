@@ -104,7 +104,7 @@ export function TeamReviewPage() {
         return c >= 40 && c < 70;
       });
     } else if (statusFilter === 'strong_momentum') {
-      filtered = filtered.filter((o) => (o.latestCheckIn?.confidence ?? 0) >= 70);
+      filtered = filtered.filter((o) => (o.latestCheckIn?.confidence ?? 0) >= 75);
     }
 
     const sorted = [...filtered];
