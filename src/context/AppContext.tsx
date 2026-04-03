@@ -163,11 +163,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         name: pa.name
       }));
 
-      const { data: domainData } = await supabase
-        .from('domains')
-        .select('*')
-        .in('product_area_id', productAreas.map(pa => pa.id))
-        .order('name');
+      const paIds = productAreas.map(pa => pa.id);
+      const { data: domainData } = paIds.length > 0
+        ? await supabase.from('domains').select('*').in('product_area_id', paIds).order('name')
+        : { data: [] };
 
       const domains: Domain[] = (domainData || []).map(d => ({
         id: d.id,
@@ -175,11 +174,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         productAreaId: d.product_area_id
       }));
 
-      const { data: teamData } = await supabase
-        .from('teams')
-        .select('*')
-        .in('domain_id', domains.map(d => d.id))
-        .order('name');
+      const domainIds = domains.map(d => d.id);
+      const { data: teamData } = domainIds.length > 0
+        ? await supabase.from('teams').select('*').in('domain_id', domainIds).order('name')
+        : { data: [] };
 
       const teams: Team[] = (teamData || []).map(t => ({
         id: t.id,
@@ -221,14 +219,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       let quarterCloses: QuarterClose[] = [];
 
       if (okrIds.length > 0) {
-        const { data: krData, error: krError } = await supabase
-          .from('key_results')
-          .select('*')
-          .in('okr_id', okrIds);
+        // Fetch all OKR child data in parallel (all depend only on okrIds)
+        const [krResult, ciResult, jlResult, qcResult] = await Promise.all([
+          supabase.from('key_results').select('*').in('okr_id', okrIds),
+          supabase.from('check_ins').select('*').in('okr_id', okrIds).order('date', { ascending: false }),
+          supabase.from('jira_links').select('*').in('okr_id', okrIds),
+          supabase.from('quarter_closes').select('*').in('okr_id', okrIds),
+        ]);
 
-        if (krError) console.error('Error fetching key results:', krError);
+        if (krResult.error) console.error('Error fetching key results:', krResult.error);
+        if (ciResult.error) console.error('Error fetching check-ins:', ciResult.error);
+        if (jlResult.error) console.error('Error fetching jira links:', jlResult.error);
+        if (qcResult.error) console.error('Error fetching quarter closes:', qcResult.error);
 
-        keyResults = (krData || []).map(kr => ({
+        keyResults = (krResult.data || []).map(kr => ({
           id: kr.id,
           okrId: kr.okr_id,
           text: kr.text,
@@ -238,15 +242,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           attentionReason: kr.attention_reason || undefined
         }));
 
-        const { data: ciData, error: ciError } = await supabase
-          .from('check_ins')
-          .select('*')
-          .in('okr_id', okrIds)
-          .order('date', { ascending: false });
-
-        if (ciError) console.error('Error fetching check-ins:', ciError);
-
-        checkIns = (ciData || []).map((ci: { id: string; okr_id: string; date: string; cadence: string; progress: number; confidence: number; confidence_label: string; reason_for_change: string | null; optional_note: string | null; root_cause?: string | null; root_cause_note?: string | null; recovery_likelihood?: string | null }) => ({
+        checkIns = (ciResult.data || []).map((ci: { id: string; okr_id: string; date: string; cadence: string; progress: number; confidence: number; confidence_label: string; reason_for_change: string | null; optional_note: string | null; root_cause?: string | null; root_cause_note?: string | null; recovery_likelihood?: string | null }) => ({
           id: ci.id,
           okrId: ci.okr_id,
           date: ci.date,
@@ -261,27 +257,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           recoveryLikelihood: ci.recovery_likelihood || null
         }));
 
-        const { data: jlData, error: jiraError } = await supabase
-          .from('jira_links')
-          .select('*')
-          .in('okr_id', okrIds);
-
-        if (jiraError) console.error('Error fetching jira links:', jiraError);
-
-        jiraLinks = (jlData || []).map(jl => ({
+        jiraLinks = (jlResult.data || []).map(jl => ({
           id: jl.id,
           okrId: jl.okr_id,
           epicIdentifierOrUrl: jl.epic_identifier_or_url
         }));
 
-        const { data: quarterCloseData, error: qcError } = await supabase
-          .from('quarter_closes')
-          .select('*')
-          .in('okr_id', okrIds);
-
-        if (qcError) console.error('Error fetching quarter closes:', qcError);
-
-        quarterCloses = (quarterCloseData || []).map((qc: { id: string; okr_id: string; final_value: number; achievement: string; summary: string; closed_by: string | null; closed_at: string; reopened_at: string | null }) => ({
+        quarterCloses = (qcResult.data || []).map((qc: { id: string; okr_id: string; final_value: number; achievement: string; summary: string; closed_by: string | null; closed_at: string; reopened_at: string | null }) => ({
           id: qc.id,
           okrId: qc.okr_id,
           finalValue: qc.final_value,
@@ -355,10 +337,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const okr = state.okrs.find(o => o.id === okrId);
     if (!okr) return false;
     if (okr.level === 'team') {
-      return isCurrentUserPM(okr.ownerId);
+      return isCurrentUserPM(okr.ownerId) || isAdmin;
     }
-    return true;
-  }, [state.okrs, isCurrentUserPM]);
+    // Domain and product-area OKRs require admin role
+    return isAdmin;
+  }, [state.okrs, isCurrentUserPM, isAdmin]);
 
   // ── Read helpers (computed from local state) ──────────────────────────
 
@@ -888,8 +871,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    await supabase.from('okrs').update({ status: 'active' }).eq('id', okrId);
-    await supabase.from('quarter_closes').update({ reopened_at: new Date().toISOString() }).eq('okr_id', okrId);
+    const { error: okrError } = await supabase.from('okrs').update({ status: 'active' }).eq('id', okrId);
+    if (okrError) {
+      console.error('Error reopening OKR:', okrError);
+      toast({ title: 'Error', description: 'Failed to reopen quarter', variant: 'destructive' });
+      return;
+    }
+    const { error: qcError } = await supabase.from('quarter_closes').update({ reopened_at: new Date().toISOString() }).eq('okr_id', okrId);
+    if (qcError) {
+      console.error('Error updating quarter close:', qcError);
+    }
     toast({ title: 'Quarter reopened' });
     await refreshData();
   }, [isDemoMode, refreshData]);

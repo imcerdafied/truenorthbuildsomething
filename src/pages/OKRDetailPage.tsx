@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
 import { RootCauseBadge } from '@/components/shared/RootCauseBadge';
 import { TrendIndicator } from '@/components/shared/TrendIndicator';
@@ -515,7 +516,7 @@ function KeyResultCard({ kr, index, progress, canEdit }: KeyResultCardProps) {
   const [attentionReason, setAttentionReason] = useState(kr.attentionReason || '');
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleToggleAttention = () => {
+  const handleToggleAttention = async () => {
     const newValue = !needsAttention;
     setNeedsAttention(newValue);
     if (!newValue) {
@@ -523,14 +524,31 @@ function KeyResultCard({ kr, index, progress, canEdit }: KeyResultCardProps) {
     } else {
       setIsEditing(true);
     }
-    // In a real app, this would persist to the database
+    const { error } = await supabase
+      .from('key_results')
+      .update({ needs_attention: newValue, attention_reason: newValue ? attentionReason : null })
+      .eq('id', kr.id);
+    if (error) {
+      console.error('Error updating attention flag:', error);
+      setNeedsAttention(!newValue);
+      toast.error('Failed to update attention flag');
+      return;
+    }
     toast.success(newValue ? 'Flagged as needing attention' : 'Attention flag removed');
   };
 
-  const handleSaveReason = () => {
+  const handleSaveReason = async () => {
     setIsEditing(false);
-    // In a real app, this would persist to the database
     if (attentionReason.trim()) {
+      const { error } = await supabase
+        .from('key_results')
+        .update({ attention_reason: attentionReason.trim() })
+        .eq('id', kr.id);
+      if (error) {
+        console.error('Error saving attention reason:', error);
+        toast.error('Failed to save reason');
+        return;
+      }
       toast.success('Reason saved');
     }
   };
