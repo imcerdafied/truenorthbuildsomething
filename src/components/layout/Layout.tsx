@@ -5,12 +5,16 @@ import { Header } from './Header';
 import { DemoBanner } from '@/components/shared/DemoBanner';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { cn } from '@/lib/utils';
+import { SharedNav } from '@/components/SharedNav';
+import { useAuth } from '@/context/AuthContext';
 
 export function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { organization } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
+      <SharedNav activeApp="goals" orgName={organization?.name} orgId={organization?.id} />
       {/* Demo mode banner */}
       <DemoBanner />
       
