@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;700&display=swap');
+/* Space Grotesk loaded via index.html Google Fonts link */
 
 @tailwind base;
 @tailwind components;
@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    /* Background & Foreground - subtle warmth */
-    --background: 210 20% 98%;
+    /* Background & Foreground */
+    --background: 220 10% 98%;
     --foreground: 220 25% 12%;
     
     /* Card surfaces */
@@ -27,7 +27,7 @@
     --secondary-foreground: 220 15% 25%;
     
     /* Muted */
-    --muted: 220 10% 95%;
+    --muted: 220 10% 96%;
     --muted-foreground: 220 8% 50%;
     
     /* Accent - Soft blue */
@@ -41,9 +41,9 @@
     --destructive: 0 55% 50%;
     --destructive-foreground: 0 0% 98%;
     
-    /* Border & Input - subtle dividers */
-    --border: 220 10% 90%;
-    --input: 220 10% 90%;
+    /* Border & Input */
+    --border: 220 15% 91%;
+    --input: 220 15% 91%;
     
     /* Radius */
     --radius: 0.5rem;

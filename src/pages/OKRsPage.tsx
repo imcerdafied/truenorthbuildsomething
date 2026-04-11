@@ -295,20 +295,44 @@ export function OKRsPage() {
       {/* Outcome list — grouped by health */}
       {filteredOKRs.length === 0 ? (
         <div className="empty-state py-16">
-          <Target className="empty-state-icon" />
-          <p className="text-lg font-semibold text-foreground">
-            {allOKRs.length === 0 ? 'No outcomes for this quarter' : 'No outcomes match your filters'}
-          </p>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mt-2">
-            {allOKRs.length === 0
-              ? 'TrueNorthOS helps teams align on outcomes and make confidence explicit. Create your first outcome to establish your signal for the quarter.'
-              : 'Try adjusting your filters to see more results.'}
-          </p>
-          {allOKRs.length === 0 && canCreateOKR && (
-            <Button onClick={() => navigate('/okrs/create')} className="mt-6 gap-2">
-              <Plus className="w-4 h-4" />
-              Create your first outcome
-            </Button>
+          {allOKRs.length === 0 ? (
+            <div className="border border-dashed rounded-lg px-8 py-12 text-center max-w-xl mx-auto">
+              <p className="text-lg font-semibold text-foreground">You're at the Goals altitude</p>
+              <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                OKRs define where your organization is going.
+                Each Objective has Key Results that measure progress.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                Start by creating your first OKR for this quarter.
+              </p>
+              {canCreateOKR && (
+                <Button onClick={() => navigate('/okrs/create')} className="mt-6 gap-2">
+                  <Plus className="w-4 h-4" />
+                  Create Your First OKR
+                </Button>
+              )}
+              <div className="mt-8 pt-6 border-t border-border/40">
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-3">
+                  Also in the BSPG Strategic OS
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center gap-4 text-xs text-muted-foreground">
+                  <a href="https://buildauthority.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                    ⚡ Bets altitude (Build Authority) → Decisions that deliver your goals
+                  </a>
+                  <a href="https://outcomeos.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                    🔨 Build altitude (OutcomeOS) → What gets built to achieve your bets
+                  </a>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <Target className="empty-state-icon" />
+              <p className="text-lg font-semibold text-foreground">No outcomes match your filters</p>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto mt-2">
+                Try adjusting your filters to see more results.
+              </p>
+            </>
           )}
         </div>
       ) : (
