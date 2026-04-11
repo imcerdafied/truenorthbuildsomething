@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { LinkedBetCard } from '@/components/LinkedBetCard';
 
 export function OKRDetailPage() {
   const { okrId } = useParams<{ okrId: string }>();
@@ -430,6 +431,13 @@ export function OKRDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Linked Bet from Build Authority */}
+          <LinkedBetCard
+            okrId={okr.id}
+            linkedBetId={(okr as any).linked_bet_id ?? null}
+            linkedBetTitle={(okr as any).linked_bet_title ?? null}
+          />
+
           {/* Alignment - only show when meaningful (has links or org has 2+ OKRs) */}
           {showAlignmentCard && (
             <Card className="border-border/60">
