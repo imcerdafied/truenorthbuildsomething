@@ -6,11 +6,13 @@ import { DemoBanner } from '@/components/shared/DemoBanner';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { cn } from '@/lib/utils';
 import { SharedNav } from '@/components/SharedNav';
+import { useOrgFromUrl } from '@/hooks/useOrgFromUrl';
 import { useAuth } from '@/context/AuthContext';
 
 export function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { organization } = useAuth();
+  useOrgFromUrl();
 
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
